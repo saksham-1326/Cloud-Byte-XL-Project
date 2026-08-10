@@ -25,7 +25,7 @@ function App() {
     <div style={{ padding: "40px", fontFamily: "Arial" }}>
       <h1>Cloud-ByteXL</h1>
 
-      <p>Frontend is running successfully.</p>
+      <p>Frontend is running successfully.Yeaa Nigga!</p>
 
       <button onClick={testBackend} disabled={loading}>
         {loading ? "Connecting..." : "Test Backend"}
