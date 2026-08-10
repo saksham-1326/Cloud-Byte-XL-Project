@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture - Git-Driven Deployment Engine</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+        h3 {
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-weight: 400;
+            font-size: 18px;
+        }
+        .print-btn {
+            display: block;
+            width: 200px;
+            margin: 0 auto 30px auto;
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .print-btn:hover {
+            background-color: #0056b3;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .print-btn {
+                display: none;
+            }
+            @page {
+                size: landscape;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SYSTEM ARCHITECTURE</h1>
+        <h3>GIT-DRIVEN DEPLOYMENT ENGINE WITH AI FAILURE SUMMARY</h3>
+        
+        <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+        <div class="mermaid">
+flowchart LR
+    %% Visual Design & Styling
+    classDef default fill:#f9f9f9,stroke:#ced4da,stroke-width:1px,color:#212529;
+    classDef dev fill:#e9ecef,stroke:#adb5bd,stroke-width:2px,color:#495057;
+    classDef github fill:#24292e,stroke:#24292e,stroke-width:2px,color:#fff;
+    classDef backend fill:#e3f2fd,stroke:#90caf9,stroke-width:2px,color:#0d47a1;
+    classDef cicd fill:#fff3e0,stroke:#ffb74d,stroke-width:2px,color:#e65100;
+    classDef docker fill:#e1f5fe,stroke:#29b6f6,stroke-width:2px,color:#01579b;
+    classDef aws fill:#ff9900,stroke:#232f3e,stroke-width:2px,color:#232f3e;
+    classDef monitor fill:#f8f9fa,stroke:#6c757d,stroke-width:2px,color:#343a40;
+    classDef success fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724;
+    classDef fail fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24;
+    classDef ai fill:#f3e5f5,stroke:#ce93d8,stroke-width:2px,color:#4a148c;
+    classDef db fill:#336791,stroke:#295273,stroke-width:2px,color:#fff;
+    classDef dashboard fill:#20c997,stroke:#1aa179,stroke-width:2px,color:#fff;
+    classDef ui fill:#ffffff,stroke:#20c997,stroke-width:2px,color:#20c997;
+
+    %% 1. Developer Layer
+    Dev(("Developer")):::dev
+
+    %% 2. Source Control
+    subgraph SC [SOURCE CONTROL]
+        Git["GitHub / GitLab<br/>Repository, Code, PR, Merge"]:::github
+    end
+
+    %% 3. Webhook & Backend
+    subgraph BE [DEPLOYMENT ENGINE]
+        WH("Webhook Handler<br/>(Flask + Python)"):::backend
+        API["Flask REST API<br/>Requests, Project Mgmt"]:::backend
+        PC["Pipeline Controller<br/>Build & Test Control"]:::backend
+        DC["Deployment Controller<br/>Environment Setup"]:::backend
+        LM["Log Manager<br/>Log Processing"]:::backend
+    end
+
+    %% 4. CI/CD Pipeline
+    subgraph CICD [CI/CD PIPELINE - GitHub Actions / Jenkins / GitLab CI/CD]
+        direction LR
+        Bld["Build"]:::cicd --> Tst["Automated Testing"]:::cicd --> Pkg["Package"]:::cicd --> Img["Docker Image"]:::cicd
+    end
+
+    %% 5. Container Execution
+    subgraph DKR [DOCKER EXECUTION ENVIRONMENT]
+        DEng{"Docker Engine<br/>Isolated Execution"}:::docker
+        subgraph Cont [Containers]
+            BC["Build Container"]:::docker
+            TC["Test Container"]:::docker
+            AC["Application Container"]:::docker
+        end
+    end
+
+    %% 6. AWS Deployment
+    subgraph AWS [AWS DEPLOYMENT ENVIRONMENT]
+        EC2["AWS EC2<br/>Running Containers"]:::aws
+        CW["AWS CloudWatch<br/>Monitoring / Metrics / Logs"]:::aws
+    end
+
+    %% 7. Monitor
+    subgraph MON [DEPLOYMENT MONITOR]
+        DM["Deployment Monitor<br/>Build, Test & Runtime Status"]:::monitor
+    end
+
+    %% 8. Database Layer
+    subgraph DB_Zone [DATA STORAGE]
+        DB[("PostgreSQL<br/>Users, Projects, Deployments")]:::db
+        S3[("AWS S3<br/>Logs, Artifacts, Objects")]:::aws
+    end
+
+    %% 9. Dashboard & UI
+    subgraph UI_Zone [DEVELOPER DASHBOARD & ADMIN]
+        Dash["DEVELOPER DASHBOARD<br/>(React.js + Bootstrap)"]:::dashboard
+        Admin["ADMIN PANEL<br/>User & Repo Mgmt"]:::ui
+        Notif(("Notification Service")):::ui
+    end
+
+    %% 10. AI Analysis
+    subgraph AIF [AI-BASED FAILURE ANALYSIS]
+        FL["Log Collection Module<br/>Failure Logs"]:::fail
+        subgraph NLP [AI / NLP Log Analysis]
+            direction TB
+            Pre["Log Preprocessing"]:::ai
+            Err["Error Extraction"]:::ai
+            Pat["Failure Pattern Detection"]:::ai
+            Root["Root Cause Identification"]:::ai
+            Summ["AI Failure Summary Generator"]:::ai
+            Pre --> Err --> Pat --> Root --> Summ
+        end
+    end
+
+    %% -- CONNECTIONS --
+    
+    Dev -- "Code Changes / Git Push" --> Git
+    Git -- "Webhook Event" --> WH
+    
+    WH --> API
+    API --> PC
+    PC --> DC
+    DC --> LM
+    
+    PC -- "Pipeline Trigger" --> Bld
+    Img -- "Build / Test" --> DEng
+    DEng -.-> BC & TC & AC
+    
+    DC -- "Deploy Application" --> EC2
+    DEng -- "Execute" --> EC2
+    EC2 -. "Logs" .-> CW
+    
+    EC2 -- "Status" --> DM
+    
+    %% Success/Failure Paths
+    Succ{"Deployment Successful"}:::success
+    Fail{"Deployment Failed"}:::fail
+    
+    DM -- "Success" --> Succ
+    DM -- "Failure" --> Fail
+    
+    Fail --> FL
+    FL -- "Build Logs, Stack Traces, Error Messages" --> Pre
+    
+    %% Database Connections
+    API -. "Reads/Writes" .-> DB
+    LM -. "Stores Logs" .-> S3
+    Summ -. "Stores Summary" .-> DB
+    
+    %% Dashboard & Notifications Connections
+    Dash -. "REST API" .-> API
+    Admin -. "REST API" .-> API
+    
+    Succ -- "Status Update" --> Dash
+    Succ -- "Success Notification" --> Notif
+    
+    Summ -- "Probable Root Cause" --> Dash
+    Summ -- "Failure Alert" --> Notif
+
+    %% Security Layer
+    subgraph SEC [SECURITY LAYER]
+        Sec["Authentication, Authorization, Secure Webhooks, API Security, Secrets"]:::default
+    end
+    API -. "Secured By" .- Sec
+        </div>
+    </div>
+    
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>
