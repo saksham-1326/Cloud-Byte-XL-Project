@@ -5,6 +5,7 @@ const BACKEND_URL = "http://127.0.0.1:5000";
 function App() {
   const [message, setMessage] = useState("");
   const [githubData, setGithubData] = useState(null);
+  const [ciData, setCiData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const testBackend = async () => {
@@ -52,9 +53,28 @@ function App() {
     }
   };
 
-  // Load GitHub activity when the page opens
+  const getCIStatus = async () => {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/ci/status`
+      );
+
+      if (!response.ok) {
+        throw new Error("Could not fetch CI/CD status");
+      }
+
+      const data = await response.json();
+
+      setCiData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Load data when page opens
   useEffect(() => {
     getGithubData();
+    getCIStatus();
   }, []);
 
   return (
@@ -80,7 +100,16 @@ function App() {
           disabled={loading}
           style={{ marginLeft: "10px" }}
         >
-          {loading ? "Loading..." : "Refresh GitHub Activity"}
+          {loading
+            ? "Loading..."
+            : "Refresh GitHub Activity"}
+        </button>
+
+        <button
+          onClick={getCIStatus}
+          style={{ marginLeft: "10px" }}
+        >
+          Refresh CI/CD Status
         </button>
       </div>
 
@@ -96,6 +125,58 @@ function App() {
           {message}
         </div>
       )}
+
+      {/* CI/CD STATUS */}
+
+      {ciData && (
+        <div
+          style={{
+            marginTop: "30px",
+            padding: "25px",
+            border: "1px solid #ddd",
+            borderRadius: "10px",
+          }}
+        >
+          <h2>CI/CD Pipeline Status</h2>
+
+          <p>
+            <strong>Workflow:</strong>{" "}
+            {ciData.workflow || "Unknown"}
+          </p>
+
+          <p>
+            <strong>Overall Status:</strong>{" "}
+            <span
+              style={{
+                fontWeight: "bold",
+                color:
+                  ciData.status === "SUCCESS"
+                    ? "green"
+                    : "red",
+              }}
+            >
+              {ciData.status || "UNKNOWN"}
+            </span>
+          </p>
+
+          <p>
+            <strong>Build:</strong>{" "}
+            {ciData.build || "UNKNOWN"}
+          </p>
+
+          <p>
+            <strong>Tests:</strong>{" "}
+            {ciData.tests || "UNKNOWN"}
+          </p>
+
+          <p>
+            <strong>Docker:</strong>{" "}
+            {ciData.docker || "UNKNOWN"}
+          </p>
+        </div>
+      )}
+
+      {/* GITHUB ACTIVITY */}
 
       {githubData && (
         <div
@@ -135,17 +216,20 @@ function App() {
             <div>
               <p>
                 <strong>Message:</strong>{" "}
-                {githubData.commits[0].message || "No message"}
+                {githubData.commits[0].message ||
+                  "No message"}
               </p>
 
               <p>
                 <strong>Commit ID:</strong>{" "}
-                {githubData.commits[0].id || "Unknown"}
+                {githubData.commits[0].id ||
+                  "Unknown"}
               </p>
 
               <p>
                 <strong>Author:</strong>{" "}
-                {githubData.commits[0].author?.name || "Unknown"}
+                {githubData.commits[0].author?.name ||
+                  "Unknown"}
               </p>
             </div>
           ) : (
