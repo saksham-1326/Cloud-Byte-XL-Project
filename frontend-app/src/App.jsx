@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const BACKEND_URL = "http://127.0.0.1:5000";
+
 function App() {
   const [message, setMessage] = useState("");
   const [githubData, setGithubData] = useState(null);
@@ -10,16 +12,20 @@ function App() {
     setMessage("");
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/");
-      const data = await response.json();
+      const response = await fetch(`${BACKEND_URL}/`);
 
+      if (!response.ok) {
+        throw new Error("Backend returned an error");
+      }
+
+      const data = await response.json();
       setMessage(data.message);
     } catch (error) {
-      setMessage("Could not connect to Flask backend.");
       console.error(error);
+      setMessage("Could not connect to Flask backend.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const getGithubData = async () => {
@@ -27,21 +33,26 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/github/latest"
+        `${BACKEND_URL}/api/github/latest`
       );
+
+      if (!response.ok) {
+        throw new Error("Could not fetch GitHub data");
+      }
 
       const data = await response.json();
 
       setGithubData(data);
+      setMessage("");
     } catch (error) {
       console.error(error);
       setMessage("Could not fetch GitHub data.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // Automatically load GitHub activity when the page opens
+  // Load GitHub activity when the page opens
   useEffect(() => {
     getGithubData();
   }, []);
@@ -50,7 +61,7 @@ function App() {
     <div
       style={{
         padding: "40px",
-        fontFamily: "Arial",
+        fontFamily: "Arial, sans-serif",
         maxWidth: "900px",
         margin: "auto",
       }}
@@ -59,69 +70,87 @@ function App() {
 
       <p>Frontend is running successfully! 🚀</p>
 
-      <button onClick={testBackend} disabled={loading}>
-        {loading ? "Connecting..." : "Test Backend"}
-      </button>
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={testBackend} disabled={loading}>
+          {loading ? "Connecting..." : "Test Backend"}
+        </button>
 
-      <button
-        onClick={getGithubData}
-        disabled={loading}
-        style={{ marginLeft: "10px" }}
-      >
-        {loading ? "Loading..." : "Refresh GitHub Activity"}
-      </button>
+        <button
+          onClick={getGithubData}
+          disabled={loading}
+          style={{ marginLeft: "10px" }}
+        >
+          {loading ? "Loading..." : "Refresh GitHub Activity"}
+        </button>
+      </div>
 
       {message && (
-        <pre style={{ marginTop: "20px" }}>
+        <div
+          style={{
+            padding: "15px",
+            marginTop: "20px",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+          }}
+        >
           {message}
-        </pre>
+        </div>
       )}
 
       {githubData && (
-        <div style={{ marginTop: "30px" }}>
+        <div
+          style={{
+            marginTop: "30px",
+            padding: "25px",
+            border: "1px solid #ddd",
+            borderRadius: "10px",
+          }}
+        >
           <h2>Latest GitHub Activity</h2>
 
           <p>
             <strong>Repository:</strong>{" "}
-            {githubData.repository}
+            {githubData.repository || "Unknown"}
           </p>
 
           <p>
             <strong>Branch:</strong>{" "}
-            {githubData.branch}
+            {githubData.branch || "Unknown"}
           </p>
 
           <p>
             <strong>Event:</strong>{" "}
-            {githubData.event}
+            {githubData.event || "Unknown"}
           </p>
 
           <p>
             <strong>Pusher:</strong>{" "}
-            {githubData.pusher}
+            {githubData.pusher || "Unknown"}
           </p>
 
-          <h3>Commit</h3>
+          <h3>Latest Commit</h3>
 
           {githubData.commits &&
-            githubData.commits.length > 0 && (
-              <div>
-                <p>
-                  <strong>Message:</strong>{" "}
-                  {githubData.commits[0].message}
-                </p>
+          githubData.commits.length > 0 ? (
+            <div>
+              <p>
+                <strong>Message:</strong>{" "}
+                {githubData.commits[0].message || "No message"}
+              </p>
 
-                <p>
-                  <strong>Commit ID:</strong>{" "}
-                  {githubData.commits[0].id}
-                </p>
+              <p>
+                <strong>Commit ID:</strong>{" "}
+                {githubData.commits[0].id || "Unknown"}
+              </p>
 
-                <p>
-                  <strong>Author:</strong>{" "}
-                  {githubData.commits[0].author?.name}
-                </p>
-              </div>
-            )}
+              <p>
+                <strong>Author:</strong>{" "}
+                {githubData.commits[0].author?.name || "Unknown"}
+              </p>
+            </div>
+          ) : (
+            <p>No commit information available.</p>
+          )}
         </div>
       )}
     </div>
