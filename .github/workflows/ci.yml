@@ -35,5 +35,9 @@ jobs:
           pip install pytest
           python -m pytest backend/tests/test_app.py
 
+      - name: Build Docker image
+        run: |
+          docker build -t cloud-bytexl-backend .
+
       - name: CI completed
         run: echo "Cloud-ByteXL CI pipeline completed successfully!"
