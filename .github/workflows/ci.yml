@@ -46,4 +46,8 @@ jobs:
           curl http://localhost:5000/
 
       - name: CI completed
-        run: echo "Cloud-ByteXL CI pipeline completed successfully!"
+        run: |
+          echo "Cloud-ByteXL CI pipeline completed successfully!"
+          echo "Build: PASSED"
+          echo "Tests: PASSED"
+          echo "Docker: PASSED"
