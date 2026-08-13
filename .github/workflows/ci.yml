@@ -50,8 +50,9 @@ jobs:
       - name: Update CI status
         if: success()
         run: |
-          curl --fail -X POST http://localhost:5000/api/ci/status \
+          curl --fail -X POST https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status \
             -H "Content-Type: application/json" \
+            -H "ngrok-skip-browser-warning: true" \
             -d '{
               "status": "SUCCESS",
               "build": "PASSED",
@@ -71,4 +72,4 @@ jobs:
       - name: Cleanup Docker container
         if: always()
         run: |
-          docker rm -f cloud-bytexl-container || true   
+          docker rm -f cloud-bytexl-container || true
