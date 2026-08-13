@@ -27,27 +27,32 @@ jobs:
           pip install flask flask-cors pytest
 
       - name: Check Python syntax
+        id: syntax
         run: |
           python -m py_compile backend/app.py
 
       - name: Run tests
+        id: tests
         run: |
           python -m pytest backend/tests/test_app.py
 
       - name: Build Docker image
+        id: docker_build
         run: |
           docker build -t cloud-bytexl-backend .
 
       - name: Run Docker container
+        id: docker_run
         run: |
           docker run -d --name cloud-bytexl-container -p 5000:5000 cloud-bytexl-backend
           sleep 5
 
       - name: Test Docker container
+        id: docker_test
         run: |
           curl --fail http://localhost:5000/
 
-      - name: Update CI status
+      - name: Update CI status - SUCCESS
         if: success()
         run: |
           curl --fail -X POST https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status \
@@ -58,6 +63,20 @@ jobs:
               "build": "PASSED",
               "tests": "PASSED",
               "docker": "PASSED",
+              "workflow": "Cloud-ByteXL CI"
+            }'
+
+      - name: Update CI status - FAILURE
+        if: failure()
+        run: |
+          curl --fail -X POST https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status \
+            -H "Content-Type: application/json" \
+            -H "ngrok-skip-browser-warning: true" \
+            -d '{
+              "status": "FAILURE",
+              "build": "FAILED_OR_SKIPPED",
+              "tests": "FAILED_OR_SKIPPED",
+              "docker": "FAILED_OR_SKIPPED",
               "workflow": "Cloud-ByteXL CI"
             }'
 
