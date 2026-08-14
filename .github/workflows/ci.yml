@@ -8,54 +8,88 @@ on:
     branches:
       - main
 
+env:
+  CI_STATUS_URL: https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status
+
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
+      # -------------------------------------------------------
+      # Checkout
+      # -------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # -------------------------------------------------------
+      # Python
+      # -------------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
+      # -------------------------------------------------------
+      # Install dependencies
+      # -------------------------------------------------------
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flask flask-cors pytest
+          pip install flask flask-cors pytest "psycopg[binary]"
 
+      # -------------------------------------------------------
+      # Python syntax check
+      # -------------------------------------------------------
       - name: Check Python syntax
         id: syntax
         run: |
           python -m py_compile backend/app.py
 
+      # -------------------------------------------------------
+      # Run backend tests
+      # -------------------------------------------------------
       - name: Run tests
         id: tests
         run: |
           python -m pytest backend/tests/test_app.py
 
+      # -------------------------------------------------------
+      # Build Docker image
+      # -------------------------------------------------------
       - name: Build Docker image
         id: docker_build
         run: |
           docker build -t cloud-bytexl-backend .
 
+      # -------------------------------------------------------
+      # Run Docker container
+      # -------------------------------------------------------
       - name: Run Docker container
         id: docker_run
         run: |
-          docker run -d --name cloud-bytexl-container -p 5000:5000 cloud-bytexl-backend
+          docker run -d \
+            --name cloud-bytexl-container \
+            -p 5000:5000 \
+            cloud-bytexl-backend
+
           sleep 5
 
+      # -------------------------------------------------------
+      # Test Docker container
+      # -------------------------------------------------------
       - name: Test Docker container
         id: docker_test
         run: |
           curl --fail http://localhost:5000/
 
+      # -------------------------------------------------------
+      # Update Flask dashboard - SUCCESS
+      # -------------------------------------------------------
       - name: Update CI status - SUCCESS
         if: success()
         run: |
-          curl --fail -X POST https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status \
+          curl --fail -X POST "$CI_STATUS_URL" \
             -H "Content-Type: application/json" \
             -H "ngrok-skip-browser-warning: true" \
             -d '{
@@ -66,10 +100,13 @@ jobs:
               "workflow": "Cloud-ByteXL CI"
             }'
 
+      # -------------------------------------------------------
+      # Update Flask dashboard - FAILURE
+      # -------------------------------------------------------
       - name: Update CI status - FAILURE
         if: failure()
         run: |
-          curl --fail -X POST https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status \
+          curl --fail -X POST "$CI_STATUS_URL" \
             -H "Content-Type: application/json" \
             -H "ngrok-skip-browser-warning: true" \
             -d '{
@@ -80,14 +117,23 @@ jobs:
               "workflow": "Cloud-ByteXL CI"
             }'
 
+      # -------------------------------------------------------
+      # Success message
+      # -------------------------------------------------------
       - name: CI completed
         if: success()
         run: |
-          echo "Cloud-ByteXL CI pipeline completed successfully!"
+          echo "=========================================="
+          echo "Cloud-ByteXL CI pipeline completed!"
           echo "Build: PASSED"
           echo "Tests: PASSED"
           echo "Docker: PASSED"
+          echo "Overall Status: SUCCESS"
+          echo "=========================================="
 
+      # -------------------------------------------------------
+      # Cleanup
+      # -------------------------------------------------------
       - name: Cleanup Docker container
         if: always()
         run: |

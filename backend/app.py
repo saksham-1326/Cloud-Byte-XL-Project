@@ -1,8 +1,26 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-# GitHub webhook test
+import psycopg
+
 app = Flask(__name__)
 CORS(app)
+
+# ============================================================
+# PostgreSQL connection
+# ============================================================
+
+DB_CONFIG = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "bytexl",
+    "user": "postgres",
+    "password": "132611"
+}
+
+
+def get_db_connection():
+    return psycopg.connect(**DB_CONFIG)
+
 
 # ============================================================
 # Store the latest GitHub webhook information
@@ -16,6 +34,7 @@ latest_webhook = {
     "commits": []
 }
 
+
 # ============================================================
 # Store the latest CI/CD pipeline information
 # ============================================================
@@ -28,6 +47,7 @@ latest_ci = {
     "workflow": "Cloud-ByteXL CI"
 }
 
+
 # ============================================================
 # Home
 # ============================================================
@@ -37,6 +57,37 @@ def home():
     return jsonify({
         "message": "Cloud-ByteXL Backend is running"
     })
+
+
+# ============================================================
+# Database connection test
+# ============================================================
+
+@app.route("/api/database/test", methods=["GET"])
+def database_test():
+    try:
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_database();")
+            database_name = cursor.fetchone()[0]
+
+        connection.close()
+
+        return jsonify({
+            "status": "SUCCESS",
+            "message": "PostgreSQL connection successful",
+            "database": database_name
+        }), 200
+
+    except Exception as error:
+        print("Database connection error:", error)
+
+        return jsonify({
+            "status": "FAILED",
+            "message": "Could not connect to PostgreSQL",
+            "error": str(error)
+        }), 500
 
 
 # ============================================================
