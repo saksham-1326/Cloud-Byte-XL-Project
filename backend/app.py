@@ -3,6 +3,7 @@ from flask_cors import CORS
 import psycopg
 from datetime import datetime
 
+
 app = Flask(__name__)
 CORS(app)
 
@@ -51,11 +52,51 @@ latest_ci = {
 
 
 # ============================================================
+# Helper: store deployment log
+# ============================================================
+
+def create_deployment_log(
+    cursor,
+    deployment_id,
+    message,
+    level="INFO"
+):
+    """
+    Store a log entry for a deployment.
+
+    This is the main Phase 7 log-collection helper.
+    """
+
+    cursor.execute(
+        """
+        INSERT INTO deployment_logs
+            (
+                deployment_id,
+                log_message,
+                log_level
+            )
+        VALUES
+            (
+                %s,
+                %s,
+                %s
+            )
+        """,
+        (
+            deployment_id,
+            message,
+            level
+        )
+    )
+
+
+# ============================================================
 # Home
 # ============================================================
 
 @app.route("/")
 def home():
+
     return jsonify({
         "message": "Cloud-ByteXL Backend is running"
     })
@@ -65,16 +106,25 @@ def home():
 # Database connection test
 # ============================================================
 
-@app.route("/api/database/test", methods=["GET"])
+@app.route(
+    "/api/database/test",
+    methods=["GET"]
+)
 def database_test():
+
+    connection = None
+
     try:
+
         connection = get_db_connection()
 
         with connection.cursor() as cursor:
-            cursor.execute("SELECT current_database();")
-            database_name = cursor.fetchone()[0]
 
-        connection.close()
+            cursor.execute(
+                "SELECT current_database();"
+            )
+
+            database_name = cursor.fetchone()[0]
 
         return jsonify({
             "status": "SUCCESS",
@@ -83,7 +133,11 @@ def database_test():
         }), 200
 
     except Exception as error:
-        print("Database connection error:", error)
+
+        print(
+            "Database connection error:",
+            error
+        )
 
         return jsonify({
             "status": "FAILED",
@@ -91,50 +145,101 @@ def database_test():
             "error": str(error)
         }), 500
 
+    finally:
+
+        if connection:
+            connection.close()
+
 
 # ============================================================
 # GitHub Webhook
 # ============================================================
 
-@app.route("/webhook", methods=["POST"])
+@app.route(
+    "/webhook",
+    methods=["POST"]
+)
 def webhook():
+
     global latest_webhook
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
+    # --------------------------------------------------------
     # GitHub event
-    event = request.headers.get("X-GitHub-Event", "Unknown")
+    # --------------------------------------------------------
 
+    event = request.headers.get(
+        "X-GitHub-Event",
+        "Unknown"
+    )
+
+    # --------------------------------------------------------
     # Repository
-    repository = data.get("repository", {})
+    # --------------------------------------------------------
 
-    repo_name = repository.get("name", "Unknown")
+    repository = data.get(
+        "repository",
+        {}
+    )
+
+    repo_name = repository.get(
+        "name",
+        "Unknown"
+    )
 
     repo_url = repository.get(
         "html_url",
         ""
     )
 
+    # --------------------------------------------------------
     # Branch
-    ref = data.get("ref", "Unknown")
+    # --------------------------------------------------------
+
+    ref = data.get(
+        "ref",
+        "Unknown"
+    )
 
     branch = ref
 
     if ref.startswith("refs/heads/"):
-        branch = ref.replace("refs/heads/", "")
 
+        branch = ref.replace(
+            "refs/heads/",
+            ""
+        )
+
+    # --------------------------------------------------------
     # Pusher
-    pusher = data.get("pusher", {})
+    # --------------------------------------------------------
+
+    pusher = data.get(
+        "pusher",
+        {}
+    )
 
     pusher_name = pusher.get(
         "name",
         "Unknown"
     )
 
+    # --------------------------------------------------------
     # Commits
-    commits = data.get("commits", [])
+    # --------------------------------------------------------
 
+    commits = data.get(
+        "commits",
+        []
+    )
+
+    # --------------------------------------------------------
     # Store latest webhook in memory
+    # --------------------------------------------------------
+
     latest_webhook = {
         "event": event,
         "repository": repo_name,
@@ -143,12 +248,34 @@ def webhook():
         "commits": commits
     }
 
-    print("\n========== GITHUB WEBHOOK ==========")
-    print("Event:", event)
-    print("Repository:", repo_name)
-    print("Branch:", branch)
-    print("Pusher:", pusher_name)
-    print("Number of commits:", len(commits))
+    print(
+        "\n========== GITHUB WEBHOOK =========="
+    )
+
+    print(
+        "Event:",
+        event
+    )
+
+    print(
+        "Repository:",
+        repo_name
+    )
+
+    print(
+        "Branch:",
+        branch
+    )
+
+    print(
+        "Pusher:",
+        pusher_name
+    )
+
+    print(
+        "Number of commits:",
+        len(commits)
+    )
 
     # ========================================================
     # Store information in PostgreSQL
@@ -157,6 +284,7 @@ def webhook():
     connection = None
 
     try:
+
         connection = get_db_connection()
 
         with connection.cursor() as cursor:
@@ -177,15 +305,23 @@ def webhook():
             user_row = cursor.fetchone()
 
             if user_row:
+
                 user_id = user_row[0]
 
             else:
+
                 cursor.execute(
                     """
                     INSERT INTO users
-                        (username, email)
+                        (
+                            username,
+                            email
+                        )
                     VALUES
-                        (%s, %s)
+                        (
+                            %s,
+                            %s
+                        )
                     RETURNING id
                     """,
                     (
@@ -235,9 +371,19 @@ def webhook():
                 cursor.execute(
                     """
                     INSERT INTO repositories
-                        (user_id, name, url, branch)
+                        (
+                            user_id,
+                            name,
+                            url,
+                            branch
+                        )
                     VALUES
-                        (%s, %s, %s, %s)
+                        (
+                            %s,
+                            %s,
+                            %s,
+                            %s
+                        )
                     RETURNING id
                     """,
                     (
@@ -294,14 +440,14 @@ def webhook():
 
                     deployment_id = cursor.fetchone()[0]
 
-                    # ------------------------------------------------
-                    # 4. Store deployment log
-                    # ------------------------------------------------
-
                     commit_message = commit.get(
                         "message",
                         "No commit message"
                     )
+
+                    # ------------------------------------------------
+                    # Phase 7 - GitHub log
+                    # ------------------------------------------------
 
                     log_message = (
                         f"GitHub {event} received. "
@@ -312,26 +458,11 @@ def webhook():
                         f"Message: {commit_message}"
                     )
 
-                    cursor.execute(
-                        """
-                        INSERT INTO deployment_logs
-                            (
-                                deployment_id,
-                                log_message,
-                                log_level
-                            )
-                        VALUES
-                            (
-                                %s,
-                                %s,
-                                %s
-                            )
-                        """,
-                        (
-                            deployment_id,
-                            log_message,
-                            "INFO"
-                        )
+                    create_deployment_log(
+                        cursor,
+                        deployment_id,
+                        log_message,
+                        "INFO"
                     )
 
                     print(
@@ -376,26 +507,14 @@ def webhook():
 
                 deployment_id = cursor.fetchone()[0]
 
-                cursor.execute(
-                    """
-                    INSERT INTO deployment_logs
-                        (
-                            deployment_id,
-                            log_message,
-                            log_level
-                        )
-                    VALUES
-                        (
-                            %s,
-                            %s,
-                            %s
-                        )
-                    """,
+                create_deployment_log(
+                    cursor,
+                    deployment_id,
                     (
-                        deployment_id,
-                        f"GitHub {event} event received for {repo_name}",
-                        "INFO"
-                    )
+                        f"GitHub {event} event received "
+                        f"for {repo_name}"
+                    ),
+                    "INFO"
                 )
 
                 print(
@@ -405,7 +524,9 @@ def webhook():
 
         connection.commit()
 
-        print("Database records saved successfully.")
+        print(
+            "Database records saved successfully."
+        )
 
     except Exception as error:
 
@@ -423,7 +544,7 @@ def webhook():
             connection.close()
 
     # ========================================================
-    # Print webhook information
+    # Print commit information
     # ========================================================
 
     for commit in commits:
@@ -489,7 +610,10 @@ def webhook():
 # Get latest GitHub webhook
 # ============================================================
 
-@app.route("/api/github/latest", methods=["GET"])
+@app.route(
+    "/api/github/latest",
+    methods=["GET"]
+)
 def get_latest_webhook():
 
     return jsonify(
@@ -501,7 +625,10 @@ def get_latest_webhook():
 # Receive CI/CD status
 # ============================================================
 
-@app.route("/api/ci/status", methods=["POST"])
+@app.route(
+    "/api/ci/status",
+    methods=["POST"]
+)
 def update_ci_status():
 
     global latest_ci
@@ -510,7 +637,12 @@ def update_ci_status():
         silent=True
     ) or {}
 
+    # --------------------------------------------------------
+    # Update in-memory CI status
+    # --------------------------------------------------------
+
     latest_ci = {
+
         "status": data.get(
             "status",
             "UNKNOWN"
@@ -566,6 +698,314 @@ def update_ci_status():
         latest_ci["docker"]
     )
 
+    # ========================================================
+    # Update latest deployment in PostgreSQL
+    # ========================================================
+
+    connection = None
+
+    try:
+
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+
+            # ------------------------------------------------
+            # Find latest deployment
+            # ------------------------------------------------
+
+            cursor.execute(
+                """
+                SELECT
+                    id
+                FROM deployments
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            )
+
+            deployment_row = cursor.fetchone()
+
+            if not deployment_row:
+
+                print(
+                    "No deployment found to update."
+                )
+
+            else:
+
+                deployment_id = deployment_row[0]
+
+                # ------------------------------------------------
+                # Determine deployment status
+                # ------------------------------------------------
+
+                ci_status = str(
+                    latest_ci["status"]
+                ).upper()
+
+                if ci_status == "SUCCESS":
+
+                    deployment_status = "SUCCESS"
+
+                elif ci_status == "FAILURE":
+
+                    deployment_status = "FAILED"
+
+                else:
+
+                    deployment_status = ci_status
+
+                # ------------------------------------------------
+                # Update deployment
+                # ------------------------------------------------
+
+                cursor.execute(
+                    """
+                    UPDATE deployments
+                    SET
+                        status = %s,
+                        completed_at = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        deployment_status,
+                        datetime.now(),
+                        deployment_id
+                    )
+                )
+
+                print(
+                    "Deployment updated:",
+                    deployment_id
+                )
+
+                print(
+                    "Deployment status:",
+                    deployment_status
+                )
+
+                # =================================================
+                # PHASE 7 - Individual CI/CD logs
+                # =================================================
+
+                create_deployment_log(
+                    cursor,
+                    deployment_id,
+                    (
+                        f"Build stage completed with status: "
+                        f"{latest_ci['build']}"
+                    ),
+                    (
+                        "INFO"
+                        if str(
+                            latest_ci["build"]
+                        ).upper() == "PASSED"
+                        else "ERROR"
+                    )
+                )
+
+                create_deployment_log(
+                    cursor,
+                    deployment_id,
+                    (
+                        f"Tests stage completed with status: "
+                        f"{latest_ci['tests']}"
+                    ),
+                    (
+                        "INFO"
+                        if str(
+                            latest_ci["tests"]
+                        ).upper() == "PASSED"
+                        else "ERROR"
+                    )
+                )
+
+                create_deployment_log(
+                    cursor,
+                    deployment_id,
+                    (
+                        f"Docker stage completed with status: "
+                        f"{latest_ci['docker']}"
+                    ),
+                    (
+                        "INFO"
+                        if str(
+                            latest_ci["docker"]
+                        ).upper() == "PASSED"
+                        else "ERROR"
+                    )
+                )
+
+                # ------------------------------------------------
+                # Overall CI/CD log
+                # ------------------------------------------------
+
+                ci_log_message = (
+                    f"CI/CD workflow "
+                    f"'{latest_ci['workflow']}' "
+                    f"completed with status "
+                    f"{deployment_status}. "
+                    f"Build: {latest_ci['build']}. "
+                    f"Tests: {latest_ci['tests']}. "
+                    f"Docker: {latest_ci['docker']}."
+                )
+
+                create_deployment_log(
+                    cursor,
+                    deployment_id,
+                    ci_log_message,
+                    (
+                        "INFO"
+                        if deployment_status == "SUCCESS"
+                        else "ERROR"
+                    )
+                )
+
+                # =================================================
+                # Failure analysis
+                # =================================================
+
+                if deployment_status == "FAILED":
+
+                    # ------------------------------------------------
+                    # Prevent duplicate failure records
+                    # ------------------------------------------------
+
+                    cursor.execute(
+                        """
+                        SELECT id
+                        FROM failure_analysis
+                        WHERE deployment_id = %s
+                        LIMIT 1
+                        """,
+                        (deployment_id,)
+                    )
+
+                    existing_failure = cursor.fetchone()
+
+                    if not existing_failure:
+
+                        failure_type = "CI/CD_FAILURE"
+
+                        failed_parts = []
+
+                        if str(
+                            latest_ci["build"]
+                        ).upper() != "PASSED":
+
+                            failed_parts.append(
+                                f"Build: {latest_ci['build']}"
+                            )
+
+                        if str(
+                            latest_ci["tests"]
+                        ).upper() != "PASSED":
+
+                            failed_parts.append(
+                                f"Tests: {latest_ci['tests']}"
+                            )
+
+                        if str(
+                            latest_ci["docker"]
+                        ).upper() != "PASSED":
+
+                            failed_parts.append(
+                                f"Docker: {latest_ci['docker']}"
+                            )
+
+                        if failed_parts:
+
+                            error_message = (
+                                "; ".join(
+                                    failed_parts
+                                )
+                            )
+
+                        else:
+
+                            error_message = (
+                                "CI/CD pipeline failed."
+                            )
+
+                        suggested_fix = (
+                            "Review the failed CI/CD step, "
+                            "check the GitHub Actions logs, "
+                            "fix the failing build, tests, "
+                            "or Docker configuration, "
+                            "and push a new commit."
+                        )
+
+                        cursor.execute(
+                            """
+                            INSERT INTO failure_analysis
+                                (
+                                    deployment_id,
+                                    failure_type,
+                                    error_message,
+                                    suggested_fix
+                                )
+                            VALUES
+                                (
+                                    %s,
+                                    %s,
+                                    %s,
+                                    %s
+                                )
+                            """,
+                            (
+                                deployment_id,
+                                failure_type,
+                                error_message,
+                                suggested_fix
+                            )
+                        )
+
+                        create_deployment_log(
+                            cursor,
+                            deployment_id,
+                            (
+                                "Failure analysis created: "
+                                + error_message
+                            ),
+                            "ERROR"
+                        )
+
+                        print(
+                            "Failure analysis created for "
+                            "deployment:",
+                            deployment_id
+                        )
+
+                    else:
+
+                        print(
+                            "Failure analysis already exists "
+                            "for deployment:",
+                            deployment_id
+                        )
+
+        connection.commit()
+
+        print(
+            "CI/CD database update completed."
+        )
+
+    except Exception as error:
+
+        if connection:
+            connection.rollback()
+
+        print(
+            "CI/CD database update error:",
+            error
+        )
+
+    finally:
+
+        if connection:
+            connection.close()
+
     print(
         "==================================\n"
     )
@@ -580,7 +1020,10 @@ def update_ci_status():
 # Get latest CI/CD status
 # ============================================================
 
-@app.route("/api/ci/status", methods=["GET"])
+@app.route(
+    "/api/ci/status",
+    methods=["GET"]
+)
 def get_ci_status():
 
     return jsonify(
@@ -592,7 +1035,10 @@ def get_ci_status():
 # Get database statistics
 # ============================================================
 
-@app.route("/api/database/stats", methods=["GET"])
+@app.route(
+    "/api/database/stats",
+    methods=["GET"]
+)
 def database_stats():
 
     connection = None
@@ -653,6 +1099,380 @@ def database_stats():
 
         print(
             "Database statistics error:",
+            error
+        )
+
+        return jsonify({
+
+            "status": "FAILED",
+
+            "message": str(error)
+
+        }), 500
+
+    finally:
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# Get deployment history
+# ============================================================
+
+@app.route(
+    "/api/deployments",
+    methods=["GET"]
+)
+def get_deployments():
+
+    connection = None
+
+    try:
+
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT
+                    d.id,
+                    d.commit_id,
+                    d.branch,
+                    d.status,
+                    d.started_at,
+                    d.completed_at,
+                    r.name AS repository
+                FROM deployments d
+                LEFT JOIN repositories r
+                    ON d.repository_id = r.id
+                ORDER BY d.id DESC
+                """
+            )
+
+            rows = cursor.fetchall()
+
+        deployments = []
+
+        for row in rows:
+
+            deployments.append({
+
+                "id": row[0],
+
+                "commit_id": row[1],
+
+                "branch": row[2],
+
+                "status": row[3],
+
+                "started_at": (
+                    row[4].isoformat()
+                    if row[4]
+                    else None
+                ),
+
+                "completed_at": (
+                    row[5].isoformat()
+                    if row[5]
+                    else None
+                ),
+
+                "repository": row[6]
+
+            })
+
+        return jsonify({
+
+            "status": "SUCCESS",
+
+            "deployments": deployments
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "Deployment history error:",
+            error
+        )
+
+        return jsonify({
+
+            "status": "FAILED",
+
+            "message": str(error)
+
+        }), 500
+
+    finally:
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# Get all deployment logs
+# ============================================================
+
+@app.route(
+    "/api/deployment-logs",
+    methods=["GET"]
+)
+def get_deployment_logs():
+
+    connection = None
+
+    try:
+
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT
+                    dl.id,
+                    dl.deployment_id,
+                    dl.log_message,
+                    dl.log_level,
+                    dl.created_at,
+                    d.commit_id,
+                    d.branch,
+                    r.name AS repository
+                FROM deployment_logs dl
+                LEFT JOIN deployments d
+                    ON dl.deployment_id = d.id
+                LEFT JOIN repositories r
+                    ON d.repository_id = r.id
+                ORDER BY dl.id DESC
+                """
+            )
+
+            rows = cursor.fetchall()
+
+        logs = []
+
+        for row in rows:
+
+            logs.append({
+
+                "id": row[0],
+
+                "deployment_id": row[1],
+
+                "log_message": row[2],
+
+                "log_level": row[3],
+
+                "created_at": (
+                    row[4].isoformat()
+                    if row[4]
+                    else None
+                ),
+
+                "commit_id": row[5],
+
+                "branch": row[6],
+
+                "repository": row[7]
+
+            })
+
+        return jsonify({
+
+            "status": "SUCCESS",
+
+            "logs": logs,
+
+            "count": len(logs)
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "Deployment log history error:",
+            error
+        )
+
+        return jsonify({
+
+            "status": "FAILED",
+
+            "message": str(error)
+
+        }), 500
+
+    finally:
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# Get logs for a specific deployment
+# ============================================================
+
+@app.route(
+    "/api/deployments/<int:deployment_id>/logs",
+    methods=["GET"]
+)
+def get_deployment_logs_by_id(
+    deployment_id
+):
+
+    connection = None
+
+    try:
+
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    deployment_id,
+                    log_message,
+                    log_level,
+                    created_at
+                FROM deployment_logs
+                WHERE deployment_id = %s
+                ORDER BY id ASC
+                """,
+                (deployment_id,)
+            )
+
+            rows = cursor.fetchall()
+
+        logs = []
+
+        for row in rows:
+
+            logs.append({
+
+                "id": row[0],
+
+                "deployment_id": row[1],
+
+                "log_message": row[2],
+
+                "log_level": row[3],
+
+                "created_at": (
+                    row[4].isoformat()
+                    if row[4]
+                    else None
+                )
+
+            })
+
+        return jsonify({
+
+            "status": "SUCCESS",
+
+            "deployment_id": deployment_id,
+
+            "logs": logs,
+
+            "count": len(logs)
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "Deployment-specific log error:",
+            error
+        )
+
+        return jsonify({
+
+            "status": "FAILED",
+
+            "message": str(error)
+
+        }), 500
+
+    finally:
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# Get failure analysis history
+# ============================================================
+
+@app.route(
+    "/api/failures",
+    methods=["GET"]
+)
+def get_failures():
+
+    connection = None
+
+    try:
+
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT
+                    f.id,
+                    f.deployment_id,
+                    f.failure_type,
+                    f.error_message,
+                    f.suggested_fix,
+                    f.created_at
+                FROM failure_analysis f
+                ORDER BY f.id DESC
+                """
+            )
+
+            rows = cursor.fetchall()
+
+        failures = []
+
+        for row in rows:
+
+            failures.append({
+
+                "id": row[0],
+
+                "deployment_id": row[1],
+
+                "failure_type": row[2],
+
+                "error_message": row[3],
+
+                "suggested_fix": row[4],
+
+                "created_at": (
+                    row[5].isoformat()
+                    if row[5]
+                    else None
+                )
+
+            })
+
+        return jsonify({
+
+            "status": "SUCCESS",
+
+            "failures": failures
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "Failure history error:",
             error
         )
 
