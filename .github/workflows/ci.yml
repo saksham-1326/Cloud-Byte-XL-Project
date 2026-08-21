@@ -53,6 +53,7 @@ jobs:
         id: tests
         run: |
           python -m pytest backend/tests/test_app.py
+          exit 1
 
       # -------------------------------------------------------
       # Build Docker image
