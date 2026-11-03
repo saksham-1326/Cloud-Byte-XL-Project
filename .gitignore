@@ -1,11 +1,15 @@
-@"
-# Python
+﻿# Python
+.venv/
 venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Node
 node_modules/
@@ -20,4 +24,3 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
-"@ | Set-Content .gitignore
