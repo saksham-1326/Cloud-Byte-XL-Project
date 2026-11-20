@@ -24,3 +24,6 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Server-generated ML artifacts (never load uploads)
+backend/ai_artifacts/

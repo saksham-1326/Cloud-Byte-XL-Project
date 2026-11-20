@@ -9,11 +9,47 @@ import json
 import base64
 import os
 import re
+import hmac
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
+import logging
+from dotenv import load_dotenv
+from werkzeug.exceptions import HTTPException
 
+
+# Resolve configuration independently of the server working directory.
+load_dotenv(Path(__file__).with_name(".env"), override=False)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[origin.strip() for origin in os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5175,http://127.0.0.1:5175",
+).split(",") if origin.strip()])
+
+# Detached Windows processes can have invalid stdout/stderr handles. Never
+# let diagnostic output break an otherwise successful repository analysis.
+log_handler = RotatingFileHandler(
+    Path(__file__).with_name("backend.log"), maxBytes=2_000_000,
+    backupCount=2, encoding="utf-8",
+)
+log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+app.logger.handlers.clear()
+app.logger.addHandler(log_handler)
+app.logger.setLevel(logging.INFO)
+app.logger.propagate = False
+
+
+def log_message(*parts):
+    app.logger.info(" ".join(str(part) for part in parts))
+
+
+@app.errorhandler(Exception)
+def handle_api_error(error):
+    if isinstance(error, HTTPException):
+        return jsonify(status="FAILED", message=error.description), error.code
+    app.logger.exception("Unhandled API request failure")
+    return jsonify(status="FAILED", message="An internal server error occurred."), 500
 
 
 # ============================================================
@@ -25,12 +61,12 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", "5432")),
     "dbname": os.getenv("DB_NAME", "bytexl"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "132611"),
+    "password": os.getenv("DB_PASSWORD", ""),
 }
 
 
 def get_db_connection():
-    return psycopg.connect(**DB_CONFIG)
+    return psycopg.connect(**DB_CONFIG, connect_timeout=5)
 
 
 # ============================================================
@@ -423,7 +459,7 @@ def _raw_github_text(owner, repo, revision, path):
             raw = response.read(300_000)
             return raw.decode("utf-8", errors="ignore")
     except Exception as error:
-        print("Raw GitHub file read warning:", path, error)
+        log_message("Raw GitHub file read warning:", path, error)
         return ""
 
 
@@ -865,7 +901,7 @@ def analyze_repository(repo_endpoint, default_branch, files, tree_truncated=Fals
     selected = ordered[:100]
     fetched = {}
 
-    print(f"Starting source analysis: {len(selected)} files selected")
+    log_message(f"Starting source analysis: {len(selected)} files selected")
 
     with ThreadPoolExecutor(max_workers=12) as executor:
         future_to_path = {
@@ -877,7 +913,7 @@ def analyze_repository(repo_endpoint, default_branch, files, tree_truncated=Fals
             try:
                 content = future.result()
             except Exception as error:
-                print("Source analysis warning:", path, error)
+                log_message("Source analysis warning:", path, error)
                 content = ""
             if content:
                 fetched[path] = content[:300_000]
@@ -898,7 +934,7 @@ def analyze_repository(repo_endpoint, default_branch, files, tree_truncated=Fals
         if total_bytes >= 1_500_000:
             break
 
-    print(f"Source analysis complete: {len(file_contents)} files inspected, {total_bytes} bytes")
+    log_message(f"Source analysis complete: {len(file_contents)} files inspected, {total_bytes} bytes")
 
     # --------------------------------------------------------
     # Repository / project identity
@@ -1347,7 +1383,7 @@ def database_test():
 
     except Exception as error:
 
-        print(
+        log_message(
             "Database connection error:",
             error
         )
@@ -1355,7 +1391,7 @@ def database_test():
         return jsonify({
             "status": "FAILED",
             "message": "Could not connect to PostgreSQL",
-            "error": str(error)
+            "error": "Internal server error. See backend logs for details."
         }), 500
 
     finally:
@@ -1389,7 +1425,7 @@ def connect_github_repository():
         silent=True
     ) or {}
 
-    repo_url = data.get("url")
+    repo_url = data.get("url") if isinstance(data, dict) else None
 
     try:
         owner, repo = parse_github_url(repo_url)
@@ -1653,7 +1689,7 @@ def connect_github_repository():
         except Exception as database_error:
             # GitHub ingestion remains successful even if
             # PostgreSQL is temporarily unavailable.
-            print(
+            log_message(
                 "GitHub repository database save error:",
                 database_error,
             )
@@ -1665,46 +1701,46 @@ def connect_github_repository():
 
         latest_github_repository = response
 
-        print(
+        log_message(
             "\n========== GITHUB REPOSITORY INGESTED =========="
         )
 
-        print(
+        log_message(
             "Repository:",
             repository_data["fullName"],
         )
 
-        print(
+        log_message(
             "Branch:",
             default_branch,
         )
 
-        print(
+        log_message(
             "Analysis commit:",
             commit_sha,
         )
 
-        print(
+        log_message(
             "Files:",
             len(files),
         )
 
-        print(
+        log_message(
             "Languages:",
             len(language_data),
         )
 
-        print(
+        log_message(
             "Commits:",
             len(commit_data),
         )
 
-        print(
+        log_message(
             "Contributors:",
             len(contributor_data),
         )
 
-        print(
+        log_message(
             "===============================================\n"
         )
 
@@ -1717,17 +1753,14 @@ def connect_github_repository():
         }), 400
 
     except Exception as error:
-        print(
-            "GitHub repository ingestion error:",
-            error,
-        )
+        app.logger.exception("GitHub repository ingestion failed")
 
         return jsonify({
             "status": "FAILED",
             "message": (
                 "Failed to read GitHub repository."
             ),
-            "error": str(error),
+            "error": "Internal server error. See backend logs for details.",
         }), 500
 
 
@@ -1784,11 +1817,11 @@ def get_latest_github_repository():
         }), 200
 
     except Exception as error:
-        print("Latest GitHub repository lookup error:", error)
+        log_message("Latest GitHub repository lookup error:", error)
         return jsonify({
             "status": "FAILED",
             "message": "Could not restore the latest GitHub repository.",
-            "error": str(error),
+            "error": "Internal server error. See backend logs for details.",
         }), 500
     finally:
         if connection:
@@ -1821,7 +1854,7 @@ def get_github_file():
         silent=True
     ) or {}
 
-    repo_url = data.get("url")
+    repo_url = data.get("url") if isinstance(data, dict) else None
     file_path = data.get("path")
 
     if not file_path:
@@ -1927,7 +1960,7 @@ def get_github_file():
         }), 400
 
     except Exception as error:
-        print(
+        log_message(
             "GitHub file read error:",
             error,
         )
@@ -1937,7 +1970,7 @@ def get_github_file():
             "message": (
                 "Failed to read GitHub file."
             ),
-            "error": str(error),
+            "error": "Internal server error. See backend logs for details.",
         }), 500
 
 
@@ -2038,31 +2071,31 @@ def webhook():
         "commits": commits
     }
 
-    print(
+    log_message(
         "\n========== GITHUB WEBHOOK =========="
     )
 
-    print(
+    log_message(
         "Event:",
         event
     )
 
-    print(
+    log_message(
         "Repository:",
         repo_name
     )
 
-    print(
+    log_message(
         "Branch:",
         branch
     )
 
-    print(
+    log_message(
         "Pusher:",
         pusher_name
     )
 
-    print(
+    log_message(
         "Number of commits:",
         len(commits)
     )
@@ -2255,7 +2288,7 @@ def webhook():
                         "INFO"
                     )
 
-                    print(
+                    log_message(
                         "Deployment saved:",
                         deployment_id
                     )
@@ -2307,14 +2340,14 @@ def webhook():
                     "INFO"
                 )
 
-                print(
+                log_message(
                     "Deployment saved:",
                     deployment_id
                 )
 
         connection.commit()
 
-        print(
+        log_message(
             "Database records saved successfully."
         )
 
@@ -2323,7 +2356,7 @@ def webhook():
         if connection:
             connection.rollback()
 
-        print(
+        log_message(
             "Database webhook error:",
             error
         )
@@ -2339,17 +2372,17 @@ def webhook():
 
     for commit in commits:
 
-        print(
+        log_message(
             "Commit:",
             commit.get("id")
         )
 
-        print(
+        log_message(
             "Message:",
             commit.get("message")
         )
 
-        print(
+        log_message(
             "Author:",
             commit.get(
                 "author",
@@ -2359,7 +2392,7 @@ def webhook():
             )
         )
 
-        print(
+        log_message(
             "Added:",
             commit.get(
                 "added",
@@ -2367,7 +2400,7 @@ def webhook():
             )
         )
 
-        print(
+        log_message(
             "Modified:",
             commit.get(
                 "modified",
@@ -2375,7 +2408,7 @@ def webhook():
             )
         )
 
-        print(
+        log_message(
             "Removed:",
             commit.get(
                 "removed",
@@ -2383,7 +2416,7 @@ def webhook():
             )
         )
 
-    print(
+    log_message(
         "====================================\n"
     )
 
@@ -2423,6 +2456,14 @@ def update_ci_status():
 
     global latest_ci
 
+    # Opt-in authentication preserves existing local clients. Configure the same
+    # token on Flask and the CI sender before enabling a remote callback.
+    callback_token = os.getenv("CI_STATUS_TOKEN", "")
+    if callback_token and not hmac.compare_digest(
+        request.headers.get("Authorization", ""), "Bearer " + callback_token
+    ):
+        return jsonify(status="FAILED", message="Unauthorized CI callback."), 401
+
     data = request.get_json(
         silent=True
     ) or {}
@@ -2459,31 +2500,31 @@ def update_ci_status():
         )
     }
 
-    print(
+    log_message(
         "\n========== CI/CD STATUS =========="
     )
 
-    print(
+    log_message(
         "Workflow:",
         latest_ci["workflow"]
     )
 
-    print(
+    log_message(
         "Overall Status:",
         latest_ci["status"]
     )
 
-    print(
+    log_message(
         "Build:",
         latest_ci["build"]
     )
 
-    print(
+    log_message(
         "Tests:",
         latest_ci["tests"]
     )
 
-    print(
+    log_message(
         "Docker:",
         latest_ci["docker"]
     )
@@ -2518,7 +2559,7 @@ def update_ci_status():
 
             if not deployment_row:
 
-                print(
+                log_message(
                     "No deployment found to update."
                 )
 
@@ -2565,12 +2606,12 @@ def update_ci_status():
                     )
                 )
 
-                print(
+                log_message(
                     "Deployment updated:",
                     deployment_id
                 )
 
-                print(
+                log_message(
                     "Deployment status:",
                     deployment_status
                 )
@@ -2761,7 +2802,7 @@ def update_ci_status():
                             "ERROR"
                         )
 
-                        print(
+                        log_message(
                             "Failure analysis created for "
                             "deployment:",
                             deployment_id
@@ -2769,7 +2810,7 @@ def update_ci_status():
 
                     else:
 
-                        print(
+                        log_message(
                             "Failure analysis already exists "
                             "for deployment:",
                             deployment_id
@@ -2777,7 +2818,7 @@ def update_ci_status():
 
         connection.commit()
 
-        print(
+        log_message(
             "CI/CD database update completed."
         )
 
@@ -2786,7 +2827,7 @@ def update_ci_status():
         if connection:
             connection.rollback()
 
-        print(
+        log_message(
             "CI/CD database update error:",
             error
         )
@@ -2796,7 +2837,7 @@ def update_ci_status():
         if connection:
             connection.close()
 
-    print(
+    log_message(
         "==================================\n"
     )
 
@@ -2887,7 +2928,7 @@ def database_stats():
 
     except Exception as error:
 
-        print(
+        log_message(
             "Database statistics error:",
             error
         )
@@ -2983,7 +3024,7 @@ def get_deployments():
 
     except Exception as error:
 
-        print(
+        log_message(
             "Deployment history error:",
             error
         )
@@ -3082,7 +3123,7 @@ def get_deployment_logs():
 
     except Exception as error:
 
-        print(
+        log_message(
             "Deployment log history error:",
             error
         )
@@ -3174,7 +3215,7 @@ def get_deployment_logs_by_id(
 
     except Exception as error:
 
-        print(
+        log_message(
             "Deployment-specific log error:",
             error
         )
@@ -3261,7 +3302,7 @@ def get_failures():
 
     except Exception as error:
 
-        print(
+        log_message(
             "Failure history error:",
             error
         )
@@ -3280,6 +3321,14 @@ def get_failures():
             connection.close()
 
 
+# Additive AI routes: existing API contracts remain unchanged.
+try:
+    from .ai_intelligence.api import register_ai
+except ImportError:
+    from ai_intelligence.api import register_ai
+register_ai(app, get_db_connection)
+
+
 # ============================================================
 # Run Flask application
 # ============================================================
@@ -3289,5 +3338,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=True
+        debug=os.getenv("FLASK_DEBUG", "0").lower() in {"1", "true"}
     )

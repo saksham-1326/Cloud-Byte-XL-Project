@@ -2,139 +2,118 @@ name: Cloud-ByteXL CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
-env:
-  CI_STATUS_URL: https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: cloud_bytexl_ci
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: cloud_bytexl_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cloud_bytexl_ci -d cloud_bytexl_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PYTHON_DOTENV_DISABLED: '1'
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_NAME: cloud_bytexl_ci_test
+      DB_USER: cloud_bytexl_ci
+      DB_PASSWORD: isolated-ci-only
+      AI_TEST_DATABASE: '1'
+      RCA_PROVIDER: none
+      OPENAI_API_KEY: ''
+      GEMINI_API_KEY: ''
+      GITHUB_TOKEN: ''
+      AI_ADMIN_TOKEN: ''
+      AI_ALLOWED_REPOSITORIES: ''
+      CI_STATUS_TOKEN: ''
 
     steps:
-      # -------------------------------------------------------
-      # Checkout
-      # -------------------------------------------------------
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # -------------------------------------------------------
-      # Python
-      # -------------------------------------------------------
-      - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/checkout@v6
         with:
-          python-version: "3.13"
+          persist-credentials: false
 
-      # -------------------------------------------------------
-      # Install dependencies
-      # -------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
       - name: Install backend dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install flask flask-cors pytest "psycopg[binary]"
+          python -m pip install -r backend/requirements.txt
+          python -m pip check
 
-      # -------------------------------------------------------
-      # Python syntax check
-      # -------------------------------------------------------
       - name: Check Python syntax
         id: syntax
-        run: |
-          python -m py_compile backend/app.py
+        run: python -m compileall -q backend/app.py backend/ai_intelligence backend/tools
 
-      # -------------------------------------------------------
-      # Run backend tests
-      # -------------------------------------------------------
-      - name: Run tests
+      - name: Initialize isolated AI database
+        run: python -m backend.ai_intelligence.cli migrate
+
+      - name: Run complete backend tests (offline AI fixtures)
         id: tests
-        run: |
-          python -m pytest backend/tests/test_app.py
+        run: python -m pytest backend/tests/ -v
 
-      # -------------------------------------------------------
-      # Build Docker image
-      # -------------------------------------------------------
       - name: Build Docker image
         id: docker_build
-        run: |
-          docker build -t cloud-bytexl-backend .
+        run: docker build -t cloud-bytexl-backend .
 
-      # -------------------------------------------------------
-      # Run Docker container
-      # -------------------------------------------------------
       - name: Run Docker container
         id: docker_run
         run: |
-          docker run -d \
-            --name cloud-bytexl-container \
-            -p 5000:5000 \
+          docker run -d --name cloud-bytexl-container \
+            -p 127.0.0.1:5000:5000 \
+            -e PYTHON_DOTENV_DISABLED=1 -e RCA_PROVIDER=none \
             cloud-bytexl-backend
 
-          sleep 5
-
-      # -------------------------------------------------------
-      # Test Docker container
-      # -------------------------------------------------------
       - name: Test Docker container
         id: docker_test
         run: |
-          curl --fail http://localhost:5000/
+          for attempt in {1..30}; do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:5000/ > /dev/null; then
+              echo 'Container HTTP health check passed.'
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs --tail 100 cloud-bytexl-container
+          exit 1
 
-      # -------------------------------------------------------
-      # Update Flask dashboard - SUCCESS
-      # -------------------------------------------------------
-      - name: Update CI status - SUCCESS
-        if: success()
-        run: |
-          curl --fail -X POST "$CI_STATUS_URL" \
-            -H "Content-Type: application/json" \
-            -H "ngrok-skip-browser-warning: true" \
-            -d '{
-              "status": "SUCCESS",
-              "build": "PASSED",
-              "tests": "PASSED",
-              "docker": "PASSED",
-              "workflow": "Cloud-ByteXL CI"
-            }'
+      # Optional notification must never change the build/test result.
+      # Fork PRs and all PR code receive no callback credential.
+      - name: Notify Flask of pipeline result
+        if: ${{ always() && github.event_name == 'push' }}
+        continue-on-error: true
+        env:
+          CI_STATUS_URL: ${{ vars.CI_STATUS_URL }}
+          CI_STATUS_TOKEN: ${{ secrets.CI_STATUS_TOKEN }}
+          PIPELINE_STATUS: ${{ job.status }}
+          SYNTAX_OUTCOME: ${{ steps.syntax.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          DOCKER_OUTCOME: ${{ steps.docker_test.outcome }}
+        run: python backend/tools/ci_callback.py
 
-      # -------------------------------------------------------
-      # Update Flask dashboard - FAILURE
-      # -------------------------------------------------------
-      - name: Update CI status - FAILURE
-        if: failure()
-        run: |
-          curl --fail -X POST "$CI_STATUS_URL" \
-            -H "Content-Type: application/json" \
-            -H "ngrok-skip-browser-warning: true" \
-            -d '{
-              "status": "FAILURE",
-              "build": "FAILED_OR_SKIPPED",
-              "tests": "FAILED_OR_SKIPPED",
-              "docker": "FAILED_OR_SKIPPED",
-              "workflow": "Cloud-ByteXL CI"
-            }'
-
-      # -------------------------------------------------------
-      # Success message
-      # -------------------------------------------------------
-      - name: CI completed
-        if: success()
-        run: |
-          echo "=========================================="
-          echo "Cloud-ByteXL CI pipeline completed!"
-          echo "Build: PASSED"
-          echo "Tests: PASSED"
-          echo "Docker: PASSED"
-          echo "Overall Status: SUCCESS"
-          echo "=========================================="
-
-      # -------------------------------------------------------
-      # Cleanup
-      # -------------------------------------------------------
       - name: Cleanup Docker container
         if: always()
         run: |
-          docker rm -f cloud-bytexl-container || true
+          if docker container inspect cloud-bytexl-container > /dev/null 2>&1; then
+            docker rm -f cloud-bytexl-container || echo '::warning::Container cleanup failed.'
+          fi

@@ -1,0 +1,16 @@
+.git
+**/.env
+**/.env.*
+**/venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/*.log
+**/*.log.*
+**/node_modules
+backend/reports
+backend/ai_audit.json
+backend/ai_intelligence/artifacts
+backend/ai_artifacts
+.ci-pg-*
+frontend-app
