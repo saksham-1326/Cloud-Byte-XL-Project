@@ -40,7 +40,7 @@ The project is an engineering prototype with measurable backend verification. It
 | --- | --- | --- |
 | GitHub repository analysis | Implemented | Repository connection, metadata/source retrieval, file inventory, technology detection, heuristic health scores, findings, and recommendations. |
 | Infrastructure and security inspection | Implemented, static | Evidence from Docker, GitHub Actions, Kubernetes, Terraform, CloudFormation/SAM, Bicep, and related configuration. Checks include permissive ingress, wildcard permissions, runtime users, moving image/action references, and possible committed credentials. |
-| React dashboard | Implemented, partial integration | Repository overview, findings, architecture, CI/CD, security, and reports views. Some display defaults are illustrative; connect a repository to obtain source-derived analysis. Dedicated AI UI integration is pending. |
+| React dashboard | Implemented, partial integration | Repository connection updates overview/findings/security/architecture/report data. The committed CI/CD view still uses mock stages/history, and the Analysis-page progress is timer-driven. Dedicated AI UI integration is pending. |
 | Actions history collection | Implemented | Incremental ingestion by repository/run/attempt, historical commit/configuration snapshots, log redaction, and explicit handling of inaccessible logs. |
 | Root-cause analysis | Implemented, bounded validation | Deterministic diagnostics, optional Gemini/OpenAI providers, evidence citations, local validation guards, stored reports, and human-review APIs. |
 | Pipeline failure prediction | Experimental | Baseline/model comparison, chronological backtests, queued-run inference safeguards, and future-outcome matching. |
@@ -91,7 +91,18 @@ Live shadow prediction requires GitHub to report the exact attempt as **queued**
 
 Historical backtests and genuine live predictions are stored separately. A retrospective backtest must never be presented as a prediction made before that historical run. Model artifacts are server-owned, versioned, and hash-checked before loading.
 
-**Current limits:** repository-specific data is small and includes deliberately induced failures. Real future-run evaluation remains incomplete; fast workflows may not provide a usable queued window. No production accuracy, calibrated probability, or guaranteed prediction coverage is claimed. See [the implementation](backend/ai_intelligence/ml.py) and [AI verification notes](backend/AI_INTELLIGENCE.md).
+**Prospective verification boundary:** the November 20, 2026 read-only audit of this project's local PostgreSQL records found **zero persisted shadow predictions** and therefore no matched prospective outcomes. Its 12 stored predictions were historical backtests across two model versions. Queued-run checks and outcome matching are implemented and regression-tested, but that is not a demonstrated real-world prospective evaluation. Fast workflows may not provide a usable queued window.
+
+The latest stored model using feature version `prequeue-v2-utc-standardized` selected Logistic Regression from the three comparators. Its recorded historical evaluation was:
+
+| Local registry evidence | Recorded value |
+| --- | --- |
+| Eligible historical runs / train / validation / test | 27 / 16 / 5 / 6 |
+| Held-out historical accuracy | 0.50 |
+| Held-out failure precision / recall / F1 | 0.00 / 0.00 / 0.00 |
+| Probability calibration | Not fitted; descriptive bins and Brier score only |
+
+These values were read from the existing local model registry and matched its generated evaluation artifact; the fitted model artifact also matched its stored SHA-256 digest. They describe **six held-out runs**, not production performance or a version-controlled benchmark dataset. The data is repository-specific and includes deliberately induced failures. No probability-calibration fitting step is implemented, and no calibrated probability or guaranteed prediction coverage is claimed. See [the implementation](backend/ai_intelligence/ml.py) and [AI verification notes](backend/AI_INTELLIGENCE.md).
 
 ## AI Feature 2 — Root-Cause Analysis
 
@@ -106,11 +117,15 @@ The implemented flow is:
 5. Validate schema, failed-step identity, evidence citations, category indicators, and bounded factual constraints. Reject unsupported claims rather than silently replacing the provider's answer.
 6. Persist accepted reports in PostgreSQL with their engine/model and human-verification status.
 
+Secret redaction is best effort over configured values and recognized patterns; it is not proof that every possible sensitive value has been removed. The evidence and semantic guards are similarly bounded.
+
 Supported categories cover intentional workflow termination, test/dependency/compiler failures, Docker/Kubernetes/workflow configuration issues, missing environment variables, authentication/permission failures, network/service failures, and `insufficient_evidence`.
 
 ### Gemini and verification status
 
-The recorded November 15, 2026 live checkpoint used **`gemini-3.5-flash-lite`**, which also remained the configured local model at this README's review. Four fresh responses identified the primary cause/category correctly on four previously examined cases; one response was rejected by the final guard for an unsupported secondary claim. That small, non-held-out sample is **not a production accuracy benchmark**, and its reports remained unverified by human reviewers at the checkpoint.
+The recorded November 15, 2026 checkpoint used **`gemini-3.5-flash-lite`**, which also remained the configured local model at this README's review. Saved generation/audit records and committed response fixtures document four fresh responses. An **agent assessment against frozen expectations** judged the primary cause/category correct on all four previously examined cases, while one response was rejected by the final guard for an unsupported secondary claim. These are recorded historical results, not fresh provider calls made during this fact-check, independent human judgments, or a production accuracy benchmark.
+
+The November 20 local database audit found six stored Gemini-grounded reports, four failed-job records with stored log text, and **zero human-review submissions** for this project. All 21 stored RCA reports, including evidence-rule reports, were marked `unverified`. These aggregate records support persistence and historical use; they do not establish present model availability, complete secret redaction, or general diagnostic accuracy.
 
 Gemini requests use bounded evidence, structured JSON output, and no tool execution, automatic provider fallback, or automatic retry. `RCA_PROVIDER=none` runs clearly labeled evidence rules with no LLM call. An OpenAI provider is also implemented but is not required for setup or CI.
 
@@ -353,7 +368,7 @@ The existing [Cloud-ByteXL CI workflow](.github/workflows/ci.yml) runs on pushes
 
 The Docker HTTP smoke check is separate from PostgreSQL persistence verification. `.dockerignore` excludes secrets, local environments, logs, model artifacts, reports, and frontend files from the backend image context. Callback fixtures remove their temporary schemas and terminate their Flask processes; GitHub manages the disposable service container.
 
-**Latest confirmed hosted result:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
+**Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
 
 ## Durable CI Callbacks
 
