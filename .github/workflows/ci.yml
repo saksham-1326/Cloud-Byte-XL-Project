@@ -63,7 +63,7 @@ jobs:
 
       - name: Check Python syntax
         id: syntax
-        run: python -m compileall -q backend/app.py backend/ai_intelligence backend/tools
+        run: python -m compileall -q backend/app.py backend/ci_callbacks.py backend/ai_intelligence backend/tools
 
       - name: Initialize isolated AI database
         run: python -m backend.ai_intelligence.cli migrate
@@ -97,19 +97,8 @@ jobs:
           docker logs --tail 100 cloud-bytexl-container
           exit 1
 
-      # Optional notification must never change the build/test result.
-      # Fork PRs and all PR code receive no callback credential.
-      - name: Notify Flask of pipeline result
-        if: ${{ always() && github.event_name == 'push' }}
-        continue-on-error: true
-        env:
-          CI_STATUS_URL: ${{ vars.CI_STATUS_URL }}
-          CI_STATUS_TOKEN: ${{ secrets.CI_STATUS_TOKEN }}
-          PIPELINE_STATUS: ${{ job.status }}
-          SYNTAX_OUTCOME: ${{ steps.syntax.outcome }}
-          TEST_OUTCOME: ${{ steps.tests.outcome }}
-          DOCKER_OUTCOME: ${{ steps.docker_test.outcome }}
-        run: python backend/tools/ci_callback.py
+      # External callback delivery stays disabled. The full test suite verifies
+      # durable sender/Flask/PostgreSQL round trips on runner-local loopback.
 
       - name: Cleanup Docker container
         if: always()

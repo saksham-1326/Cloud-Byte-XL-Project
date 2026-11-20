@@ -11,6 +11,8 @@ for key, value in {
     'DB_PASSWORD': 'isolated-ci-only', 'RCA_PROVIDER': 'none',
     'OPENAI_API_KEY': '', 'GEMINI_API_KEY': '', 'GITHUB_TOKEN': '',
     'AI_ADMIN_TOKEN': '', 'AI_ALLOWED_REPOSITORIES': '', 'CI_STATUS_TOKEN': '',
+    'CI_ALLOWED_REPOSITORIES': '', 'CI_CALLBACK_ENABLED': '0',
+    'CI_CALLBACK_TEST_LOOPBACK': '0',
 }.items():
     os.environ.setdefault(key, value)
 

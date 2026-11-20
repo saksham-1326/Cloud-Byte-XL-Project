@@ -16,23 +16,15 @@ inside the application container. Cleanup runs even after failure and cannot
 replace the original failure. `.dockerignore` excludes local environments,
 credentials, logs, virtual environments, and generated artifacts.
 
-## Optional dashboard callback
+## Durable callback development
 
-1. Configure `CI_STATUS_TOKEN` in the Flask server environment first. Without
-   this setting the existing local callback behavior is preserved; do not expose
-   the legacy unauthenticated endpoint publicly.
-2. Add the identical value as repository Actions secret `CI_STATUS_TOKEN`.
-3. Add repository Actions variable `CI_STATUS_URL` as the stable HTTPS URL ending
-   in `/api/ci/status`, without query parameters or embedded credentials.
-
-No URL means a successful skip. Configured callbacks require HTTPS and a token,
-reject redirects, have a 15-second timeout, and report HTTP failure codes without
-printing credentials or response bodies. Notifications run only on pushes, not
-PRs. Their failure is visible as a warning and does not turn passing tests into
-a failed pipeline. Payload fields and the Flask response contract are retained.
-The backend checks Authorization when configured; GitHub webhook routes are
-unchanged. Flask's existing callback acknowledges in-memory status even when its
-legacy deployment database update fails; HTTP 200 does not prove persistence.
+External delivery is disabled in the current development workflow. The sender
+also defaults to disabled. The full backend suite includes authenticated
+sender/Flask/PostgreSQL verification over isolated loopback, including a separate
+Flask process restart. See `backend/DURABLE_CI_CALLBACKS.md` for the new versioned
+endpoint, registration, receipt migration, transaction guarantees, and limitations.
+The legacy callback endpoint remains compatible but is not used for durable
+acknowledgment. Do not configure a public callback URL or expose the local server.
 
 ## Review and remote execution
 

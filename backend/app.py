@@ -3328,6 +3328,12 @@ except ImportError:
     from ai_intelligence.api import register_ai
 register_ai(app, get_db_connection)
 
+try:
+    from .ci_callbacks import register_ci_callbacks
+except ImportError:
+    from ci_callbacks import register_ci_callbacks
+register_ci_callbacks(app, get_db_connection)
+
 
 # ============================================================
 # Run Flask application
