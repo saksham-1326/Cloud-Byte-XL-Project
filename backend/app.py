@@ -9,6 +9,7 @@ import json
 import base64
 import os
 import re
+import hmac
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
@@ -2454,6 +2455,14 @@ def get_latest_webhook():
 def update_ci_status():
 
     global latest_ci
+
+    # Opt-in authentication preserves existing local clients. Configure the same
+    # token on Flask and the CI sender before enabling a remote callback.
+    callback_token = os.getenv("CI_STATUS_TOKEN", "")
+    if callback_token and not hmac.compare_digest(
+        request.headers.get("Authorization", ""), "Bearer " + callback_token
+    ):
+        return jsonify(status="FAILED", message="Unauthorized CI callback."), 401
 
     data = request.get_json(
         silent=True
