@@ -637,3 +637,42 @@ A read-only GitHub check found 35 runs and no queued run. No workflow or failure
 was manufactured. Genuine prospective prediction performance therefore remains
 unverified; the next step is observing a naturally occurring eligible run and
 its outcome. Historical accuracy and small-sample limitations remain unchanged.
+
+## Live prediction readiness and proposed commit scopes
+
+The [prospective prediction plan](docs/PROSPECTIVE_PREDICTION_PLAN.md) documents
+the reviewed RCA/ML commit scopes and a step-by-step natural-run procedure with
+independent read-only database readback. No commits have been created.
+Generated reports, secrets, model artifacts and unrelated frontend/root-package
+changes are excluded from the proposed commits and preserved locally.
+
+The running Flask API creates the prediction service but does not automatically
+watch GitHub. POST `/api/ai/v1/predictions` enqueues a task and submits it to the
+API's executor. The signed `/api/ai/v1/webhook` handles `workflow_run` requested
+and completed actions; it also accepts a queued action that GitHub does not
+document for that event. GitHub's `in_progress` action is ignored, and requested
+is not emitted for reruns. A separately started CLI worker polls **database
+tasks**, not GitHub runs. There is no built-in periodic GitHub observer or CLI
+predict command. See [GitHub workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run).
+
+A secret-safe check of local file/shell configuration found the GitHub token
+present but webhook secret, repository allowlist and admin token absent. This
+does not authenticate an already running process's environment or prove token
+permissions. Webhook delivery and worker uptime are not established. Local
+loopback administration can operate without an admin token; remote operation
+requires deliberate authorization/allowlist setup. No settings were changed.
+
+Before a genuine session, authenticate the existing model metadata/artifact,
+prepare an approved dedicated observation database, run the API/recovery worker,
+and approve either real webhook delivery or a bounded observer calling the
+existing API. Preserve queued observation times, exact run/attempt/SHA, immutable
+prediction fields and independent pre-start readback, then reconcile the actual
+outcome. `predicted_at` is sampled before insertion; the existing matched flag
+alone cannot prove pre-start database commit. The plan excludes cases lacking
+independent timing evidence, even if that flag is matched.
+
+Full backend rerun with isolated PostgreSQL: **212 passed, 0 failed, 0 skipped,
+0 expected failures** (30 existing joblib/NumPy deprecation warnings). This covers
+controlled persistence/concurrency, RCA and durable callbacks; no new live
+observation was performed. Prospective prediction count for this task remains
+**zero**, prospective metrics remain null, and historical accuracy is unchanged.
