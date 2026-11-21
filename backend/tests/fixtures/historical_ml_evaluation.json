@@ -1,0 +1,439 @@
+{
+  "backtest": [
+    {
+      "attempt": 1,
+      "feature_time": "2026-08-21T04:36:22+00:00",
+      "features": {
+        "additions": 0,
+        "changed_files": 1,
+        "consecutive_failures": 1,
+        "created_hour": 4,
+        "created_weekday": 4,
+        "deletions": 1,
+        "dependency_change": 0,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 30.8,
+        "prior_run_count": 21,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 1,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 0,
+      "probability": 0.1431388332677496,
+      "run_id": 32447532315
+    },
+    {
+      "attempt": 1,
+      "feature_time": "2026-09-04T08:03:28+00:00",
+      "features": {
+        "additions": 0,
+        "changed_files": 1,
+        "consecutive_failures": 0,
+        "created_hour": 8,
+        "created_weekday": 4,
+        "deletions": 0,
+        "dependency_change": 0,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 31.4,
+        "prior_run_count": 22,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 0,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 1,
+      "probability": 0.1906690766171925,
+      "run_id": 33851582532
+    },
+    {
+      "attempt": 1,
+      "feature_time": "2026-09-04T08:54:37+00:00",
+      "features": {
+        "additions": 1,
+        "changed_files": 1,
+        "consecutive_failures": 1,
+        "created_hour": 8,
+        "created_weekday": 4,
+        "deletions": 0,
+        "dependency_change": 0,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 35.0,
+        "prior_run_count": 23,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 0,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 0,
+      "probability": 0.06698068499862302,
+      "run_id": 33855718943
+    },
+    {
+      "attempt": 1,
+      "feature_time": "2026-09-30T13:33:02+00:00",
+      "features": {
+        "additions": 0,
+        "changed_files": 1,
+        "consecutive_failures": 0,
+        "created_hour": 13,
+        "created_weekday": 2,
+        "deletions": 0,
+        "dependency_change": 0,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 36.1,
+        "prior_run_count": 24,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 0,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 0,
+      "probability": 0.4843993243090368,
+      "run_id": 36722442393
+    },
+    {
+      "attempt": 1,
+      "feature_time": "2026-09-30T13:37:29+00:00",
+      "features": {
+        "additions": 0,
+        "changed_files": 1,
+        "consecutive_failures": 0,
+        "created_hour": 13,
+        "created_weekday": 2,
+        "deletions": 0,
+        "dependency_change": 0,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 37.7,
+        "prior_run_count": 25,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 0,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 0,
+      "probability": 0.5097698906312517,
+      "run_id": 36722985725
+    },
+    {
+      "attempt": 1,
+      "feature_time": "2026-11-03T06:20:18+00:00",
+      "features": {
+        "additions": 5002,
+        "changed_files": 10,
+        "consecutive_failures": 0,
+        "created_hour": 6,
+        "created_weekday": 1,
+        "deletions": 2157,
+        "dependency_change": 1,
+        "docker_change": 0,
+        "event": "push",
+        "prior_duration_count": 10,
+        "prior_mean_duration": 37.7,
+        "prior_run_count": 26,
+        "recent_failure_rate": 0.2,
+        "workflow_change": 0,
+        "workflow_config_available": 1,
+        "workflow_identity": "331680973",
+        "workflow_lines": 140
+      },
+      "label": 1,
+      "probability": 6.872192217757991e-47,
+      "run_id": 41589239366
+    }
+  ],
+  "class_distribution": {
+    "failure": 6,
+    "success": 21
+  },
+  "comparisons": {
+    "dummy": {
+      "test": {
+        "accuracy": 0.6666666666666666,
+        "brier_score": 0.24348958333333334,
+        "calibration_bins": [
+          {
+            "count": 6,
+            "mean_probability": 0.1875,
+            "observed_failure_rate": 0.3333333333333333
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            4,
+            0
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "f1": 0.0,
+        "n": 6,
+        "pr_auc": 0.3333333333333333,
+        "precision": 0.0,
+        "recall": 0.0,
+        "roc_auc": 0.5
+      },
+      "threshold": 0.5,
+      "validation": {
+        "accuracy": 0.8,
+        "brier_score": 0.16015625,
+        "calibration_bins": [
+          {
+            "count": 5,
+            "mean_probability": 0.1875,
+            "observed_failure_rate": 0.2
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            4,
+            0
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "f1": 0.0,
+        "n": 5,
+        "pr_auc": 0.2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "roc_auc": 0.5
+      }
+    },
+    "logistic": {
+      "test": {
+        "accuracy": 0.5,
+        "brier_score": 0.3624166213468425,
+        "calibration_bins": [
+          {
+            "count": 4,
+            "mean_probability": 0.10019714872089129,
+            "observed_failure_rate": 0.5
+          },
+          {
+            "count": 2,
+            "mean_probability": 0.49708460747014427,
+            "observed_failure_rate": 0.0
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            3,
+            1
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "f1": 0.0,
+        "n": 6,
+        "pr_auc": 0.3333333333333333,
+        "precision": 0.0,
+        "recall": 0.0,
+        "roc_auc": 0.25
+      },
+      "threshold": 0.5,
+      "validation": {
+        "accuracy": 1.0,
+        "brier_score": 0.05510755596460963,
+        "calibration_bins": [
+          {
+            "count": 3,
+            "mean_probability": 0.010842684017290813,
+            "observed_failure_rate": 0.0
+          },
+          {
+            "count": 2,
+            "mean_probability": 0.471082519622512,
+            "observed_failure_rate": 0.5
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            4,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "f1": 1.0,
+        "n": 5,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      }
+    },
+    "random_forest": {
+      "test": {
+        "accuracy": 0.6666666666666666,
+        "brier_score": 0.26867949899286,
+        "calibration_bins": [
+          {
+            "count": 1,
+            "mean_probability": 0.20086045367907004,
+            "observed_failure_rate": 1.0
+          },
+          {
+            "count": 5,
+            "mean_probability": 0.40514246061483233,
+            "observed_failure_rate": 0.2
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            4,
+            0
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "f1": 0.0,
+        "n": 6,
+        "pr_auc": 0.3333333333333333,
+        "precision": 0.0,
+        "recall": 0.0,
+        "roc_auc": 0.25
+      },
+      "threshold": 0.5,
+      "validation": {
+        "accuracy": 1.0,
+        "brier_score": 0.10838537809405294,
+        "calibration_bins": [
+          {
+            "count": 3,
+            "mean_probability": 0.27519689732031666,
+            "observed_failure_rate": 0.0
+          },
+          {
+            "count": 2,
+            "mean_probability": 0.5120124415362531,
+            "observed_failure_rate": 0.5
+          }
+        ],
+        "calibration_status": "descriptive_only_insufficient_sample",
+        "confusion_matrix": [
+          [
+            4,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "f1": 1.0,
+        "n": 5,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      }
+    }
+  },
+  "dataset_size": 27,
+  "evaluation_date": "2026-11-11T04:34:23.468930+00:00",
+  "excluded": [
+    {
+      "reason": "unlabeled, rerun attempt, or completion timestamp unavailable",
+      "run_id": 41589239366
+    }
+  ],
+  "feature_names": [
+    "additions",
+    "changed_files",
+    "consecutive_failures",
+    "created_hour",
+    "created_weekday",
+    "deletions",
+    "dependency_change",
+    "docker_change",
+    "event=push",
+    "prior_duration_count",
+    "prior_mean_duration",
+    "prior_run_count",
+    "recent_failure_rate",
+    "workflow_change",
+    "workflow_config_available",
+    "workflow_identity=331680973",
+    "workflow_lines"
+  ],
+  "feature_version": "prequeue-v2-utc-standardized",
+  "label_policy": "Only success=0 and failure=1; all other conclusions excluded. Attempts >1 excluded from training.",
+  "limitation": "Small, repository-specific data with deliberately induced failures. Not evidence of production generalization.",
+  "preprocessing": "DictVectorizer + train-only StandardScaler",
+  "selected_model": "logistic",
+  "split_policy": "Chronological 60/20/20; purge shared commits across partitions; train outcomes must precede validation predictions.",
+  "split_sizes": {
+    "test": 6,
+    "train": 16,
+    "validation": 5
+  },
+  "status": "experimental",
+  "test": {
+    "accuracy": 0.5,
+    "brier_score": 0.3624166213468425,
+    "calibration_bins": [
+      {
+        "count": 4,
+        "mean_probability": 0.10019714872089129,
+        "observed_failure_rate": 0.5
+      },
+      {
+        "count": 2,
+        "mean_probability": 0.49708460747014427,
+        "observed_failure_rate": 0.0
+      }
+    ],
+    "calibration_status": "descriptive_only_insufficient_sample",
+    "confusion_matrix": [
+      [
+        3,
+        1
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "f1": 0.0,
+    "n": 6,
+    "pr_auc": 0.3333333333333333,
+    "precision": 0.0,
+    "recall": 0.0,
+    "roc_auc": 0.25
+  },
+  "threshold": 0.5,
+  "threshold_policy": "Validation F1; 0.5 when validation has only one class.",
+  "trained_through": "2026-08-14T20:13:48+05:30",
+  "version": "55ef22a1-2f30-47f2-95d8-bf12efaf6463"
+}

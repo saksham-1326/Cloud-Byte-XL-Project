@@ -136,7 +136,7 @@ def test_completed_run_cannot_get_live_prediction():
 
 def test_untrained_queued_run_does_not_invent_probability():
     class Client:
-        def run(self,*args):return {'id':1,'run_attempt':1,'status':'queued','conclusion':None}
+        def run(self,*args):return {'id':1,'run_attempt':1,'head_sha':'target','status':'queued','conclusion':None}
     class Store:
         def query(self,*args):return None
         def models(self,*args):return []

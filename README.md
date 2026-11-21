@@ -572,3 +572,68 @@ has zero completed rows; no real report was submitted to the verification API.
 Initial read-only access to the application database failed; the later isolated
 test database is separate and does not verify its current state. Generated data
 is excluded from the proposed commits. No commits or pushes have been created.
+
+## ML historical audit and prospective plan (2026-11-21)
+
+See [ML prediction audit](docs/ML_PREDICTION_AUDIT.md) for architecture, provenance,
+leakage findings, the RCA commit scope and the prospective shadow implementation
+plan. The saved historical dataset has **27 eligible runs: 21 success, 6 failure**,
+split into **16 training / 5 validation / 6 test**. Recovered split class counts
+are 13/3, 4/1 and 4/2 success/failure. These are historical records, not a fresh
+database inventory; read-only database access was unavailable.
+
+Reproduce the saved selected-model test scores and the DummyClassifier prior
+baseline using `backend/venv/Scripts/python.exe -m backend.tools.replay_historical_ml`.
+This replays saved probabilities and recovers the dummy training prior from
+aggregate counts. It does not retrain or reconstruct missing training records.
+The local saved logistic artifact also reproduced all six saved probabilities
+when inspected read-only during the audit.
+
+| Historical test metric (6 runs) | Selected logistic | Dummy prior |
+| --- | ---: | ---: |
+| Accuracy | 0.5 | 0.6666666667 |
+| Precision / recall / F1 | 0 / 0 / 0 | 0 / 0 / 0 |
+| PR-AUC (average precision) | 0.3333333333 | 0.3333333333 |
+| Confusion matrix [[TN, FP], [FN, TP]] | [[3, 1], [2, 0]] | [[4, 0], [2, 0]] |
+
+Both actual test failures were missed. The tiny validation sample contains only
+one failure; its perfect validation F1 did not generalize. For #27, commit-size
+features have large negative logistic contributions, explaining the extreme
+low score without explaining the real HTTP failure. Runtime endpoint health is
+not directly represented. No threshold was forced and no model was changed.
+
+Feature tests verify exclusion of target outcome, duration, logs and errors,
+and completion-time restrictions on history. The split helper now purges training
+against the earliest surviving validation/test cutoff even when validation is
+empty. The unchanged regression assertion now passes, with an additional exact
+cutoff boundary test. Training still refuses insufficient partitions; the recorded
+experiment had five validation rows. Historical feature availability and exact split
+membership cannot be fully verified without the raw records.
+
+Queued-run prediction, duplicate-resistant persistence, separate outcome joins
+and timing validation already exist. Genuine prospective performance remains
+unverified. Queued-state rechecks still race with run start; later reconciliation
+must exclude at/after-start predictions and leave missing start evidence
+unverifiable. No historical backtest is prospective evidence.
+
+Follow-up [isolated shadow verification](docs/SHADOW_VERIFICATION.md): full backend
+regression **212 passed, 0 failed, 0 skipped, 0 expected failures**, using a fresh
+PostgreSQL 17 cluster on 127.0.0.1:55439 with database cloud_bytexl_ci_test and
+role cloud_bytexl_ci. No personal or production database was contacted. ML regression:
+**32 passed**; existing RCA regression: **68 passed**. All tests blocked unmocked
+external HTTP; controlled lifecycle tests are not prospective accuracy evidence.
+Focused PostgreSQL/shadow/callback suite: **60 passed, 0 failed, 0 skipped**.
+
+The prediction service now rejects inconsistent identities and missing SHAs.
+Persistence rejects stale completed-to-queued updates, mismatched commit metadata
+and model/repository associations. Prediction insertion locks the eligible queued
+run row through insertion; concurrent duplicates preserve one original prediction,
+and outcome reconciliation preserves its original fields. Database rollback and
+late/unverifiable timing exclusions are covered. There are no schema/migration,
+provider, callback or frontend changes and no retraining/replacement of the saved
+model. Generated reports and model artifacts remain excluded from commits.
+
+A read-only GitHub check found 35 runs and no queued run. No workflow or failure
+was manufactured. Genuine prospective prediction performance therefore remains
+unverified; the next step is observing a naturally occurring eligible run and
+its outcome. Historical accuracy and small-sample limitations remain unchanged.
