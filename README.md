@@ -554,7 +554,7 @@ The builder reads saved artifacts, preserves any existing manual worksheet, and
 makes no network, provider, database or verification API calls. To calculate
 metrics from the completed worksheet, use the command in the package. The
 existing verification API lacks primary-cause and uncertain-decision fields;
-do not submit uncertain rows through it. No reviews were submitted in this task.
+do not submit uncertain rows through it. No real report was submitted for human verification.
 
 Validation: `backend/venv/Scripts/python.exe -m pytest
 backend/tests/test_review_metrics.py backend/tests/test_independent_review_package.py
@@ -571,7 +571,8 @@ confirm the two original RCA session files are unchanged. The human worksheet
 has zero completed rows; no real report was submitted to the verification API.
 Initial read-only access to the application database failed; the later isolated
 test database is separate and does not verify its current state. Generated data
-is excluded from the proposed commits. No commits or pushes have been created.
+is excluded from the source commits. The reviewed RCA, ML reliability and
+prospective verification changes are committed separately.
 
 ## ML historical audit and prospective plan (2026-11-21)
 
@@ -642,9 +643,10 @@ its outcome. Historical accuracy and small-sample limitations remain unchanged.
 
 The [prospective prediction plan](docs/PROSPECTIVE_PREDICTION_PLAN.md) documents
 the reviewed RCA/ML commit scopes and a step-by-step natural-run procedure with
-independent read-only database readback. No commits have been created.
+independent read-only database readback. The reviewed scopes are recorded in
+three focused source commits; publication and merge are separate actions.
 Generated reports, secrets, model artifacts and unrelated frontend/root-package
-changes are excluded from the proposed commits and preserved locally.
+changes are excluded from these commits and preserved locally.
 
 The running Flask API creates the prediction service but does not automatically
 watch GitHub. POST `/api/ai/v1/predictions` enqueues a task and submits it to the
