@@ -495,3 +495,80 @@ For project evaluation or a technical interview, a reproducible demonstration ca
 Cloud-ByteXL demonstrates how source inspection, historical workflow data, machine learning, evidence-grounded diagnosis, and transactional status handling can work together in a DevOps tool. Its strongest verified foundation is the backend: explicit data provenance, reproducible regression tests, isolated database checks, and durable callback behavior. Further frontend integration and broader real-world evaluation will determine how effectively that foundation supports day-to-day development.
 
 For deeper implementation details, read [AI Intelligence](backend/AI_INTELLIGENCE.md), [Durable CI Callbacks](backend/DURABLE_CI_CALLBACKS.md), and [CI Verification](backend/CI_VERIFICATION.md). The broader [System Architecture document](System_Architecture.md) records design intent; its cloud-service diagrams should not be read as proof of deployed infrastructure.
+
+## Independent RCA manual review (2026-11-21)
+
+Review-package links below point to local generated files, which are not checked
+into Git. A clean checkout contains the frozen regression fixtures; generating
+the actual package requires the preserved original input artifacts.
+
+Start with the plain-English [review guide](backend/reports/independent_review/REVIEW_GUIDE.md).
+It explains all four failures and compares the earlier and improved responses.
+Agent suggestions are separate in `suggested_decisions.json`; actual decisions
+and rubric answers remain null in the worksheet until a person reviews them.
+
+The user-requested [ChatGPT-assisted recommendations](backend/reports/independent_review/assisted_recommendations.json)
+are stored separately from the human worksheet. They reject both #13 responses,
+reject earlier/accept improved #21, and leave earlier #23/#27 uncertain while
+accepting the improved responses for the observed HTTP 404 only. Run #13's
+compiler outcome and the exact server-side reasons for HTTP 404 remain unresolved.
+These are not independent human verification and were not submitted to any API.
+
+[Provisional assisted metrics](backend/reports/independent_review/provisional_assisted_metrics.json)
+contain decision statistics only: 3 accept, 3 reject and 2 uncertain across
+8 reports on 4 workflows. The rejection proportion is 3/6 among resolved
+recommendations; the 2 uncertain decisions are excluded. Earlier session: 2
+reject, 2 uncertain; improved session: 3 accept, 1 reject. These proportions
+are not correctness or production accuracy scores. Criterion-level accuracy
+metrics are not inferred from acceptance decisions.
+
+Reproduce these two assisted artifacts with
+`python -m backend.tools.assisted_rca_recommendations`. This command preserves the
+human worksheet and all original responses and evidence. Validation including
+`backend/tests/test_assisted_rca_recommendations.py` plus the four review/RCA test
+files listed below passed **68 tests**, with external HTTP blocked by test fixtures.
+
+The [review package](backend/reports/independent_review/REVIEW_PACKAGE.md) presents
+preserved log excerpts, independent agent proposals, and eight saved Gemini
+responses across runs #13, #21, #23 and #27. These are proposals for manual review,
+not completed human validation. Historical artifacts also identify failed runs
+#4 and #8 with unavailable logs. Database and GitHub connectivity were unavailable
+during initial evidence preparation, so these are historical availability counts.
+
+Fill in [human_worksheet.json](backend/reports/independent_review/human_worksheet.json)
+only after reviewing each response. Unresolved judgments stay null. The offline
+calculator in `backend/ai_intelligence/review_metrics.py` provides primary-cause,
+category, failed-step, evidence, unsupported-claim, fix and rejection rates, each with its own
+resolved sample size. No human reviews are prefilled; initial metric denominators
+are zero and rates are null. Four runs from one repository cannot establish
+production accuracy.
+
+Metrics include separate earlier/improved source sessions and distinct workflow
+counts. Only rows explicitly marked human and completed contribute. Unanswered
+criteria stay null and are excluded per criterion; uncertain decisions are
+counted separately and excluded from the accept/reject rejection denominator.
+This supports incomplete evidence without guessing a pass or failure.
+
+Rebuild the package with `python -m backend.tools.prepare_independent_review`.
+The builder reads saved artifacts, preserves any existing manual worksheet, and
+makes no network, provider, database or verification API calls. To calculate
+metrics from the completed worksheet, use the command in the package. The
+existing verification API lacks primary-cause and uncertain-decision fields;
+do not submit uncertain rows through it. No reviews were submitted in this task.
+
+Validation: `backend/venv/Scripts/python.exe -m pytest
+backend/tests/test_review_metrics.py backend/tests/test_independent_review_package.py
+backend/tests/test_rca_reliability.py backend/tests/test_gemini_rca.py -q` passed 66 tests. The root `.venv` lacks
+`jsonschema` for the existing RCA tests; the backend environment has it.
+
+Generated `backend/reports/` and `backend/ai_audit.json` are ignored and are not
+part of the proposed evaluation commit. Offline package tests use the explicitly
+frozen historical fixture `backend/tests/fixtures/independent_review_inputs.json`,
+so they do not require local generated reports. Regenerating the actual review
+package still requires the original saved source files; a clean checkout only
+contains regression inputs, not a new human evaluation. Source hash checks
+confirm the two original RCA session files are unchanged. The human worksheet
+has zero completed rows; no real report was submitted to the verification API.
+Initial read-only access to the application database failed; the later isolated
+test database is separate and does not verify its current state. Generated data
+is excluded from the proposed commits. No commits or pushes have been created.

@@ -27,3 +27,7 @@ Thumbs.db
 
 # Server-generated ML artifacts (never load uploads)
 backend/ai_artifacts/
+
+# Generated audit/review output; stable regression inputs belong in tests/fixtures.
+backend/reports/
+backend/ai_audit.json
