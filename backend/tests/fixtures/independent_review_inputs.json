@@ -1,0 +1,1492 @@
+{
+  "provenance": "Minimal frozen regression inputs extracted from existing historical artifacts; original diagnosis strings, report IDs and evidence preserved. No human verification. Required only for offline package tests.",
+  "files": {
+    "live_rca_validation.json": {
+      "cases": [
+        {
+          "run_number": 21,
+          "run_id": 32446985157,
+          "attempt": 1,
+          "report_id": "51771fdd-b3a1-4fb2-af21-382fdb39d5cf",
+          "provider_call": {
+            "diagnosis": {
+              "category": "unit_test_failure",
+              "primary_cause": "The test command explicitly executed 'exit 1' after running pytest.",
+              "explanation": "In step 'Run tests', pytest successfully passed 1 test in 0.75s, but immediately followed the pytest execution with an explicit 'exit 1' instruction, causing the step and job to fail with exit code 1.",
+              "recommended_fix": "Remove the explicit 'exit 1' command following the pytest execution in the CI workflow step.",
+              "evidence_refs": [
+                "job:96668290338:line:202",
+                "job:96668290338:line:203",
+                "job:96668290338:line:204",
+                "job:96668290338:line:222",
+                "job:96668290338:line:223"
+              ],
+              "uncertainty": "low"
+            }
+          }
+        },
+        {
+          "run_number": 13,
+          "run_id": 31722854108,
+          "attempt": 1,
+          "report_id": "2f7a967e-9299-49a7-b8f1-689bcda373e6",
+          "provider_call": {
+            "diagnosis": {
+              "category": "compilation_error",
+              "primary_cause": "Python syntax check compilation step failed with exit code 1 when running py_compile on backend/app.py.",
+              "explanation": "During the 'Check Python syntax' step, the command 'python -m py_compile backend/app.py' executed and exited with code 1, causing the process to fail.",
+              "recommended_fix": "Fix any syntax errors present in backend/app.py.",
+              "evidence_refs": [
+                "job:94523856476:line:178",
+                "job:94523856476:line:179",
+                "job:94523856476:line:180",
+                "job:94523856476:line:190"
+              ],
+              "uncertainty": "low"
+            }
+          }
+        },
+        {
+          "run_number": 23,
+          "run_id": 33851582532,
+          "attempt": 1,
+          "report_id": "c02232e3-53a3-4b83-8870-528c965a0913",
+          "report": {
+            "category": "network_service_failure",
+            "primary_cause": "HTTP 404 Not Found error when sending CI status via curl",
+            "explanation": "The step 'Update CI status - SUCCESS' executed a curl command to POST status information to the URL defined by the CI_STATUS_URL environment variable. The server responded with HTTP status code 404 (The requested URL returned error: 404), causing curl to fail with exit code 22 because the --fail flag was enabled.",
+            "recommended_fix": "Verify that the CI_STATUS_URL endpoint is correct and accessible, and ensure that the target service has the required route configured.",
+            "failed_step": "Update CI status - SUCCESS",
+            "evidence_refs": [
+              "job:100955373631:line:393",
+              "job:100955373631:line:394",
+              "job:100955373631:line:406",
+              "job:100955373631:line:419",
+              "job:100955373631:line:420"
+            ],
+            "secondary_errors": [],
+            "parallel_failures": 1
+          }
+        },
+        {
+          "run_number": 27,
+          "run_id": 41589239366,
+          "attempt": 1,
+          "report_id": "52b27489-c9d4-4c6c-aee7-79dd1dc3c99a",
+          "report": {
+            "category": "network_service_failure",
+            "primary_cause": "The curl command encountered a HTTP 404 error when attempting to reach the endpoint specified by CI_STATUS_URL.",
+            "explanation": "During the 'Update CI status - SUCCESS' step, a POST request was sent via curl to https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status using the --fail flag. The requested URL returned an HTTP 404 error, causing curl to fail with exit code 22.",
+            "recommended_fix": "Verify that the CI_STATUS_URL environment variable is configured correctly and that the remote server endpoint is available and active.",
+            "failed_step": "Update CI status - SUCCESS",
+            "evidence_refs": [
+              "job:125761870597:line:410",
+              "job:125761870597:line:411",
+              "job:125761870597:line:416",
+              "job:125761870597:line:417",
+              "job:125761870597:line:418",
+              "job:125761870597:line:423",
+              "job:125761870597:line:435",
+              "job:125761870597:line:436"
+            ],
+            "secondary_errors": [],
+            "parallel_failures": 1
+          }
+        }
+      ]
+    },
+    "rca_reliability_validation.json": {
+      "cases": [
+        {
+          "run_number": 21,
+          "run_id": 32446985157,
+          "attempt": 1,
+          "report_id": "f6f2bc79-fb1e-40e0-94d1-3d5bcfa438e4",
+          "report": {
+            "category": "intentional_workflow_termination",
+            "primary_cause": "The workflow step included an explicit unconditional 'exit 1' command after running the pytest command, causing the step to fail despite the tests passing.",
+            "explanation": "The test execution successfully passed 1 test in 0.75s (indicated by the pytest summary). However, the step script explicitly contained an unconditional 'exit 1' command, causing the bash shell (running with the -e flag or directly exiting) to terminate the step with exit code 1.",
+            "recommended_fix": "Remove the explicit unconditional 'exit 1' command from the workflow step configuration so that the step exit code reflects the actual test outcome.",
+            "failed_step": "Run tests",
+            "evidence_refs": [
+              "job:96668290338:line:204",
+              "job:96668290338:line:222",
+              "job:96668290338:line:223"
+            ],
+            "secondary_evidence_refs": [
+              "job:96668290338:line:273"
+            ],
+            "secondary_explanation": "A subsequent cleanup step or daemon interaction reported a 'No such container: cloud-bytexl-container' error, which is a secondary cleanup message and not the cause of the test step failure.",
+            "secondary_errors": [
+              {
+                "id": "job:96668290338:line:273",
+                "kind": "log_output",
+                "line": 273,
+                "text": "2026-08-21T04:27:18.2729636Z Error response from daemon: No such container: cloud-bytexl-container",
+                "job_id": 96668290338,
+                "relation": "cleanup"
+              }
+            ],
+            "parallel_failures": 0
+          }
+        },
+        {
+          "run_number": 13,
+          "run_id": 31722854108,
+          "attempt": 1,
+          "report_id": "249baec0-865f-4b99-946d-fd6c69d886c4",
+          "report": {
+            "category": "intentional_workflow_termination",
+            "primary_cause": "An explicit unconditional exit 1 command was executed in the script block, causing the step to terminate with exit code 1 without a prior diagnostic error.",
+            "explanation": "The step 'Check Python syntax' ran a script containing an explicit 'exit 1' command, resulting in process completion with exit code 1. There are no compiler errors or test failures reported prior to this termination.",
+            "recommended_fix": "Remove the explicit unconditional 'exit 1' command from the workflow step script so that it can complete based on the actual outcome of the python compilation check.",
+            "failed_step": "Check Python syntax",
+            "evidence_refs": [
+              "job:94523856476:line:180",
+              "job:94523856476:line:190"
+            ],
+            "secondary_evidence_refs": [
+              "job:94523856476:line:202"
+            ],
+            "secondary_explanation": "A subsequent cleanup step failed because the container 'cloud-bytexl-container' did not exist.",
+            "secondary_errors": [
+              {
+                "id": "job:94523856476:line:202",
+                "kind": "log_output",
+                "line": 202,
+                "text": "2026-08-13T16:52:27.9624985Z Error response from daemon: No such container: cloud-bytexl-container",
+                "job_id": 94523856476,
+                "relation": "cleanup"
+              }
+            ],
+            "parallel_failures": 0,
+            "final_source_evidence": {
+              "step_outcomes": [
+                {
+                  "name": "Set up job",
+                  "number": 1,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout repository",
+                  "number": 2,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "number": 3,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install backend dependencies",
+                  "number": 4,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check Python syntax",
+                  "number": 5,
+                  "conclusion": "failure"
+                },
+                {
+                  "name": "Run tests",
+                  "number": 6,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Build Docker image",
+                  "number": 7,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Run Docker container",
+                  "number": 8,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Test Docker container",
+                  "number": 9,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Update CI status",
+                  "number": 10,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "CI completed",
+                  "number": 11,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Cleanup Docker container",
+                  "number": 12,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "number": 23,
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Checkout repository",
+                  "number": 24,
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "number": 25,
+                  "conclusion": "success"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "run_number": 23,
+          "run_id": 33851582532,
+          "attempt": 1,
+          "report_id": "21cc3fee-e8e0-4f66-9e7b-6b631014729c",
+          "report": {
+            "category": "network_service_failure",
+            "primary_cause": "The curl command used to report CI status received an HTTP 404 Not Found error from the target endpoint.",
+            "explanation": "During the 'Update CI status - SUCCESS' step, a POST request was sent to https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status via curl with the '--fail' flag. The remote server responded with HTTP 404, causing curl to exit with status code 22.",
+            "recommended_fix": "Verify that the CI status endpoint URL is correct and that the receiving server/service is running and accessible at the specified route.",
+            "failed_step": "Update CI status - SUCCESS",
+            "evidence_refs": [
+              "job:100955373631:line:406",
+              "job:100955373631:line:419",
+              "job:100955373631:line:420"
+            ],
+            "secondary_evidence_refs": [
+              "job:100955373631:line:447",
+              "job:100955373631:line:448"
+            ],
+            "secondary_explanation": "A subsequent step ('Update CI status - FAILURE') also attempted to POST to the status URL and similarly failed with HTTP 404 and exit code 22.",
+            "secondary_errors": [
+              {
+                "id": "job:100955373631:line:447",
+                "kind": "log_output",
+                "line": 447,
+                "text": "2026-09-04T08:04:16.7856277Z curl: (22) The requested URL returned error: 404",
+                "job_id": 100955373631,
+                "relation": "later_error_in_same_job"
+              },
+              {
+                "id": "job:100955373631:line:448",
+                "kind": "log_output",
+                "line": 448,
+                "text": "2026-09-04T08:04:16.7875853Z ##[error]Process completed with exit code 22.",
+                "job_id": 100955373631,
+                "relation": "later_error_in_same_job"
+              }
+            ],
+            "parallel_failures": 0
+          }
+        },
+        {
+          "run_number": 27,
+          "run_id": 41589239366,
+          "attempt": 1,
+          "report_id": "8936e327-e79d-4b48-95f2-993c38346065",
+          "report": {
+            "category": "network_service_failure",
+            "primary_cause": "The HTTP request made via curl to the CI status endpoint returned a 404 Not Found error.",
+            "explanation": "During the step 'Update CI status - SUCCESS', a curl command was executed to notify an external service at `https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status`. The server responded with HTTP status 404 (Not Found). Because the curl command included the `--fail` option, it exited with code 22 upon encountering the HTTP error response, causing the step to fail.",
+            "recommended_fix": "Verify that the `$CI_STATUS_URL` endpoint is correct, accessible, and that the server-side route `/api/ci/status` is properly configured and running.",
+            "failed_step": "Update CI status - SUCCESS",
+            "evidence_refs": [
+              "job:125761870597:line:423",
+              "job:125761870597:line:435",
+              "job:125761870597:line:436"
+            ],
+            "secondary_evidence_refs": [
+              "job:125761870597:line:462",
+              "job:125761870597:line:463"
+            ],
+            "secondary_explanation": "A subsequent step ('Update CI status - FAILURE') also encountered a similar 404 HTTP error when trying to report status back to the same ngrok URL.",
+            "secondary_errors": [
+              {
+                "id": "job:125761870597:line:462",
+                "kind": "log_output",
+                "line": 462,
+                "text": "2026-11-03T06:20:56.9578190Z curl: (22) The requested URL returned error: 404",
+                "job_id": 125761870597,
+                "relation": "later_error_in_same_job"
+              },
+              {
+                "id": "job:125761870597:line:463",
+                "kind": "log_output",
+                "line": 463,
+                "text": "2026-11-03T06:20:56.9595403Z ##[error]Process completed with exit code 22.",
+                "job_id": 125761870597,
+                "relation": "later_error_in_same_job"
+              }
+            ],
+            "parallel_failures": 0
+          }
+        }
+      ]
+    },
+    "proposed_ground_truth.json": {
+      "status": "agent_proposals_pending_human_review",
+      "independence": "Prepared from saved input_evidence only, before inspecting response fields in this task. Prior automated ground-truth file headers were encountered during inventory; this is not a blinded human study. Saved excerpts were selected by the existing extractor, not an independent full-log collection.",
+      "source": "backend\\reports\\rca_reliability_validation.json",
+      "source_sha256": "1c7923cc30db601087c76dbbf6b5ae92c8d3b69ae5f67bd2d927dcd04b173044",
+      "cases": [
+        {
+          "run_number": 21,
+          "run_id": 32446985157,
+          "attempt": 1,
+          "repository": "saksham-1326/cloud-byte-xl-project",
+          "evidence": {
+            "failed_workflow": "Cloud-ByteXL CI",
+            "failed_job": "test",
+            "failed_step": "Run tests",
+            "step_number": 6,
+            "primary": [
+              {
+                "id": "job:96668290338:line:202",
+                "job_id": 96668290338,
+                "line": 202,
+                "text": "2026-08-21T04:27:15.7338767Z ##[group]Run python -m pytest backend/tests/test_app.py",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:96668290338:line:203",
+                "job_id": 96668290338,
+                "line": 203,
+                "text": "2026-08-21T04:27:15.7339217Z python -m pytest backend/tests/test_app.py",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:96668290338:line:204",
+                "job_id": 96668290338,
+                "line": 204,
+                "text": "2026-08-21T04:27:15.7339801Z exit 1",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:96668290338:line:205",
+                "job_id": 96668290338,
+                "line": 205,
+                "text": "2026-08-21T04:27:15.7376306Z shell: /usr/bin/bash -e {0}",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:96668290338:line:207",
+                "job_id": 96668290338,
+                "line": 207,
+                "text": "2026-08-21T04:27:15.7376921Z   CI_STATUS_URL: https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:96668290338:line:214",
+                "job_id": 96668290338,
+                "line": 214,
+                "text": "2026-08-21T04:27:15.7380053Z ##[endgroup]",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:96668290338:line:216",
+                "job_id": 96668290338,
+                "line": 216,
+                "text": "2026-08-21T04:27:17.3585608Z platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:96668290338:line:222",
+                "job_id": 96668290338,
+                "line": 222,
+                "text": "2026-08-21T04:27:17.3811205Z ============================== 1 passed in 0.75s ===============================",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:96668290338:line:223",
+                "job_id": 96668290338,
+                "line": 223,
+                "text": "2026-08-21T04:27:17.4258327Z ##[error]Process completed with exit code 1.",
+                "kind": "log_output"
+              }
+            ],
+            "secondary": [
+              {
+                "id": "job:96668290338:line:273",
+                "job_id": 96668290338,
+                "line": 273,
+                "text": "2026-08-21T04:27:18.2729636Z Error response from daemon: No such container: cloud-bytexl-container",
+                "kind": "log_output",
+                "relation": "cleanup"
+              }
+            ],
+            "parallel_failures": 0,
+            "additional_failed_steps": [],
+            "facts": {
+              "commands": [
+                {
+                  "evidence_ref": "job:96668290338:line:202",
+                  "text": "##[group]Run python -m pytest backend/tests/test_app.py",
+                  "command": "python -m pytest backend/tests/test_app.py",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:96668290338:line:203",
+                  "text": "python -m pytest backend/tests/test_app.py",
+                  "command": "python -m pytest backend/tests/test_app.py",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:96668290338:line:204",
+                  "text": "exit 1",
+                  "command": "exit 1",
+                  "execution_status": "script_echo_not_execution_proof"
+                }
+              ],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:96668290338:line:223",
+                  "text": "##[error]Process completed with exit code 1.",
+                  "code": 1
+                }
+              ],
+              "explicit_exit_commands": [
+                {
+                  "evidence_ref": "job:96668290338:line:204",
+                  "text": "exit 1",
+                  "code": 1,
+                  "unconditional_in_visible_script": true
+                }
+              ],
+              "pytest_summaries": [
+                {
+                  "evidence_ref": "job:96668290338:line:222",
+                  "text": "============================== 1 passed in 0.75s ===============================",
+                  "counts": {
+                    "passed": 1
+                  }
+                }
+              ],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": [
+                {
+                  "evidence_ref": "job:96668290338:line:205",
+                  "text": "shell: /usr/bin/bash -e {0}"
+                }
+              ]
+            },
+            "secondary_facts": {
+              "commands": [],
+              "exit_codes": [],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [],
+              "docker_errors": [
+                {
+                  "evidence_ref": "job:96668290338:line:273",
+                  "text": "Error response from daemon: No such container: cloud-bytexl-container"
+                }
+              ],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": []
+            },
+            "evidence_truncated": false
+          },
+          "proposed_category": "intentional_workflow_termination",
+          "proposed_cause": "The script contains unconditional exit 1 after pytest reports 1 passed.",
+          "proposed_fix": "Remove the deliberate exit 1 if this failure injection is no longer wanted.",
+          "secondary_and_uncertainty": "Missing container during later cleanup is secondary.",
+          "human_review": null
+        },
+        {
+          "run_number": 13,
+          "run_id": 31722854108,
+          "attempt": 1,
+          "repository": "saksham-1326/cloud-byte-xl-project",
+          "evidence": {
+            "failed_workflow": "Cloud-ByteXL CI",
+            "failed_job": "test",
+            "failed_step": "Check Python syntax",
+            "step_number": 5,
+            "primary": [
+              {
+                "id": "job:94523856476:line:178",
+                "job_id": 94523856476,
+                "line": 178,
+                "text": "2026-08-13T16:52:27.8295104Z ##[group]Run python -m py_compile backend/app.py",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:94523856476:line:179",
+                "job_id": 94523856476,
+                "line": 179,
+                "text": "2026-08-13T16:52:27.8295578Z python -m py_compile backend/app.py",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:94523856476:line:180",
+                "job_id": 94523856476,
+                "line": 180,
+                "text": "2026-08-13T16:52:27.8295876Z exit 1",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:94523856476:line:181",
+                "job_id": 94523856476,
+                "line": 181,
+                "text": "2026-08-13T16:52:27.8334588Z shell: /usr/bin/bash -e {0}",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:94523856476:line:189",
+                "job_id": 94523856476,
+                "line": 189,
+                "text": "2026-08-13T16:52:27.8337517Z ##[endgroup]",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:94523856476:line:190",
+                "job_id": 94523856476,
+                "line": 190,
+                "text": "2026-08-13T16:52:27.8743501Z ##[error]Process completed with exit code 1.",
+                "kind": "log_output"
+              }
+            ],
+            "secondary": [
+              {
+                "id": "job:94523856476:line:202",
+                "job_id": 94523856476,
+                "line": 202,
+                "text": "2026-08-13T16:52:27.9624985Z Error response from daemon: No such container: cloud-bytexl-container",
+                "kind": "log_output",
+                "relation": "cleanup"
+              }
+            ],
+            "parallel_failures": 0,
+            "additional_failed_steps": [],
+            "facts": {
+              "commands": [
+                {
+                  "evidence_ref": "job:94523856476:line:178",
+                  "text": "##[group]Run python -m py_compile backend/app.py",
+                  "command": "python -m py_compile backend/app.py",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:94523856476:line:179",
+                  "text": "python -m py_compile backend/app.py",
+                  "command": "python -m py_compile backend/app.py",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:94523856476:line:180",
+                  "text": "exit 1",
+                  "command": "exit 1",
+                  "execution_status": "script_echo_not_execution_proof"
+                }
+              ],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:94523856476:line:190",
+                  "text": "##[error]Process completed with exit code 1.",
+                  "code": 1
+                }
+              ],
+              "explicit_exit_commands": [
+                {
+                  "evidence_ref": "job:94523856476:line:180",
+                  "text": "exit 1",
+                  "code": 1,
+                  "unconditional_in_visible_script": true
+                }
+              ],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": [
+                {
+                  "evidence_ref": "job:94523856476:line:181",
+                  "text": "shell: /usr/bin/bash -e {0}"
+                }
+              ]
+            },
+            "secondary_facts": {
+              "commands": [],
+              "exit_codes": [],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [],
+              "docker_errors": [
+                {
+                  "evidence_ref": "job:94523856476:line:202",
+                  "text": "Error response from daemon: No such container: cloud-bytexl-container"
+                }
+              ],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": []
+            },
+            "evidence_truncated": false
+          },
+          "proposed_category": "intentional_workflow_termination",
+          "proposed_cause": "The syntax-check script contains unconditional exit 1; no syntax diagnostic appears in the saved excerpt.",
+          "proposed_fix": "Remove the explicit exit 1 if unintended; inspect full compiler output before prescribing a code syntax fix.",
+          "secondary_and_uncertainty": "Missing container during later cleanup is secondary; py_compile success is not separately proven by this excerpt.",
+          "human_review": null
+        },
+        {
+          "run_number": 23,
+          "run_id": 33851582532,
+          "attempt": 1,
+          "repository": "saksham-1326/cloud-byte-xl-project",
+          "evidence": {
+            "failed_workflow": "Cloud-ByteXL CI",
+            "failed_job": "test",
+            "failed_step": "Update CI status - SUCCESS",
+            "step_number": 10,
+            "primary": [
+              {
+                "id": "job:100955373631:line:393",
+                "job_id": 100955373631,
+                "line": 393,
+                "text": "2026-09-04T08:04:16.4636115Z ##[group]Run curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:394",
+                "job_id": 100955373631,
+                "line": 394,
+                "text": "2026-09-04T08:04:16.4636448Z curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:395",
+                "job_id": 100955373631,
+                "line": 395,
+                "text": "2026-09-04T08:04:16.4636716Z   -H \"Content-Type: application/json\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:396",
+                "job_id": 100955373631,
+                "line": 396,
+                "text": "2026-09-04T08:04:16.4636978Z   -H \"ngrok-skip-browser-warning: true\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:397",
+                "job_id": 100955373631,
+                "line": 397,
+                "text": "2026-09-04T08:04:16.4637205Z   -d '{",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:398",
+                "job_id": 100955373631,
+                "line": 398,
+                "text": "2026-09-04T08:04:16.4637391Z     \"status\": \"SUCCESS\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:399",
+                "job_id": 100955373631,
+                "line": 399,
+                "text": "2026-09-04T08:04:16.4637595Z     \"build\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:400",
+                "job_id": 100955373631,
+                "line": 400,
+                "text": "2026-09-04T08:04:16.4637799Z     \"tests\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:401",
+                "job_id": 100955373631,
+                "line": 401,
+                "text": "2026-09-04T08:04:16.4638229Z     \"docker\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:402",
+                "job_id": 100955373631,
+                "line": 402,
+                "text": "2026-09-04T08:04:16.4638524Z     \"workflow\": \"Cloud-ByteXL CI\"",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:403",
+                "job_id": 100955373631,
+                "line": 403,
+                "text": "2026-09-04T08:04:16.4638781Z   }'",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:100955373631:line:404",
+                "job_id": 100955373631,
+                "line": 404,
+                "text": "2026-09-04T08:04:16.4672064Z shell: /usr/bin/bash -e {0}",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:100955373631:line:406",
+                "job_id": 100955373631,
+                "line": 406,
+                "text": "2026-09-04T08:04:16.4672593Z   CI_STATUS_URL: https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:100955373631:line:413",
+                "job_id": 100955373631,
+                "line": 413,
+                "text": "2026-09-04T08:04:16.4674861Z ##[endgroup]",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:100955373631:line:419",
+                "job_id": 100955373631,
+                "line": 419,
+                "text": "2026-09-04T08:04:16.6374885Z curl: (22) The requested URL returned error: 404",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:100955373631:line:420",
+                "job_id": 100955373631,
+                "line": 420,
+                "text": "2026-09-04T08:04:16.6398961Z ##[error]Process completed with exit code 22.",
+                "kind": "log_output"
+              }
+            ],
+            "secondary": [
+              {
+                "id": "job:100955373631:line:447",
+                "job_id": 100955373631,
+                "line": 447,
+                "text": "2026-09-04T08:04:16.7856277Z curl: (22) The requested URL returned error: 404",
+                "kind": "log_output",
+                "relation": "later_error_in_same_job"
+              },
+              {
+                "id": "job:100955373631:line:448",
+                "job_id": 100955373631,
+                "line": 448,
+                "text": "2026-09-04T08:04:16.7875853Z ##[error]Process completed with exit code 22.",
+                "kind": "log_output",
+                "relation": "later_error_in_same_job"
+              }
+            ],
+            "parallel_failures": 0,
+            "additional_failed_steps": [
+              {
+                "job_id": 100955373631,
+                "job": "test",
+                "step": "Update CI status - FAILURE",
+                "step_number": 11,
+                "relation": "later_step_in_same_job"
+              }
+            ],
+            "facts": {
+              "commands": [
+                {
+                  "evidence_ref": "job:100955373631:line:393",
+                  "text": "##[group]Run curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "command": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:394",
+                  "text": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "command": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:395",
+                  "text": "-H \"Content-Type: application/json\" \\",
+                  "command": "-H \"Content-Type: application/json\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:396",
+                  "text": "-H \"ngrok-skip-browser-warning: true\" \\",
+                  "command": "-H \"ngrok-skip-browser-warning: true\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:397",
+                  "text": "-d '{",
+                  "command": "-d '{",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:398",
+                  "text": "\"status\": \"SUCCESS\",",
+                  "command": "\"status\": \"SUCCESS\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:399",
+                  "text": "\"build\": \"PASSED\",",
+                  "command": "\"build\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:400",
+                  "text": "\"tests\": \"PASSED\",",
+                  "command": "\"tests\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:401",
+                  "text": "\"docker\": \"PASSED\",",
+                  "command": "\"docker\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:402",
+                  "text": "\"workflow\": \"Cloud-ByteXL CI\"",
+                  "command": "\"workflow\": \"Cloud-ByteXL CI\"",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:100955373631:line:403",
+                  "text": "}'",
+                  "command": "}'",
+                  "execution_status": "script_echo_not_execution_proof"
+                }
+              ],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:100955373631:line:420",
+                  "text": "##[error]Process completed with exit code 22.",
+                  "code": 22
+                }
+              ],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [
+                {
+                  "evidence_ref": "job:100955373631:line:419",
+                  "text": "curl: (22) The requested URL returned error: 404",
+                  "code": 404
+                }
+              ],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": [
+                {
+                  "evidence_ref": "job:100955373631:line:404",
+                  "text": "shell: /usr/bin/bash -e {0}"
+                }
+              ]
+            },
+            "secondary_facts": {
+              "commands": [],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:100955373631:line:448",
+                  "text": "##[error]Process completed with exit code 22.",
+                  "code": 22
+                }
+              ],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [
+                {
+                  "evidence_ref": "job:100955373631:line:447",
+                  "text": "curl: (22) The requested URL returned error: 404",
+                  "code": 404
+                }
+              ],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": []
+            },
+            "evidence_truncated": false
+          },
+          "proposed_category": "network_service_failure",
+          "proposed_cause": "The success-status curl --fail callback receives HTTP 404 and exits 22.",
+          "proposed_fix": "Check the configured callback URL and server route; restore a reachable correct endpoint.",
+          "secondary_and_uncertainty": "A later callback also receives 404 and exits 22. The origin of the 404 (tunnel, proxy, or application) is unresolved.",
+          "human_review": null
+        },
+        {
+          "run_number": 27,
+          "run_id": 41589239366,
+          "attempt": 1,
+          "repository": "saksham-1326/cloud-byte-xl-project",
+          "evidence": {
+            "failed_workflow": "Cloud-ByteXL CI",
+            "failed_job": "test",
+            "failed_step": "Update CI status - SUCCESS",
+            "step_number": 10,
+            "primary": [
+              {
+                "id": "job:125761870597:line:410",
+                "job_id": 125761870597,
+                "line": 410,
+                "text": "2026-11-03T06:20:56.7342406Z ##[group]Run curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:411",
+                "job_id": 125761870597,
+                "line": 411,
+                "text": "2026-11-03T06:20:56.7342798Z curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:412",
+                "job_id": 125761870597,
+                "line": 412,
+                "text": "2026-11-03T06:20:56.7343128Z   -H \"Content-Type: application/json\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:413",
+                "job_id": 125761870597,
+                "line": 413,
+                "text": "2026-11-03T06:20:56.7343454Z   -H \"ngrok-skip-browser-warning: true\" \\",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:414",
+                "job_id": 125761870597,
+                "line": 414,
+                "text": "2026-11-03T06:20:56.7343737Z   -d '{",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:415",
+                "job_id": 125761870597,
+                "line": 415,
+                "text": "2026-11-03T06:20:56.7343941Z     \"status\": \"SUCCESS\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:416",
+                "job_id": 125761870597,
+                "line": 416,
+                "text": "2026-11-03T06:20:56.7344191Z     \"build\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:417",
+                "job_id": 125761870597,
+                "line": 417,
+                "text": "2026-11-03T06:20:56.7344434Z     \"tests\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:418",
+                "job_id": 125761870597,
+                "line": 418,
+                "text": "2026-11-03T06:20:56.7344682Z     \"docker\": \"PASSED\",",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:419",
+                "job_id": 125761870597,
+                "line": 419,
+                "text": "2026-11-03T06:20:56.7344940Z     \"workflow\": \"Cloud-ByteXL CI\"",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:420",
+                "job_id": 125761870597,
+                "line": 420,
+                "text": "2026-11-03T06:20:56.7345200Z   }'",
+                "kind": "command_script"
+              },
+              {
+                "id": "job:125761870597:line:421",
+                "job_id": 125761870597,
+                "line": 421,
+                "text": "2026-11-03T06:20:56.7371653Z shell: /usr/bin/bash -e {0}",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:125761870597:line:423",
+                "job_id": 125761870597,
+                "line": 423,
+                "text": "2026-11-03T06:20:56.7372243Z   CI_STATUS_URL: https://implode-elephant-sensitive.ngrok-free.dev/api/ci/status",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:125761870597:line:430",
+                "job_id": 125761870597,
+                "line": 430,
+                "text": "2026-11-03T06:20:56.7375143Z ##[endgroup]",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:125761870597:line:435",
+                "job_id": 125761870597,
+                "line": 435,
+                "text": "2026-11-03T06:20:56.8528891Z curl: (22) The requested URL returned error: 404",
+                "kind": "log_output"
+              },
+              {
+                "id": "job:125761870597:line:436",
+                "job_id": 125761870597,
+                "line": 436,
+                "text": "2026-11-03T06:20:56.8558602Z ##[error]Process completed with exit code 22.",
+                "kind": "log_output"
+              }
+            ],
+            "secondary": [
+              {
+                "id": "job:125761870597:line:462",
+                "job_id": 125761870597,
+                "line": 462,
+                "text": "2026-11-03T06:20:56.9578190Z curl: (22) The requested URL returned error: 404",
+                "kind": "log_output",
+                "relation": "later_error_in_same_job"
+              },
+              {
+                "id": "job:125761870597:line:463",
+                "job_id": 125761870597,
+                "line": 463,
+                "text": "2026-11-03T06:20:56.9595403Z ##[error]Process completed with exit code 22.",
+                "kind": "log_output",
+                "relation": "later_error_in_same_job"
+              }
+            ],
+            "parallel_failures": 0,
+            "additional_failed_steps": [
+              {
+                "job_id": 125761870597,
+                "job": "test",
+                "step": "Update CI status - FAILURE",
+                "step_number": 11,
+                "relation": "later_step_in_same_job"
+              }
+            ],
+            "facts": {
+              "commands": [
+                {
+                  "evidence_ref": "job:125761870597:line:410",
+                  "text": "##[group]Run curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "command": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:411",
+                  "text": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "command": "curl --fail -X POST \"$CI_STATUS_URL\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:412",
+                  "text": "-H \"Content-Type: application/json\" \\",
+                  "command": "-H \"Content-Type: application/json\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:413",
+                  "text": "-H \"ngrok-skip-browser-warning: true\" \\",
+                  "command": "-H \"ngrok-skip-browser-warning: true\" \\",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:414",
+                  "text": "-d '{",
+                  "command": "-d '{",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:415",
+                  "text": "\"status\": \"SUCCESS\",",
+                  "command": "\"status\": \"SUCCESS\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:416",
+                  "text": "\"build\": \"PASSED\",",
+                  "command": "\"build\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:417",
+                  "text": "\"tests\": \"PASSED\",",
+                  "command": "\"tests\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:418",
+                  "text": "\"docker\": \"PASSED\",",
+                  "command": "\"docker\": \"PASSED\",",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:419",
+                  "text": "\"workflow\": \"Cloud-ByteXL CI\"",
+                  "command": "\"workflow\": \"Cloud-ByteXL CI\"",
+                  "execution_status": "script_echo_not_execution_proof"
+                },
+                {
+                  "evidence_ref": "job:125761870597:line:420",
+                  "text": "}'",
+                  "command": "}'",
+                  "execution_status": "script_echo_not_execution_proof"
+                }
+              ],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:125761870597:line:436",
+                  "text": "##[error]Process completed with exit code 22.",
+                  "code": 22
+                }
+              ],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [
+                {
+                  "evidence_ref": "job:125761870597:line:435",
+                  "text": "curl: (22) The requested URL returned error: 404",
+                  "code": 404
+                }
+              ],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": [
+                {
+                  "evidence_ref": "job:125761870597:line:421",
+                  "text": "shell: /usr/bin/bash -e {0}"
+                }
+              ]
+            },
+            "secondary_facts": {
+              "commands": [],
+              "exit_codes": [
+                {
+                  "evidence_ref": "job:125761870597:line:463",
+                  "text": "##[error]Process completed with exit code 22.",
+                  "code": 22
+                }
+              ],
+              "explicit_exit_commands": [],
+              "pytest_summaries": [],
+              "compiler_errors": [],
+              "dependency_errors": [],
+              "test_errors": [],
+              "http_errors": [
+                {
+                  "evidence_ref": "job:125761870597:line:462",
+                  "text": "curl: (22) The requested URL returned error: 404",
+                  "code": 404
+                }
+              ],
+              "docker_errors": [],
+              "docker_build_errors": [],
+              "network_errors": [],
+              "shells": []
+            },
+            "evidence_truncated": false
+          },
+          "proposed_category": "network_service_failure",
+          "proposed_cause": "The success-status curl --fail callback receives HTTP 404 and exits 22.",
+          "proposed_fix": "Check callback routing and endpoint availability using server-side logs.",
+          "secondary_and_uncertainty": "A later callback also receives 404 and exits 22. The server-side cause is unresolved.",
+          "human_review": null
+        }
+      ]
+    },
+    "suggested_decisions.json": [
+      {
+        "report_id": "2f7a967e-9299-49a7-b8f1-689bcda373e6",
+        "run_number": 13,
+        "source": "live_rca_validation.json",
+        "suggested_decision": "reject",
+        "explanation": "Compilation failure and syntax repair are unsupported: the script includes exit 1 and no syntax diagnostic. Secondary cleanup omitted.",
+        "review_question": "Was exit 1 intentional, and is the saved compiler context enough to approve the proposed primary cause?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "249baec0-865f-4b99-946d-fd6c69d886c4",
+        "run_number": 13,
+        "source": "rca_reliability_validation.json",
+        "suggested_decision": "reject",
+        "explanation": "Primary cause, category, step and fix agree. Secondary claim that cleanup step failed contradicts successful cleanup metadata; a daemon error is not a failed step. Full compiler output remains desirable.",
+        "review_question": "Was exit 1 intentional, and is the saved compiler context enough to approve the proposed primary cause?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "51771fdd-b3a1-4fb2-af21-382fdb39d5cf",
+        "run_number": 21,
+        "source": "live_rca_validation.json",
+        "suggested_decision": "reject",
+        "explanation": "Cause and fix match, but unit_test_failure contradicts the passing pytest summary. Secondary cleanup omitted.",
+        "review_question": "Do you agree that the passing test summary rules out unit_test_failure as the category for this failure?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "f6f2bc79-fb1e-40e0-94d1-3d5bcfa438e4",
+        "run_number": 21,
+        "source": "rca_reliability_validation.json",
+        "suggested_decision": "accept",
+        "explanation": "Cause, category, step, fix and cleanup distinction agree with preserved evidence.",
+        "review_question": "Do you agree that the passing test summary rules out unit_test_failure as the category for this failure?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "c02232e3-53a3-4b83-8870-528c965a0913",
+        "run_number": 23,
+        "source": "live_rca_validation.json",
+        "suggested_decision": "uncertain",
+        "explanation": "Primary cause, category, step and diagnostic fix agree. Later callback failure omitted; parallel_failures=1 does not prove a separate concurrent job.",
+        "review_question": "Is the observed HTTP failure enough for acceptance, or do you require server logs and the missing secondary-error discussion?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "21cc3fee-e8e0-4f66-9e7b-6b631014729c",
+        "run_number": 23,
+        "source": "rca_reliability_validation.json",
+        "suggested_decision": "accept",
+        "explanation": "Cause, category, step, fix and subsequent callback distinction agree. Server-side origin of 404 remains unresolved.",
+        "review_question": "Is the observed HTTP failure enough for acceptance, or do you require server logs and the missing secondary-error discussion?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "52b27489-c9d4-4c6c-aee7-79dd1dc3c99a",
+        "run_number": 27,
+        "source": "live_rca_validation.json",
+        "suggested_decision": "uncertain",
+        "explanation": "Primary cause, category, step and diagnostic fix agree. Later callback failure omitted; PASSED strings in the posted JSON are not independent test or build results.",
+        "review_question": "Can you accept a diagnosis of the observed callback failure while leaving the origin of 404 unresolved?",
+        "assessment_source": "agent_not_human"
+      },
+      {
+        "report_id": "8936e327-e79d-4b48-95f2-993c38346065",
+        "run_number": 27,
+        "source": "rca_reliability_validation.json",
+        "suggested_decision": "accept",
+        "explanation": "Cause, category, step, fix and subsequent callback distinction agree. Server-side origin of 404 remains unresolved.",
+        "review_question": "Can you accept a diagnosis of the observed callback failure while leaving the origin of 404 unresolved?",
+        "assessment_source": "agent_not_human"
+      }
+    ],
+    "human_worksheet.json": [
+      {
+        "report_id": "51771fdd-b3a1-4fb2-af21-382fdb39d5cf",
+        "run_number": 21,
+        "source": "live_rca_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 32446985157,
+        "attempt": 1,
+        "session": "earlier",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "Missing container during later cleanup is secondary.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "f6f2bc79-fb1e-40e0-94d1-3d5bcfa438e4",
+        "run_number": 21,
+        "source": "rca_reliability_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 32446985157,
+        "attempt": 1,
+        "session": "improved",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "Missing container during later cleanup is secondary.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "2f7a967e-9299-49a7-b8f1-689bcda373e6",
+        "run_number": 13,
+        "source": "live_rca_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 31722854108,
+        "attempt": 1,
+        "session": "earlier",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "Missing container during later cleanup is secondary; py_compile success is not separately proven by this excerpt.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "249baec0-865f-4b99-946d-fd6c69d886c4",
+        "run_number": 13,
+        "source": "rca_reliability_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 31722854108,
+        "attempt": 1,
+        "session": "improved",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "Missing container during later cleanup is secondary; py_compile success is not separately proven by this excerpt.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "c02232e3-53a3-4b83-8870-528c965a0913",
+        "run_number": 23,
+        "source": "live_rca_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 33851582532,
+        "attempt": 1,
+        "session": "earlier",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "A later callback also receives 404 and exits 22. The origin of the 404 (tunnel, proxy, or application) is unresolved.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "21cc3fee-e8e0-4f66-9e7b-6b631014729c",
+        "run_number": 23,
+        "source": "rca_reliability_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 33851582532,
+        "attempt": 1,
+        "session": "improved",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "A later callback also receives 404 and exits 22. The origin of the 404 (tunnel, proxy, or application) is unresolved.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "52b27489-c9d4-4c6c-aee7-79dd1dc3c99a",
+        "run_number": 27,
+        "source": "live_rca_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 41589239366,
+        "attempt": 1,
+        "session": "earlier",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "A later callback also receives 404 and exits 22. The server-side cause is unresolved.",
+        "additional_evidence_needed": null
+      },
+      {
+        "report_id": "8936e327-e79d-4b48-95f2-993c38346065",
+        "run_number": 27,
+        "source": "rca_reliability_validation.json",
+        "review_source": null,
+        "reviewer": null,
+        "completed": false,
+        "primary_cause_correct": null,
+        "category_correct": null,
+        "step_correct": null,
+        "evidence_correct": null,
+        "unsupported_claims": null,
+        "fix_correct": null,
+        "decision": null,
+        "corrected_ground_truth": null,
+        "comment": null,
+        "repository": "saksham-1326/cloud-byte-xl-project",
+        "run_id": 41589239366,
+        "attempt": 1,
+        "session": "improved",
+        "evidence_file": "proposed_ground_truth.json",
+        "evidence_limitations": "A later callback also receives 404 and exits 22. The server-side cause is unresolved.",
+        "additional_evidence_needed": null
+      }
+    ]
+  }
+}

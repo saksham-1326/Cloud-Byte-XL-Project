@@ -495,3 +495,186 @@ For project evaluation or a technical interview, a reproducible demonstration ca
 Cloud-ByteXL demonstrates how source inspection, historical workflow data, machine learning, evidence-grounded diagnosis, and transactional status handling can work together in a DevOps tool. Its strongest verified foundation is the backend: explicit data provenance, reproducible regression tests, isolated database checks, and durable callback behavior. Further frontend integration and broader real-world evaluation will determine how effectively that foundation supports day-to-day development.
 
 For deeper implementation details, read [AI Intelligence](backend/AI_INTELLIGENCE.md), [Durable CI Callbacks](backend/DURABLE_CI_CALLBACKS.md), and [CI Verification](backend/CI_VERIFICATION.md). The broader [System Architecture document](System_Architecture.md) records design intent; its cloud-service diagrams should not be read as proof of deployed infrastructure.
+
+## Independent RCA manual review (2026-11-21)
+
+Review-package links below point to local generated files, which are not checked
+into Git. A clean checkout contains the frozen regression fixtures; generating
+the actual package requires the preserved original input artifacts.
+
+Start with the plain-English [review guide](backend/reports/independent_review/REVIEW_GUIDE.md).
+It explains all four failures and compares the earlier and improved responses.
+Agent suggestions are separate in `suggested_decisions.json`; actual decisions
+and rubric answers remain null in the worksheet until a person reviews them.
+
+The user-requested [ChatGPT-assisted recommendations](backend/reports/independent_review/assisted_recommendations.json)
+are stored separately from the human worksheet. They reject both #13 responses,
+reject earlier/accept improved #21, and leave earlier #23/#27 uncertain while
+accepting the improved responses for the observed HTTP 404 only. Run #13's
+compiler outcome and the exact server-side reasons for HTTP 404 remain unresolved.
+These are not independent human verification and were not submitted to any API.
+
+[Provisional assisted metrics](backend/reports/independent_review/provisional_assisted_metrics.json)
+contain decision statistics only: 3 accept, 3 reject and 2 uncertain across
+8 reports on 4 workflows. The rejection proportion is 3/6 among resolved
+recommendations; the 2 uncertain decisions are excluded. Earlier session: 2
+reject, 2 uncertain; improved session: 3 accept, 1 reject. These proportions
+are not correctness or production accuracy scores. Criterion-level accuracy
+metrics are not inferred from acceptance decisions.
+
+Reproduce these two assisted artifacts with
+`python -m backend.tools.assisted_rca_recommendations`. This command preserves the
+human worksheet and all original responses and evidence. Validation including
+`backend/tests/test_assisted_rca_recommendations.py` plus the four review/RCA test
+files listed below passed **68 tests**, with external HTTP blocked by test fixtures.
+
+The [review package](backend/reports/independent_review/REVIEW_PACKAGE.md) presents
+preserved log excerpts, independent agent proposals, and eight saved Gemini
+responses across runs #13, #21, #23 and #27. These are proposals for manual review,
+not completed human validation. Historical artifacts also identify failed runs
+#4 and #8 with unavailable logs. Database and GitHub connectivity were unavailable
+during initial evidence preparation, so these are historical availability counts.
+
+Fill in [human_worksheet.json](backend/reports/independent_review/human_worksheet.json)
+only after reviewing each response. Unresolved judgments stay null. The offline
+calculator in `backend/ai_intelligence/review_metrics.py` provides primary-cause,
+category, failed-step, evidence, unsupported-claim, fix and rejection rates, each with its own
+resolved sample size. No human reviews are prefilled; initial metric denominators
+are zero and rates are null. Four runs from one repository cannot establish
+production accuracy.
+
+Metrics include separate earlier/improved source sessions and distinct workflow
+counts. Only rows explicitly marked human and completed contribute. Unanswered
+criteria stay null and are excluded per criterion; uncertain decisions are
+counted separately and excluded from the accept/reject rejection denominator.
+This supports incomplete evidence without guessing a pass or failure.
+
+Rebuild the package with `python -m backend.tools.prepare_independent_review`.
+The builder reads saved artifacts, preserves any existing manual worksheet, and
+makes no network, provider, database or verification API calls. To calculate
+metrics from the completed worksheet, use the command in the package. The
+existing verification API lacks primary-cause and uncertain-decision fields;
+do not submit uncertain rows through it. No real report was submitted for human verification.
+
+Validation: `backend/venv/Scripts/python.exe -m pytest
+backend/tests/test_review_metrics.py backend/tests/test_independent_review_package.py
+backend/tests/test_rca_reliability.py backend/tests/test_gemini_rca.py -q` passed 66 tests. The root `.venv` lacks
+`jsonschema` for the existing RCA tests; the backend environment has it.
+
+Generated `backend/reports/` and `backend/ai_audit.json` are ignored and are not
+part of the proposed evaluation commit. Offline package tests use the explicitly
+frozen historical fixture `backend/tests/fixtures/independent_review_inputs.json`,
+so they do not require local generated reports. Regenerating the actual review
+package still requires the original saved source files; a clean checkout only
+contains regression inputs, not a new human evaluation. Source hash checks
+confirm the two original RCA session files are unchanged. The human worksheet
+has zero completed rows; no real report was submitted to the verification API.
+Initial read-only access to the application database failed; the later isolated
+test database is separate and does not verify its current state. Generated data
+is excluded from the source commits. The reviewed RCA, ML reliability and
+prospective verification changes are committed separately.
+
+## ML historical audit and prospective plan (2026-11-21)
+
+See [ML prediction audit](docs/ML_PREDICTION_AUDIT.md) for architecture, provenance,
+leakage findings, the RCA commit scope and the prospective shadow implementation
+plan. The saved historical dataset has **27 eligible runs: 21 success, 6 failure**,
+split into **16 training / 5 validation / 6 test**. Recovered split class counts
+are 13/3, 4/1 and 4/2 success/failure. These are historical records, not a fresh
+database inventory; read-only database access was unavailable.
+
+Reproduce the saved selected-model test scores and the DummyClassifier prior
+baseline using `backend/venv/Scripts/python.exe -m backend.tools.replay_historical_ml`.
+This replays saved probabilities and recovers the dummy training prior from
+aggregate counts. It does not retrain or reconstruct missing training records.
+The local saved logistic artifact also reproduced all six saved probabilities
+when inspected read-only during the audit.
+
+| Historical test metric (6 runs) | Selected logistic | Dummy prior |
+| --- | ---: | ---: |
+| Accuracy | 0.5 | 0.6666666667 |
+| Precision / recall / F1 | 0 / 0 / 0 | 0 / 0 / 0 |
+| PR-AUC (average precision) | 0.3333333333 | 0.3333333333 |
+| Confusion matrix [[TN, FP], [FN, TP]] | [[3, 1], [2, 0]] | [[4, 0], [2, 0]] |
+
+Both actual test failures were missed. The tiny validation sample contains only
+one failure; its perfect validation F1 did not generalize. For #27, commit-size
+features have large negative logistic contributions, explaining the extreme
+low score without explaining the real HTTP failure. Runtime endpoint health is
+not directly represented. No threshold was forced and no model was changed.
+
+Feature tests verify exclusion of target outcome, duration, logs and errors,
+and completion-time restrictions on history. The split helper now purges training
+against the earliest surviving validation/test cutoff even when validation is
+empty. The unchanged regression assertion now passes, with an additional exact
+cutoff boundary test. Training still refuses insufficient partitions; the recorded
+experiment had five validation rows. Historical feature availability and exact split
+membership cannot be fully verified without the raw records.
+
+Queued-run prediction, duplicate-resistant persistence, separate outcome joins
+and timing validation already exist. Genuine prospective performance remains
+unverified. Queued-state rechecks still race with run start; later reconciliation
+must exclude at/after-start predictions and leave missing start evidence
+unverifiable. No historical backtest is prospective evidence.
+
+Follow-up [isolated shadow verification](docs/SHADOW_VERIFICATION.md): full backend
+regression **212 passed, 0 failed, 0 skipped, 0 expected failures**, using a fresh
+PostgreSQL 17 cluster on 127.0.0.1:55439 with database cloud_bytexl_ci_test and
+role cloud_bytexl_ci. No personal or production database was contacted. ML regression:
+**32 passed**; existing RCA regression: **68 passed**. All tests blocked unmocked
+external HTTP; controlled lifecycle tests are not prospective accuracy evidence.
+Focused PostgreSQL/shadow/callback suite: **60 passed, 0 failed, 0 skipped**.
+
+The prediction service now rejects inconsistent identities and missing SHAs.
+Persistence rejects stale completed-to-queued updates, mismatched commit metadata
+and model/repository associations. Prediction insertion locks the eligible queued
+run row through insertion; concurrent duplicates preserve one original prediction,
+and outcome reconciliation preserves its original fields. Database rollback and
+late/unverifiable timing exclusions are covered. There are no schema/migration,
+provider, callback or frontend changes and no retraining/replacement of the saved
+model. Generated reports and model artifacts remain excluded from commits.
+
+A read-only GitHub check found 35 runs and no queued run. No workflow or failure
+was manufactured. Genuine prospective prediction performance therefore remains
+unverified; the next step is observing a naturally occurring eligible run and
+its outcome. Historical accuracy and small-sample limitations remain unchanged.
+
+## Live prediction readiness and proposed commit scopes
+
+The [prospective prediction plan](docs/PROSPECTIVE_PREDICTION_PLAN.md) documents
+the reviewed RCA/ML commit scopes and a step-by-step natural-run procedure with
+independent read-only database readback. The reviewed scopes are recorded in
+three focused source commits; publication and merge are separate actions.
+Generated reports, secrets, model artifacts and unrelated frontend/root-package
+changes are excluded from these commits and preserved locally.
+
+The running Flask API creates the prediction service but does not automatically
+watch GitHub. POST `/api/ai/v1/predictions` enqueues a task and submits it to the
+API's executor. The signed `/api/ai/v1/webhook` handles `workflow_run` requested
+and completed actions; it also accepts a queued action that GitHub does not
+document for that event. GitHub's `in_progress` action is ignored, and requested
+is not emitted for reruns. A separately started CLI worker polls **database
+tasks**, not GitHub runs. There is no built-in periodic GitHub observer or CLI
+predict command. See [GitHub workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run).
+
+A secret-safe check of local file/shell configuration found the GitHub token
+present but webhook secret, repository allowlist and admin token absent. This
+does not authenticate an already running process's environment or prove token
+permissions. Webhook delivery and worker uptime are not established. Local
+loopback administration can operate without an admin token; remote operation
+requires deliberate authorization/allowlist setup. No settings were changed.
+
+Before a genuine session, authenticate the existing model metadata/artifact,
+prepare an approved dedicated observation database, run the API/recovery worker,
+and approve either real webhook delivery or a bounded observer calling the
+existing API. Preserve queued observation times, exact run/attempt/SHA, immutable
+prediction fields and independent pre-start readback, then reconcile the actual
+outcome. `predicted_at` is sampled before insertion; the existing matched flag
+alone cannot prove pre-start database commit. The plan excludes cases lacking
+independent timing evidence, even if that flag is matched.
+
+Full backend rerun with isolated PostgreSQL: **212 passed, 0 failed, 0 skipped,
+0 expected failures** (30 existing joblib/NumPy deprecation warnings). This covers
+controlled persistence/concurrency, RCA and durable callbacks; no new live
+observation was performed. Prospective prediction count for this task remains
+**zero**, prospective metrics remain null, and historical accuracy is unchanged.

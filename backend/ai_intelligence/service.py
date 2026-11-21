@@ -48,6 +48,8 @@ class IntelligenceService:
         # Never accept run status/features/outcomes supplied by a browser or webhook.
         run=self.client.run(repo,run_id,attempt)
         at=datetime.now(timezone.utc)
+        if run.get('id')!=run_id or run.get('run_attempt',1)!=attempt or not run.get('head_sha'):
+            return self._decision(repo,{'id':run_id,'run_attempt':attempt},'skipped','Run identity, attempt or commit SHA is missing or inconsistent.')
         if run['status']!='queued' or run.get('conclusion') is not None:
             return self._decision(repo,run,'skipped','Only a currently queued run is eligible; no retrospective live predictions.')
         models=[model for model in self.store.models(repo) if model['status']=='experimental' and model['metrics'].get('feature_version')==ml.FEATURE_VERSION and model['created_at']<=at]
@@ -61,7 +63,7 @@ class IntelligenceService:
         values,provenance=ml.features(target,self.store.runs(repo),snapshot,at)
         pipeline=ml.load_model(model);probability=float(pipeline.predict_proba([values])[0,1])
         fresh=self.client.run(repo,run_id,attempt)
-        if fresh['status']!='queued' or fresh.get('conclusion') is not None or fresh['head_sha']!=run['head_sha'] or fresh.get('run_attempt',1)!=attempt:
+        if fresh.get('id')!=run_id or fresh['status']!='queued' or fresh.get('conclusion') is not None or fresh.get('head_sha')!=run['head_sha'] or fresh.get('run_attempt',1)!=attempt:
             return self._decision(repo,run,'skipped','Run started, finished, or changed while collecting features; no live prediction persisted.')
         self.store.save_run(repo,fresh,[])
         predicted_at=datetime.now(timezone.utc)
@@ -73,6 +75,8 @@ class IntelligenceService:
             names=pipeline[0].get_feature_names_out()
             factors=[{'feature':str(names[i]),'log_odds_contribution':float(contributions[i])} for i in sorted(range(len(names)),key=lambda i:abs(contributions[i]),reverse=True)[:5]]
         stored=self.store.predict(repo,run,model['version'],{'values':values,'provenance':provenance,'factors':factors},probability,model['metrics']['threshold'],predicted_at)
+        if not stored and not self.store.query('SELECT id FROM ai_predictions WHERE repository=%s AND run_id=%s AND attempt=%s AND mode=\'shadow\'',(repo,run_id,attempt),True):
+            return self._decision(repo,run,'skipped','Persisted run is no longer eligible or model/run identity does not match; no prediction inserted.')
         return self._decision(repo,run,'predicted' if stored else 'already_predicted','Experimental shadow prediction persisted before observing an outcome; CI behavior is unchanged.')
 
     def evaluation(self,repo):

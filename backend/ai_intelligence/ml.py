@@ -76,8 +76,9 @@ def temporal_split(rows):
     if test:
         validation=[r for r in validation if timestamp(r["run"]["completed_at"])<timestamp(test[0]["run"]["created_at"])]
     # At the first validation/test prediction, training outcomes must already exist.
-    if validation:
-        cutoff=timestamp(validation[0]["run"]["created_at"])
+    cutoffs=[timestamp(partition[0]["run"]["created_at"]) for partition in (validation,test) if partition]
+    if cutoffs:
+        cutoff=min(cutoffs)
         train=[r for r in train if timestamp(r["run"]["completed_at"])<cutoff]
     return train,validation,test
 

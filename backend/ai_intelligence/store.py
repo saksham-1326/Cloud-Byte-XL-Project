@@ -42,8 +42,11 @@ class Store:
             with conn.cursor() as cur:
                 cur.execute("""INSERT INTO ai_runs(repository,run_id,attempt,workflow_id,commit_sha,created_at,started_at,completed_at,status,conclusion,payload)
                     VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(repository,run_id,attempt) DO UPDATE SET
-                    started_at=excluded.started_at,completed_at=excluded.completed_at,status=excluded.status,conclusion=excluded.conclusion,payload=excluded.payload,synced_at=now()""",
+                    started_at=excluded.started_at,completed_at=excluded.completed_at,status=excluded.status,conclusion=excluded.conclusion,payload=excluded.payload,synced_at=now()
+                    WHERE ai_runs.commit_sha=excluded.commit_sha AND NOT (ai_runs.status='completed' AND excluded.status<>'completed') RETURNING commit_sha""",
                     (repo,run["id"],attempt,run["workflow_id"],run["head_sha"],timestamp(run["created_at"]),start,timestamp(completion),run["status"],run.get("conclusion"),Jsonb(payload)))
+                if not cur.fetchone():
+                    return  # Stale state or inconsistent SHA: do not write jobs/outcomes.
                 for job in jobs:
                     text=job.get("log_text")
                     body={k:job.get(k) for k in ("id","name","status","conclusion","started_at","completed_at","steps")}
@@ -96,8 +99,14 @@ class Store:
 
     def predict(self, repo, run, version, values, probability, threshold, at):
         return self.query("""INSERT INTO ai_predictions(id,repository,run_id,attempt,model_version,predicted_at,feature_snapshot,probability,threshold,predicted_class,mode)
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'shadow') ON CONFLICT DO NOTHING RETURNING id""",
-            (str(uuid.uuid4()),repo,run["id"],run.get("run_attempt",1),version,at,Jsonb(values),probability,threshold,int(probability>=threshold)),True)
+            SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'shadow'
+            FROM ai_runs r JOIN ai_models m ON m.version=%s AND m.repository=r.repository
+            WHERE r.repository=%s AND r.run_id=%s AND r.attempt=%s
+              AND r.commit_sha=%s AND r.status='queued' AND r.conclusion IS NULL
+            FOR UPDATE OF r
+            ON CONFLICT DO NOTHING RETURNING id""",
+            (str(uuid.uuid4()),repo,run["id"],run.get("run_attempt",1),version,at,Jsonb(values),probability,threshold,int(probability>=threshold),
+             version,repo,run["id"],run.get("run_attempt",1),run['head_sha']),True)
 
     def enqueue(self, repo, kind, payload):
         task_id=str(uuid.uuid4())
