@@ -376,6 +376,8 @@ backend/database, credentials or paid provider; model training, live prediction
 and provider action flags are explicitly false. Frontend checks run independently
 of the backend/PostgreSQL/Docker job. Run the same sequence locally from the
 frontend directory; do not use the unrelated root package/lockfile.
+The frontend lockfile includes the pinned Linux x64 native bindings for Rolldown
+and Lightning CSS so clean Ubuntu builds do not depend on a Windows installation.
 
 **Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
 
