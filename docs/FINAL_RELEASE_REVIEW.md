@@ -1,6 +1,6 @@
 # Final release review — November 23, 2026
 
-Deadline: November 26, Asia/Kolkata. Branch: `codex/local-actions-observer`. Nothing is staged or committed. Approval is required before creating the proposed commits or publishing anything. No architecture/AI/frontend implementation rewrite was made in this review.
+Deadline: November 26, Asia/Kolkata. Branch: `codex/local-actions-observer`. **Release-status update:** the reviewed commits were approved and created as `6620771`, `cbd7c0c` and `7e42042`; push and PR creation are now approved. Merge/deployment remain separately gated. The sections below preserve the pre-commit scope review and its historical approval requirements. No architecture/AI/frontend implementation rewrite was made in that review.
 
 ## Verification and acceptance
 

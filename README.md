@@ -17,7 +17,7 @@ Understand what changed, why a pipeline failed, and what historical workflow dat
 
 **Verified checkpoint — November 20, 2026:** [174 backend tests passed on `main`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885), including PostgreSQL 17, migration upgrades, callback persistence after a Flask restart, and Docker verification. This checkpoint belongs to merge commit [`a476582`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/commit/a4765826fa8526b97c159ac3b93d2b65bb993ebb); it is not a permanent test-count or model-accuracy claim.
 
-> **Development status:** Backend AI services and durable callbacks are implemented; prediction remains experimental and external callback delivery is disabled. The uncommitted React integration displays authentic historical attempts, model metrics and RCA evidence from the isolated demo database. The user reports desktop AI views, 400px mobile navigation/table scrolling and 768px tablet RCA/table checks passed. See the [final release review](docs/FINAL_RELEASE_REVIEW.md) for fresh regressions, remaining checks and proposed commit scopes. These changes have not been published.
+> **Development status:** Backend AI services and durable callbacks are implemented; prediction remains experimental and external callback delivery is disabled. The committed React integration displays authentic historical attempts, model metrics and RCA evidence from the isolated local demo database. The user reports desktop AI views, 400px mobile navigation/table scrolling and 768px tablet RCA/table checks passed. See the [final release review](docs/FINAL_RELEASE_REVIEW.md) for regressions, remaining checks and reviewed commit scopes. Release-branch publication is approved; merge and deployment remain separately gated.
 
 **Explore:** [Overview](#project-overview) · [Features](#key-features) · [Prediction](#ai-feature-1--pipeline-failure-prediction) · [RCA](#ai-feature-2--root-cause-analysis) · [Architecture](#system-architecture) · [Setup](#installation-and-setup) · [Testing](#testing-and-cicd) · [Callbacks](#durable-ci-callbacks) · [Technical contributions](#final-year-project-context-and-technical-contributions)
 
@@ -40,7 +40,7 @@ The project is an engineering prototype with measurable backend verification. It
 | --- | --- | --- |
 | GitHub repository analysis | Implemented | Repository connection, metadata/source retrieval, file inventory, technology detection, heuristic health scores, findings, and recommendations. |
 | Infrastructure and security inspection | Implemented, static | Evidence from Docker, GitHub Actions, Kubernetes, Terraform, CloudFormation/SAM, Bicep, and related configuration. Checks include permissive ingress, wildcard permissions, runtime users, moving image/action references, and possible committed credentials. |
-| React dashboard | Development integration, not yet published | Repository analysis updates overview/findings/security/architecture/report data. CI/CD links to persisted AI history; historical metrics, RCA evidence and unavailable states remain distinct. Desktop AI, mobile 400px and tablet 768px checks passed according to the user's manual inspection; full demo rehearsal and error/console checks remain on the checklist. |
+| React dashboard | Committed release-branch integration | Repository analysis updates overview/findings/security/architecture/report data. CI/CD links to persisted AI history; historical metrics, RCA evidence and unavailable states remain distinct. Desktop AI, mobile 400px and tablet 768px checks passed according to the user's manual inspection; full demo rehearsal and error/console checks remain on the checklist. |
 | Actions history collection | Implemented | Incremental ingestion by repository/run/attempt, historical commit/configuration snapshots, log redaction, and explicit handling of inaccessible logs. |
 | Root-cause analysis | Implemented, bounded validation | Deterministic diagnostics, optional Gemini/OpenAI providers, evidence citations, local validation guards, stored reports, and human-review APIs. |
 | Pipeline failure prediction | Experimental | Baseline/model comparison, chronological backtests, queued-run inference safeguards, and future-outcome matching. |
@@ -255,7 +255,7 @@ To build the frontend package:
 npm run build --prefix frontend-app
 ```
 
-The dedicated AI dashboard changes and additional styling are pending integration. A fresh clone should not depend on uncommitted local frontend assets or repository-root experimental Node files.
+The dedicated AI dashboard and required styles are committed in `frontend-app`. Repository-root experimental Node files are not required. Authentic demo records, credentials and model binaries remain local/private; a fresh clone alone does not recreate that populated demo.
 
 ### Work with AI history through the CLI
 
@@ -823,6 +823,7 @@ commits, excluded private/generated assets, user-reported manual acceptance,
 safe shutdown/startup dependencies and outage fallback. Provisioning credentials,
 database/export files and local demo utilities stay ignored, not in the release.
 The local Docker daemon remains unavailable; existing GitHub Docker evidence is
-historical. No commit, push, merge, deployment, live observation or paid provider
-call has been performed. Prospective predictions and independent human reviews
-remain zero.
+historical until a new run completes. The three reviewed commits are created;
+branch publication and PR creation are approved. No merge, deployment, live
+observation or paid provider call is authorized by that publication approval.
+Prospective predictions and independent human reviews remain zero.
