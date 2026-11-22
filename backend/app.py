@@ -1855,13 +1855,18 @@ def get_github_file():
     ) or {}
 
     repo_url = data.get("url") if isinstance(data, dict) else None
+    if not isinstance(data, dict):
+        return jsonify(status="FAILED", message="A JSON object is required."), 400
     file_path = data.get("path")
 
-    if not file_path:
+    if not isinstance(file_path, str) or not file_path.strip():
         return jsonify({
             "status": "FAILED",
-            "message": "File path is required.",
+            "message": "A nonempty file path is required.",
         }), 400
+
+    if data.get("branch") is not None and (not isinstance(data["branch"], str) or not data["branch"].strip()):
+        return jsonify(status="FAILED", message="Branch or commit reference must be a nonempty string."), 400
 
     try:
         owner, repo = parse_github_url(
