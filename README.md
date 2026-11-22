@@ -17,7 +17,7 @@ Understand what changed, why a pipeline failed, and what historical workflow dat
 
 **Verified checkpoint — November 20, 2026:** [174 backend tests passed on `main`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885), including PostgreSQL 17, migration upgrades, callback persistence after a Flask restart, and Docker verification. This checkpoint belongs to merge commit [`a476582`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/commit/a4765826fa8526b97c159ac3b93d2b65bb993ebb); it is not a permanent test-count or model-accuracy claim.
 
-> **Development status:** The backend AI services and durable callbacks are implemented. Prediction remains experimental. External callback delivery is disabled. The merged React application supports repository analysis; dedicated AI dashboard wiring and further frontend/Figma integration remain pending.
+> **Development status:** Backend AI services and durable callbacks are implemented; prediction remains experimental and external callback delivery is disabled. The uncommitted React integration displays authentic historical attempts, model metrics and RCA evidence from the isolated demo database. The user reports desktop AI views, 400px mobile navigation/table scrolling and 768px tablet RCA/table checks passed. See the [final release review](docs/FINAL_RELEASE_REVIEW.md) for fresh regressions, remaining checks and proposed commit scopes. These changes have not been published.
 
 **Explore:** [Overview](#project-overview) · [Features](#key-features) · [Prediction](#ai-feature-1--pipeline-failure-prediction) · [RCA](#ai-feature-2--root-cause-analysis) · [Architecture](#system-architecture) · [Setup](#installation-and-setup) · [Testing](#testing-and-cicd) · [Callbacks](#durable-ci-callbacks) · [Technical contributions](#final-year-project-context-and-technical-contributions)
 
@@ -40,7 +40,7 @@ The project is an engineering prototype with measurable backend verification. It
 | --- | --- | --- |
 | GitHub repository analysis | Implemented | Repository connection, metadata/source retrieval, file inventory, technology detection, heuristic health scores, findings, and recommendations. |
 | Infrastructure and security inspection | Implemented, static | Evidence from Docker, GitHub Actions, Kubernetes, Terraform, CloudFormation/SAM, Bicep, and related configuration. Checks include permissive ingress, wildcard permissions, runtime users, moving image/action references, and possible committed credentials. |
-| React dashboard | Implemented, partial integration | Repository connection updates overview/findings/security/architecture/report data. The committed CI/CD view still uses mock stages/history, and the Analysis-page progress is timer-driven. Dedicated AI UI integration is pending. |
+| React dashboard | Development integration, not yet published | Repository analysis updates overview/findings/security/architecture/report data. CI/CD links to persisted AI history; historical metrics, RCA evidence and unavailable states remain distinct. Desktop AI, mobile 400px and tablet 768px checks passed according to the user's manual inspection; full demo rehearsal and error/console checks remain on the checklist. |
 | Actions history collection | Implemented | Incremental ingestion by repository/run/attempt, historical commit/configuration snapshots, log redaction, and explicit handling of inaccessible logs. |
 | Root-cause analysis | Implemented, bounded validation | Deterministic diagnostics, optional Gemini/OpenAI providers, evidence citations, local validation guards, stored reports, and human-review APIs. |
 | Pipeline failure prediction | Experimental | Baseline/model comparison, chronological backtests, queued-run inference safeguards, and future-outcome matching. |
@@ -678,3 +678,151 @@ Full backend rerun with isolated PostgreSQL: **212 passed, 0 failed, 0 skipped,
 controlled persistence/concurrency, RCA and durable callbacks; no new live
 observation was performed. Prospective prediction count for this task remains
 **zero**, prospective metrics remain null, and historical accuracy is unchanged.
+
+## Local observation assessment (2026-11-22)
+
+The [local polling assessment](docs/LOCAL_OBSERVATION_ASSESSMENT.md) recommends
+an opt-in, authenticated local runner reusing `IntelligenceService.predict`
+directly with dedicated PostgreSQL writer/reader connections. That assessment
+was the design stage; an opt-in implementation is now documented below. No public
+endpoint, external webhook delivery, workflow changes or hosting are required.
+The implemented runner adds rate-aware discovery, rerun-safe attempt tracking, an append-only
+evidence ledger and independent readback for pre-start persistence. Existing
+`matched` status alone is insufficient for the stronger timing claim.
+
+No live Actions observations or prediction submissions were started during this
+assessment. The implementation is locally tested; a bounded real observation session still needs
+explicit approval. Historical backtests, controlled tests, assisted RCA review
+and genuine prospective results remain separate; no new accuracy is claimed.
+
+Targeted assessment regressions: **53 passed, 0 failed, 0 skipped, 0 expected
+failures**. The run-state test now supplies a valid identity so it checks the
+eligibility gate rather than an earlier missing-SHA guard. This is separate from
+the prior 212-pass main-branch PostgreSQL/Docker checkpoint; no full integration
+rerun or new prospective observation is claimed here.
+
+## Local Actions observer (offline verification only)
+
+The [local observer guide](docs/LOCAL_OBSERVER.md) documents
+`python -m backend.tools.observe_actions`, a bounded outbound-GET runner that
+reuses `IntelligenceService.predict` and existing PostgreSQL persistence. No
+Flask listener, hosting, paid provider or external webhook is required. No live
+session has been started, and the saved model is not retrained or replaced.
+
+Configuration requires an explicit repository allowlist, authenticated GitHub
+Actions/Contents read access, pinned original model UUID/SHA-256, and separate
+writer/reader roles in a dedicated loopback `cloud_bytexl_observation_*` database.
+The CLI reads `GITHUB_TOKEN`, `OBSERVER_WRITER_DSN` and `OBSERVER_READER_DSN` from
+the environment without loading .env or falling back to development DB settings.
+`--dry-run` is configuration-only: no sockets, database queries or ledger writes.
+Only a separately approved `--run` invocation starts observation; Ctrl+C requests
+graceful shutdown. Safe placeholder examples and minimal SQL grants are in the guide.
+
+Defaults are 15-second polls, a 900-second session, 300 total reserved HTTP
+requests and 60 polls. The budget includes service snapshots/rechecks, pagination
+and retries, not just discovery. Rate headers/backoff, conditional discovery,
+timeouts, cancellation and response bounds prevent busy/unbounded polling.
+Reruns use exact run IDs/attempts without a creation-time-only discovery filter.
+The existing model cutoff can still conservatively skip very old reruns.
+
+A locked, fsynced, hash-chained JSONL ledger preserves request/state, prediction,
+independent readback and outcome evidence across restarts. Only independently
+read committed predictions that precede all actual attempt job starts with
+declared, validated clock-error/precision margins can receive `eligible_prestart`.
+Unknown clock error, late readback, missing timing or identity/provenance changes
+stay excluded/unverifiable even if the existing store reports matched. No
+database commit time is invented; no accuracy score is automatically generated.
+No schema migration or alternative prediction table/model was added.
+
+Offline verification on the dedicated development branch: **278 passed, 0 failed,
+0 skipped, 0 expected failures**, using disposable PostgreSQL 17 and mocked
+GitHub responses. This includes 61 observer tests and all existing backend/RCA/
+callback regressions. There were 68 existing joblib/NumPy deprecation warnings.
+The dry-run was also exercised with placeholder credentials and made no network
+or database connections. Original RCA/model artifacts and frontend/root-package
+work remain unchanged. This is controlled verification, not a real observation
+or improved ML accuracy claim. A separately approved live session is still required.
+
+## Delivery integration checkpoint (November 22, 2026)
+
+The current working tree adds persisted Actions history, explicit historical/shadow
+labels, blank manual-review choices, visible database-save warnings, request
+cancellation/timeouts and source previews pinned to the analyzed commit. Model
+training, live predictions and configured-provider calls are disabled by default
+in the UI; the public configuration example is `frontend-app/.env.example`.
+These interface flags do not replace backend authorization.
+
+Local verification: **285 backend tests passed, 0 failed, 0 skipped, 0 expected
+failures**, with isolated PostgreSQL 17; **12 frontend contracts passed**, and
+frontend lint/build passed. The backend emitted 68 dependency deprecation warnings;
+Vite warned about the approximately 672 kB JavaScript chunk. Current Docker smoke
+verification is blocked by an unavailable daemon, and the browser tool could not
+reach the local Vite server, so fresh visual/end-to-end acceptance remains pending.
+
+The [delivery audit](docs/DELIVERY_AUDIT.md) contains the integration matrix,
+Figma-reference mapping, exact remaining blockers, setup/demo procedure and
+November 23–25 checklist. All 61 original frontend/root files were backed up and
+their backup hashes verified before the five intentional existing-file edits.
+Original RCA evidence, unanswered human worksheet, assisted recommendations,
+credentials and saved models retain their preservation hashes. No live session,
+independent human review, retraining or improved accuracy is claimed. Genuine
+prospective prediction count remains **zero**. Changes are uncommitted/unpublished.
+
+### Authentic demo data and manual acceptance
+
+The [final demo acceptance guide](docs/FINAL_DEMO_ACCEPTANCE.md) provides exact
+Windows startup commands, screenshot-by-screenshot browser checks and a proposed
+approval-gated historical-data copy. Read-only diagnostics recovered access to the
+original local database outside sandbox networking: 28 runs, 12 historical
+backtest predictions, 28 outcomes, two original models and 21 unverified RCA
+reports are available; no human reviews exist there. Both models pass artifact
+integrity loading; only one has the current feature-version metadata. Original
+migration receipts 001–004 match; migration 005 has not been applied there, and
+no upgrade was performed.
+
+That pre-copy assessment found an empty isolated database. The subsequently
+approved [authentic demo copy](docs/AUTHENTIC_DEMO.md) is now populated in
+`cloud_bytexl_demo_20261123` on loopback port 55439, with a separate SELECT-only
+application role. Independent readback matches all nine source table hashes:
+27 unique runs / 28 attempts, 12 historical backtests, 28 outcomes, two models
+and 21 unverified RCA reports. Source data and migration receipts remain unchanged;
+official migrations 001–005 ran only on the demo. No metadata was invented and
+no live prediction was requested. All 78 primary report citation references resolve
+to original report evidence; this does not establish semantic correctness.
+
+Seven historical API endpoints returned SUCCESS; mutation-denial checks passed.
+The protected local demo launcher validates its destination and blocks live AI
+actions. Exact Windows commands and its local-only configuration requirements
+are in the demo guide. Browser/responsive acceptance remains pending manual
+checks after the prior automation safety stop. API success does not establish
+browser or end-to-end acceptance. Prospective predictions and independent human
+reviews remain zero; the preserved-evidence fallback remains available.
+
+The [November 23 submission readiness checkpoint](docs/SUBMISSION_READINESS.md)
+records a fresh **12/12 frontend test pass**, successful lint/build and seven
+successful historical API checks. The Vite-served modules use the real loopback
+API; browser-side Network activity and rendered screens still require manual
+acceptance after the prior automation safety stop. Desktop/tablet/mobile results
+were explicitly unverified at that checkpoint. Subsequent user-reported manual
+inspection is recorded in the final release review. The guide includes screenshot expectations, the final
+demo sequence and the November 25–26 checklist. No new application source changes
+or backend regression rerun were needed for this documentation/checkpoint task.
+
+## Final release review (November 23, 2026)
+
+Fresh isolated regression results: **285 backend passed, 0 failed, 0 skipped,
+0 expected failures**, including **61 observer tests**; **12 frontend tests
+passed**, lint/build passed. There are 68 joblib/NumPy deprecation warnings and
+the existing approximately 672 kB Vite bundle warning. Original/demo data hashes
+and saved model/evidence hashes remain unchanged; demo access remains SELECT-only.
+The security review found no actual credential exposure in proposed files; one
+credential-URL match is an intentional public redaction-test placeholder.
+
+[FINAL_RELEASE_REVIEW.md](docs/FINAL_RELEASE_REVIEW.md) lists the exact proposed
+commits, excluded private/generated assets, user-reported manual acceptance,
+safe shutdown/startup dependencies and outage fallback. Provisioning credentials,
+database/export files and local demo utilities stay ignored, not in the release.
+The local Docker daemon remains unavailable; existing GitHub Docker evidence is
+historical. No commit, push, merge, deployment, live observation or paid provider
+call has been performed. Prospective predictions and independent human reviews
+remain zero.
