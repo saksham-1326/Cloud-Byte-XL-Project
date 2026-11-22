@@ -356,7 +356,7 @@ Remove-Item Env:DB_PASSWORD
 
 ### What GitHub Actions verifies
 
-The existing [Cloud-ByteXL CI workflow](.github/workflows/ci.yml) runs on pushes to `main` and pull requests targeting `main`:
+The [Cloud-ByteXL CI workflow](.github/workflows/ci.yml) runs on pushes to `main` and pull requests targeting `main`. Its independent `test` backend job performs:
 
 1. Start a health-checked PostgreSQL **17** service with isolated test credentials.
 2. Set up Python **3.13**, install `backend/requirements.txt`, and run `pip check`.
@@ -367,6 +367,15 @@ The existing [Cloud-ByteXL CI workflow](.github/workflows/ci.yml) runs on pushes
 7. Build the Docker image, start the Flask container, poll its HTTP endpoint, and clean up the application and service containers.
 
 The Docker HTTP smoke check is separate from PostgreSQL persistence verification. `.dockerignore` excludes secrets, local environments, logs, model artifacts, reports, and frontend files from the backend image context. Callback fixtures remove their temporary schemas and terminate their Flask processes; GitHub manages the disposable service container.
+
+The separate `frontend` job uses Node.js **22**, caches npm by
+`frontend-app/package-lock.json`, and runs these existing commands from
+`frontend-app`: `npm ci`, `npm test`, `npm run lint`, and `npm run build`.
+Each required step fails the job on error. The frontend job needs no running
+backend/database, credentials or paid provider; model training, live prediction
+and provider action flags are explicitly false. Frontend checks run independently
+of the backend/PostgreSQL/Docker job. Run the same sequence locally from the
+frontend directory; do not use the unrelated root package/lockfile.
 
 **Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
 
