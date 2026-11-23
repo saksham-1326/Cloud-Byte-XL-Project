@@ -379,6 +379,18 @@ frontend directory; do not use the unrelated root package/lockfile.
 The frontend lockfile includes the pinned Linux x64 native bindings for Rolldown
 and Lightning CSS so clean Ubuntu builds do not depend on a Windows installation.
 
+### Frontend dependency security gate
+
+The [November 23 security assessment](docs/FRONTEND_SECURITY_GATE.md) traces the
+eight original npm findings to development tooling and records their advisory
+IDs, exposure and compatible fixes. The locally patched dependency graph reports
+**zero full-audit and zero production-only vulnerabilities** after a clean
+install. Vite is pinned to **8.2.4**, ESLint to **10.15.0**; React, Tailwind and
+production dependency versions are unchanged. Twelve frontend tests, lint/build
+and seven relevant Flask/API contracts pass. The security fix is local pending
+push approval and a fresh GitHub CI run; prior PR checks do not cover it yet.
+Keep Vite on loopback and retain all existing AI evaluation/demo limitations.
+
 **Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
 
 ## Durable CI Callbacks
