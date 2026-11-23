@@ -17,7 +17,7 @@ Understand what changed, why a pipeline failed, and what historical workflow dat
 
 **Verified checkpoint — November 20, 2026:** [174 backend tests passed on `main`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885), including PostgreSQL 17, migration upgrades, callback persistence after a Flask restart, and Docker verification. This checkpoint belongs to merge commit [`a476582`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/commit/a4765826fa8526b97c159ac3b93d2b65bb993ebb); it is not a permanent test-count or model-accuracy claim.
 
-> **Development status:** Backend AI services and durable callbacks are implemented; prediction remains experimental and external callback delivery is disabled. The committed React integration displays authentic historical attempts, model metrics and RCA evidence from the isolated local demo database. The user reports desktop AI views, 400px mobile navigation/table scrolling and 768px tablet RCA/table checks passed. See the [final release review](docs/FINAL_RELEASE_REVIEW.md) for regressions, remaining checks and reviewed commit scopes. Release-branch publication is approved; merge and deployment remain separately gated.
+> **Project status:** PR #6 is merged into `main`; backend services, the existing React integration and both CI jobs are verified. Prediction remains experimental, with zero verified prospective predictions; external callback delivery and live observation remain disabled. Historical demo/RCA data remain separate from independent human verification. See the [post-merge AI verification](docs/AI_VERIFICATION_20261123.md) for actual candidate results, observation preflight and remaining approval requirements. Deployment remains separately gated.
 
 **Explore:** [Overview](#project-overview) · [Features](#key-features) · [Prediction](#ai-feature-1--pipeline-failure-prediction) · [RCA](#ai-feature-2--root-cause-analysis) · [Architecture](#system-architecture) · [Setup](#installation-and-setup) · [Testing](#testing-and-cicd) · [Callbacks](#durable-ci-callbacks) · [Technical contributions](#final-year-project-context-and-technical-contributions)
 
@@ -391,8 +391,9 @@ and seven relevant Flask/API contracts pass. The security fix was pushed as
 `c50f560fd507153ec7c24fc21ba27b6befe676c3`; both backend and frontend checks
 passed on that head in [GitHub CI run 45139343901](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/45139343901).
 Fresh full and production-only npm audits reported zero findings.
-[PR #6](https://github.com/saksham-1326/Cloud-Byte-XL-Project/pull/6) remains open,
-awaiting explicit merge approval.
+[PR #6](https://github.com/saksham-1326/Cloud-Byte-XL-Project/pull/6) merged at
+`5612568d0a3a17fe9351cede46c5bcce440671b6`; [main CI run 45141514112](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/45141514112)
+passed both backend and frontend jobs. No deployment or live observation followed.
 Keep Vite on loopback and retain all existing AI evaluation/demo limitations.
 
 **Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
@@ -863,3 +864,67 @@ historical until a new run completes. The three reviewed commits are created;
 branch publication and PR creation are approved. No merge, deployment, live
 observation or paid provider call is authorized by that publication approval.
 Prospective predictions and independent human reviews remain zero.
+
+## Post-merge AI verification (November 23, 2026)
+
+[Final live observation preflight](docs/FINAL_LIVE_OBSERVATION_PREFLIGHT.md)
+records the read-only refresh preview, pinned-model and separate-role checks,
+configuration-only dry-run and exact bounded session profile. The result is
+**NO-GO**: a whole-session clock-error bound, token restriction confirmation
+and separate live-session approval remain outstanding. The subsequently approved
+historical refresh is complete: 44 attempts / 43 unique runs, 44 outcomes,
+21 jobs and 308 steps in the dedicated observation database; zero predictions.
+No live observation was performed. See the preflight's latest follow-up below.
+
+Subsequent authorized Windows UAC recovery on November 23 succeeded: the last
+successful synchronization advanced to 19:44:55 IST and the stale-data error
+cleared. This does not establish a 900-second clock uncertainty bound; timing
+qualification remains NO-GO. GitHub account authentication was verified, while
+the loaded credential's Byte-XL display-name identity and effective restrictions
+remain unverified. No live observer session has started.
+
+[AI_VERIFICATION_20261123.md](docs/AI_VERIFICATION_20261123.md) records actual
+one-shot GitHub read authentication, a separate prepared observation DB with
+least-privilege writer/reader roles, pinned-model integrity, independent readback,
+controlled ledger restart and configuration-only dry-run. That historical report
+predates the completed seed refresh and successful Windows synchronization
+recovery described above. A justified clock-error bound, credential confirmation
+and exact live-session approval remain outstanding; the read-only demo is never
+used for observation writes.
+
+Existing ML training was reproduced on authentic data without source/demo writes
+or replacing the pinned model: 16 train / 5 validation / 6 previously examined
+test runs. Logistic historical accuracy remains 50%; failure recall is zero for
+Logistic, Random Forest and Dummy. Validation-only threshold exploration still
+selects 0.5; no independent new test set or supported accuracy improvement exists.
+
+[RCA reviewer instructions](docs/RCA_REVIEWER_INSTRUCTIONS.md) accompany a
+separate recommendation-free evidence packet and blank worksheet. Original eight
+response IDs/evidence and the original human worksheet remain unchanged. Completed
+human reviews remain zero and human correctness rates remain null. Full isolated
+backend regressions pass: **285 passed, 0 failed/skipped/expected failures**,
+including 61 observer tests. No frontend redesign, provider call, commit or push
+is part of this verification task.
+
+## Final submission rehearsal (November 23, 2026)
+
+[Submission demo package](docs/SUBMISSION_DEMO_PACKAGE.md) contains exact local
+launch commands, a seven-minute walkthrough, speaking outline, authentic outage
+fallback and technical Q&A. Fresh browser checks verified public repository
+analysis, saved AI history/RCA, inline evidence, mobile navigation and responsive
+views at 1440/768/400 pixels. The expected SELECT-only repository catalog-save
+warning remains visible. Seven demo GET endpoints passed and all nine authentic
+demo table hashes matched the import receipt. Citation evidence is inline;
+separate citation jump-links are not implemented.
+
+This rehearsal ran **109 relevant offline backend tests (1 PostgreSQL opt-in
+test skipped), 12 frontend tests, frontend lint and production build**. The build
+has a nonblocking bundle-size warning. The earlier 285-test full-suite checkpoint
+above remains separate historical evidence. No application source, frontend,
+Figma assets, model or database records were changed in this rehearsal.
+
+[Independent reviewer handoff](docs/INDEPENDENT_REVIEW_HANDOFF.md) supplies no
+suggested decisions and points to the separate packet and blank templates. Zero
+completed independent reviews and zero verified prospective predictions remain.
+The prospective timing gate is NO-GO; Byte-XL credential identity still requires
+operator confirmation. Neither blocks the authentic historical demonstration.
