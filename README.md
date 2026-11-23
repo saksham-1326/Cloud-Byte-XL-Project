@@ -45,7 +45,7 @@ The project is an engineering prototype with measurable backend verification. It
 | Root-cause analysis | Implemented, bounded validation | Deterministic diagnostics, optional Gemini/OpenAI providers, evidence citations, local validation guards, stored reports, and human-review APIs. |
 | Pipeline failure prediction | Experimental | Baseline/model comparison, chronological backtests, queued-run inference safeguards, and future-outcome matching. |
 | Durable CI callbacks | Implemented and tested locally/in CI | Mandatory authentication, repository allowlist, explicit run/deployment binding, transactional receipts, idempotency, and restart persistence. External delivery remains disabled. |
-| Frontend/Figma integration and public callback deployment | Planned | Further integration and deployment require separate work and approval. |
+| Frontend/Figma integration and public callback deployment | Frontend integrated; external delivery planned | The existing React integration is committed on the release branch. Public callback deployment requires separate work and approval. |
 
 Repository security checks are heuristics over bounded source inspection. They are not a complete secret scanner, dependency-vulnerability service, live cloud-account audit, or compliance certification. Inferred architecture and health scores describe repository evidence, not verified running infrastructure.
 
@@ -387,8 +387,12 @@ IDs, exposure and compatible fixes. The locally patched dependency graph reports
 **zero full-audit and zero production-only vulnerabilities** after a clean
 install. Vite is pinned to **8.2.4**, ESLint to **10.15.0**; React, Tailwind and
 production dependency versions are unchanged. Twelve frontend tests, lint/build
-and seven relevant Flask/API contracts pass. The security fix is local pending
-push approval and a fresh GitHub CI run; prior PR checks do not cover it yet.
+and seven relevant Flask/API contracts pass. The security fix was pushed as
+`c50f560fd507153ec7c24fc21ba27b6befe676c3`; both backend and frontend checks
+passed on that head in [GitHub CI run 45139343901](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/45139343901).
+Fresh full and production-only npm audits reported zero findings.
+[PR #6](https://github.com/saksham-1326/Cloud-Byte-XL-Project/pull/6) remains open,
+awaiting explicit merge approval.
 Keep Vite on loopback and retain all existing AI evaluation/demo limitations.
 
 **Documented backend checkpoint:** [174 passing tests and successful Docker checks](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885) on November 20, 2026, at `a476582`. This is a fixed historical checkpoint, not a claim that it is the latest run. No public Flask server, external PostgreSQL host, paid AI service, or live provider request is required.
@@ -414,7 +418,7 @@ The backend validates and locks the association, then updates the deployment and
 
 ## Screenshots
 
-Screenshots will be added after frontend integration and publication approval. Local screenshots and in-progress frontend artifacts are intentionally not published here.
+Screenshots and local frontend verification artifacts remain intentionally excluded from this PR. Publishing them requires separate approval.
 
 ## Project Structure
 
@@ -486,7 +490,7 @@ Cloud-ByteXL/
         └── assets/
 ```
 
-Generated model files, local environment files, validation reports, virtual environments, and unmerged frontend assets are not prerequisites supplied by this source tree.
+Generated model files, local environment files, validation reports, virtual environments, and untracked frontend artifacts are not prerequisites supplied by this source tree.
 
 ## Final-Year Project Context and Technical Contributions
 
@@ -507,7 +511,7 @@ For project evaluation or a technical interview, a reproducible demonstration ca
 
 - **ML generalization:** collect more independent, naturally occurring workflow outcomes and evaluate genuine future queued predictions before making accuracy or calibration claims.
 - **RCA validation:** expand independent datasets, human review, and cross-job causal analysis. A citation match alone does not establish that every claim follows from the evidence.
-- **Frontend integration:** integrate the dedicated AI dashboard and approved frontend/Figma work; replace remaining illustrative UI defaults with verified data flows where appropriate.
+- **Frontend acceptance:** the dedicated AI dashboard and approved frontend/Figma integration are committed; complete the full demo rehearsal and remaining console, error-state and outage checks.
 - **Fresh installation:** provide a reviewed bootstrap/migration path for the original deployment tables. Existing AI/CI migrations are additive, not a complete application-database installer.
 - **Callback operations:** separately evaluate remote HTTPS delivery, identity/secret lifecycle, and automatic trusted run registration. No tunnel or public endpoint is enabled by the current workflow.
 - **Service hardening:** the current local-admin identity model, legacy endpoints, development server, and repository heuristics are not a production multi-tenant security boundary.
@@ -768,6 +772,10 @@ or improved ML accuracy claim. A separately approved live session is still requi
 
 ## Delivery integration checkpoint (November 22, 2026)
 
+This historical checkpoint records the pre-publication state. Its references to
+uncommitted changes and blocked checks describe that stage, not the current PR.
+The security gate above records the subsequently published and verified fix.
+
 The current working tree adds persisted Actions history, explicit historical/shadow
 labels, blank manual-review choices, visible database-save warnings, request
 cancellation/timeouts and source previews pinned to the analyzed commit. Model
@@ -816,9 +824,10 @@ to original report evidence; this does not establish semantic correctness.
 Seven historical API endpoints returned SUCCESS; mutation-denial checks passed.
 The protected local demo launcher validates its destination and blocks live AI
 actions. Exact Windows commands and its local-only configuration requirements
-are in the demo guide. Browser/responsive acceptance remains pending manual
-checks after the prior automation safety stop. API success does not establish
-browser or end-to-end acceptance. Prospective predictions and independent human
+are in the demo guide. Subsequent user-reported desktop AI, mobile 400px and
+tablet 768px checks passed; the full demo rehearsal and broader error/console
+checks remain on the checklist. API success alone does not establish browser
+or end-to-end acceptance. Prospective predictions and independent human
 reviews remain zero; the preserved-evidence fallback remains available.
 
 The [November 23 submission readiness checkpoint](docs/SUBMISSION_READINESS.md)
@@ -832,6 +841,10 @@ demo sequence and the November 25–26 checklist. No new application source chan
 or backend regression rerun were needed for this documentation/checkpoint task.
 
 ## Final release review (November 23, 2026)
+
+This is the historical pre-publication review; its proposed-commit and CI-status
+wording is preserved as a checkpoint. Current security publication and CI status
+are recorded in the frontend dependency security gate above.
 
 Fresh isolated regression results: **285 backend passed, 0 failed, 0 skipped,
 0 expected failures**, including **61 observer tests**; **12 frontend tests
