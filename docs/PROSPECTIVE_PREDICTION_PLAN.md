@@ -1,5 +1,9 @@
 # Prospective prediction readiness and commit review
 
+Follow-up implementation: [local observer](LOCAL_OBSERVER.md). The November 21
+commit-preparation statements below are historical (PR #5 is merged). The new
+runner is opt-in and offline-tested; no live session is established by this plan.
+
 Reviewed 2026-11-21 on codex/independent-rca-review. This is an operational plan,
 not evidence of live predictions. No deployment, webhook, credential, model or
 GitHub repository settings were changed. No commits have been created. Final

@@ -1,5 +1,36 @@
 """Incremental ingestion keyed by repository/run/attempt; historical SHA snapshots."""
+import re
 from .github import GitHubError, scrub, repository_name
+
+
+def validate_attempt(repo, run_id, attempt, run, jobs):
+    """Validate exact live metadata before scoped observer persistence."""
+    repo=repository_name(repo)
+    if (type(run.get('id')) is not int or type(run.get('run_attempt')) is not int
+        or run.get('id')!=run_id or run.get('run_attempt')!=attempt
+        or not isinstance(run.get('head_sha'),str) or not re.fullmatch(r'[a-fA-F0-9]{40}',run['head_sha'])
+        or type(run.get('workflow_id')) is not int or run['workflow_id']<1
+        or repository_name(run.get('repository',{}).get('full_name'))!=repo):
+        raise ValueError('Run identity does not match the configured repository and attempt.')
+    for job in jobs:
+        if (type(job.get('run_id')) is not int or job.get('run_id')!=run_id or job.get('run_attempt',attempt)!=attempt
+            or (job.get('head_sha') and job['head_sha']!=run['head_sha'])):
+            raise ValueError('Job identity does not match the exact run attempt.')
+
+
+def synchronize_attempt(client, store, repo, run_id, attempt):
+    """Scoped outcome reconciliation, reusing existing transactional save_run.
+
+    Metadata only: no failure logs, training, provider calls or historical
+    backfills. Existing full-history synchronize behavior remains unchanged.
+    """
+    run=client.run(repo,run_id,attempt)
+    jobs=client.jobs(repo,run_id,attempt)
+    validate_attempt(repo,run_id,attempt,run,jobs)
+    if run.get('status')!='completed' or not run.get('conclusion'):
+        return {'reconciled':False,'run':run,'jobs':jobs}
+    store.save_run(repo,scrub(run),scrub(jobs))
+    return {'reconciled':True,'run':run,'jobs':jobs}
 
 
 def synchronize(client, store, repo):

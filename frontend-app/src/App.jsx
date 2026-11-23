@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import AIIntelligence from "./AIIntelligence.jsx";
+import { API_BASE, requestJson } from "./api.js";
+import { REPO, HEALTH, SUBSCORES, METRICS, SEVERITY_COUNTS, ISSUES, ARCH, SECURITY, RECOMMENDATIONS, ACTIVITY, CONTRIBUTORS, COMMITS, LANGUAGES, REPOSITORY_FILES, ANALYSIS_STEPS, ANALYSIS_HISTORY, subscribeRepository, getRepositoryRevision, publishRepositoryData } from "./repositoryData.js";
+import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import {
   LayoutDashboard, GitBranch, ScanSearch, AlertTriangle, Cloud, Boxes, Container,
-  Workflow, ShieldAlert, Lightbulb, FileBarChart2, Settings, HelpCircle, User,
+  Workflow, ShieldAlert, Lightbulb, FileBarChart2, User,
   ChevronLeft, ChevronRight, Bell, RefreshCw, ExternalLink, Check, X,
   Clock, Circle, CheckCircle2, AlertCircle, AlertOctagon, ChevronDown,
-  Server, Database, Layers, Code2, FileCode2, Package, Files, TrendingUp,
-  TrendingDown, Minus, ArrowRight, Loader2, Plug, MapPin, GitCommit,
-  FolderTree, Download,
+  Database, Layers, Code2, FileCode2, Package, Files,
+  Minus, ArrowRight, Loader2, Plug, GitCommit,
+  FolderTree, Download, Menu,
 } from "lucide-react";
 import {
-  ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell, BarChart,
-  Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
+  ResponsiveContainer, PieChart, Pie, Cell, BarChart,
+  Bar, XAxis, YAxis, Tooltip,
 } from "recharts";
 
 /* ============================== ICONS ============================== */
@@ -27,226 +30,17 @@ function Github({ className = "h-4 w-4" }) {
   );
 }
 
-/* ============================== MOCK DATA ============================== */
-
-let REPO = {
-  name: "cloud-bytexl-project",
-  fullName: "acme-labs/cloud-bytexl-project",
-  url: "github.com/acme-labs/cloud-bytexl-project",
-  branch: "main",
-  lastCommitMsg: "Refactor RDS connection pooling and retry logic",
-  commitHash: "a3f9c21",
-  commitAuthor: "Saksham Sharma",
-  lastAnalyzed: "2 minutes ago",
-  analysisDuration: "48s",
-};
-
-let HEALTH = { overall: 82, status: "Good — Improvements Recommended" };
-
-let SUBSCORES = [
-  { label: "Code Quality", value: 88, tone: "emerald" },
-  { label: "Security", value: 71, tone: "amber" },
-  { label: "Infrastructure", value: 84, tone: "blue" },
-  { label: "CI/CD", value: 92, tone: "emerald" },
-  { label: "Configuration", value: 76, tone: "amber" },
-];
-
-let METRICS = [
-  { label: "Total Files", value: "342", icon: Files, note: "Across 8 languages", trend: null },
-  { label: "Issues Detected", value: "17", icon: AlertCircle, note: "+3 since last scan", trend: "up" },
-  { label: "Critical Issues", value: "2", icon: AlertOctagon, note: "Needs immediate review", trend: "flat", tone: "critical" },
-  { label: "Cloud Resources", value: "0", icon: Cloud, note: "From latest repository analysis", trend: null },
-  { label: "Security Findings", value: "5", icon: ShieldAlert, note: "2 critical · 1 high", trend: "up", tone: "warning" },
-];
-
-let SEVERITY_COUNTS = { critical: 2, high: 5, medium: 7, low: 3 };
-
-let ISSUES = [
-  {
-    id: 1, severity: "critical", title: "Publicly accessible AWS security group",
-    category: "Cloud Infrastructure", file: "security-group.tf", line: 42,
-    snippet: 'ingress {\n  from_port   = 0\n  to_port     = 65535\n  cidr_blocks = ["0.0.0.0/0"]\n}',
-    why: "The security group allows unrestricted inbound traffic from any IP address on every port.",
-    impact: "Any host on the internet can attempt to connect directly to this resource, significantly increasing exposure to scanning and exploitation.",
-    recommendation: "Restrict ingress to the required ports only and limit CIDR blocks to trusted ranges or a bastion host.",
-    related: "EC2 · VPC",
-  },
-  {
-    id: 2, severity: "high", title: "Container running with excessive privileges",
-    category: "Docker", file: "Dockerfile", line: 18,
-    snippet: "USER root\nRUN chmod -R 777 /app",
-    why: "The container runs as root and grants world-writable permissions to the application directory.",
-    impact: "A compromised process inside the container could gain broader access to the host or escalate privileges further.",
-    recommendation: "Create a dedicated non-root user and scope file permissions to what the application actually needs.",
-    related: "Docker · Kubernetes Deployment",
-  },
-  {
-    id: 3, severity: "medium", title: "Kubernetes deployment missing resource limits",
-    category: "Kubernetes", file: "deployment.yaml", line: 27,
-    snippet: "containers:\n  - name: api\n    image: cloud-bytexl/api:latest",
-    why: "No CPU or memory limits are defined for this container.",
-    impact: "A single pod could consume unbounded node resources, causing noisy-neighbor issues or node-level failures.",
-    recommendation: "Add resources.requests and resources.limits sized to the workload's actual profile.",
-    related: "Kubernetes · Node Pool",
-  },
-  {
-    id: 4, severity: "medium", title: "GitHub Actions workflow uses an unpinned action",
-    category: "CI/CD", file: "deploy.yml", line: 9,
-    snippet: "uses: actions/checkout@main",
-    why: "Referencing a branch instead of a version tag can pull unreviewed changes into the pipeline.",
-    impact: "A future update to the action could silently change build behavior or introduce a supply-chain risk.",
-    recommendation: "Pin third-party actions to a specific release tag or commit SHA.",
-    related: "GitHub Actions",
-  },
-  {
-    id: 5, severity: "high", title: "RDS instance not encrypted at rest",
-    category: "Cloud Infrastructure", file: "rds.tf", line: 15,
-    snippet: 'resource "aws_db_instance" "primary" {\n  storage_encrypted = false\n}',
-    why: "The primary database instance does not have storage encryption enabled.",
-    impact: "Data at rest could be exposed if the underlying storage is ever accessed outside normal channels.",
-    recommendation: "Enable storage_encrypted and provide a KMS key, then plan a maintenance window to apply it.",
-    related: "RDS",
-  },
-  {
-    id: 6, severity: "low", title: "Unused environment variable in configuration",
-    category: "Configuration", file: "config.py", line: 14,
-    snippet: 'LEGACY_API_KEY = os.getenv("LEGACY_API_KEY")',
-    why: "This variable is no longer referenced anywhere in the codebase.",
-    impact: "Minor — increases configuration surface area and can confuse future maintainers.",
-    recommendation: "Remove the unused variable and its corresponding secret from the environment.",
-    related: "Application Config",
-  },
-  {
-    id: 7, severity: "high", title: "IAM policy grants wildcard resource access",
-    category: "Cloud Infrastructure", file: "iam-policy.tf", line: 33,
-    snippet: '"Action": "s3:*",\n"Resource": "*"',
-    why: "The policy grants full S3 access across all resources rather than the specific buckets in use.",
-    impact: "A compromised credential using this role could read or delete data in any bucket in the account.",
-    recommendation: "Scope the policy to the specific bucket ARNs the application needs.",
-    related: "IAM · S3",
-  },
-  {
-    id: 8, severity: "medium", title: "Health check missing on load balancer target group",
-    category: "Cloud Infrastructure", file: "alb.tf", line: 21,
-    snippet: 'resource "aws_lb_target_group" "api" {\n  # no health_check block\n}',
-    why: "Without a health check, the load balancer cannot detect unhealthy instances.",
-    impact: "Traffic may continue routing to failing instances, increasing error rates during partial outages.",
-    recommendation: "Define a health_check block with an appropriate path, interval, and threshold.",
-    related: "ALB · EC2",
-  },
-];
-
-let ARCH = {
-  title: "Repository Architecture",
-  reason: "Architecture is determined from evidence in the connected GitHub repository.",
-  assessment: "No cloud resource evidence was detected.",
-  provider: "Not detected",
-  confidence: 0,
-  services: [],
-  architectureLabels: [],
-  detected: {},
-  evidence: [],
-};
-
-const TECH_STACK = [
-  { name: "Python", category: "Language", icon: Code2 },
-  { name: "Flask", category: "Framework", icon: Layers },
-  { name: "Docker", category: "Container", icon: Container },
-  { name: "Kubernetes", category: "Orchestration", icon: Boxes },
-  { name: "Terraform", category: "IaC", icon: FileCode2 },
-  { name: "GitHub Actions", category: "CI/CD", icon: Workflow },
-  { name: "AWS", category: "Cloud", icon: Cloud },
-  { name: "MySQL", category: "Database", icon: Database },
-];
-
-const CICD_STAGES = [
-  { name: "Build", status: "success" },
-  { name: "Tests", status: "success" },
-  { name: "Docker Build", status: "success" },
-  { name: "Security Scan", status: "warning" },
-  { name: "Deployment", status: "success" },
-];
-const CICD_META = { lastRun: "12 minutes ago", duration: "4m 12s", successRate: 96 };
-const CICD_HISTORY = [
-  { run: "#128", duration: 252 }, { run: "#129", duration: 244 }, { run: "#130", duration: 268 },
-  { run: "#131", duration: 231 }, { run: "#132", duration: 260 }, { run: "#133", duration: 239 },
-  { run: "#134", duration: 252 },
-];
-
-let SECURITY = { score: 71, findings: { critical: 2, high: 1, medium: 2, low: 4 } };
-
-let RECOMMENDATIONS = [
-  {
-    id: 1, severity: "critical", title: "Restrict public inbound access on the AWS security group",
-    why: "The current configuration allows unrestricted inbound traffic from any address.",
-    action: "Limit access to required ports and trusted sources such as a bastion host or VPN range.",
-    relatedIssue: 1,
-  },
-  {
-    id: 2, severity: "high", title: "Use a non-root user inside the Docker container",
-    why: "Running as root increases the impact of any container compromise.",
-    action: "Create a dedicated application user and drop root privileges before the entrypoint runs.",
-    relatedIssue: 2,
-  },
-  {
-    id: 3, severity: "medium", title: "Add resource limits to the Kubernetes deployment",
-    why: "Containers without limits can consume unbounded node resources.",
-    action: "Define CPU and memory requests and limits for every container.",
-    relatedIssue: 3,
-  },
-  {
-    id: 4, severity: "medium", title: "Pin GitHub Actions to a fixed version",
-    why: "Unpinned actions can introduce unreviewed changes into the pipeline.",
-    action: "Reference a release tag or commit SHA instead of a branch name.",
-    relatedIssue: 4,
-  },
-];
-
-let ACTIVITY = [
-  { time: "10:42 AM", label: "Repository analyzed", status: "done" },
-  { time: "10:39 AM", label: "Terraform infrastructure scanned", status: "done" },
-  { time: "10:37 AM", label: "Kubernetes manifests analyzed", status: "done" },
-  { time: "10:35 AM", label: "GitHub webhook received", status: "done" },
-];
-
-let CONTRIBUTORS = [
-  { name: "Priya Nair", commits: 128 }, { name: "Daniel Osei", commits: 94 },
-  { name: "Wei Zhang", commits: 61 }, { name: "Sara Kim", commits: 37 },
-];
-let COMMITS = [
-  { hash: "a3f9c21", message: "Refactor RDS connection pooling and retry logic", author: "Priya Nair", time: "2 hours ago" },
-  { hash: "7cb14e0", message: "Add health checks to ALB target group", author: "Daniel Osei", time: "1 day ago" },
-  { hash: "e02d9aa", message: "Bump base image to python:3.12-slim", author: "Wei Zhang", time: "2 days ago" },
-  { hash: "44a1f3c", message: "Tighten IAM policy for deployment role", author: "Priya Nair", time: "3 days ago" },
-];
-let LANGUAGES = [
-  { name: "Python", pct: 54 }, { name: "HCL (Terraform)", pct: 18 }, { name: "YAML", pct: 14 },
-  { name: "Dockerfile", pct: 6 }, { name: "Other", pct: 8 },
-];
-let REPOSITORY_FILES = [];
-
-const ANALYSIS_STEPS = [
-  "Repository cloned", "Files discovered", "Source code analyzed", "Docker configuration analyzed",
-  "Terraform analysis", "Kubernetes analysis", "Security analysis", "Report generation",
-];
-let ANALYSIS_HISTORY = [
-  { date: "Today, 10:42 AM", score: 82, issues: 17, duration: "48s" },
-  { date: "Yesterday, 4:15 PM", score: 79, issues: 21, duration: "52s" },
-  { date: "3 days ago, 9:03 AM", score: 79, issues: 19, duration: "51s" },
-  { date: "6 days ago, 2:47 PM", score: 74, issues: 24, duration: "55s" },
-];
-
 /* ============================== TOKENS / HELPERS ============================== */
 
 const TONE = {
-  critical: { text: "text-red-400", bg: "bg-red-500", soft: "bg-red-500/10", border: "border-red-500/30", ring: "ring-red-500/20", hex: "#ef4444" },
-  high:     { text: "text-orange-400", bg: "bg-orange-500", soft: "bg-orange-500/10", border: "border-orange-500/30", ring: "ring-orange-500/20", hex: "#fb923c" },
-  medium:   { text: "text-amber-400", bg: "bg-amber-500", soft: "bg-amber-500/10", border: "border-amber-500/30", ring: "ring-amber-500/20", hex: "#fbbf24" },
-  low:      { text: "text-slate-400", bg: "bg-slate-500", soft: "bg-slate-500/10", border: "border-slate-500/30", ring: "ring-slate-500/20", hex: "#94a3b8" },
-  amber:    { text: "text-amber-400", bg: "bg-amber-500", soft: "bg-amber-500/10", border: "border-amber-500/30", hex: "#fbbf24" },
+  critical: { text: "text-red-400",     bg: "bg-red-500",     soft: "bg-red-500/10",     border: "border-red-500/30",     ring: "ring-red-500/20",     hex: "#ef4444" },
+  high:     { text: "text-orange-400",  bg: "bg-orange-500",  soft: "bg-orange-500/10",  border: "border-orange-500/30",  ring: "ring-orange-500/20",  hex: "#fb923c" },
+  medium:   { text: "text-amber-400",   bg: "bg-amber-500",   soft: "bg-amber-500/10",   border: "border-amber-500/30",   ring: "ring-amber-500/20",   hex: "#fbbf24" },
+  low:      { text: "text-slate-400",   bg: "bg-slate-500",   soft: "bg-slate-500/10",   border: "border-slate-500/30",   ring: "ring-slate-500/20",   hex: "#94a3b8" },
+  amber:    { text: "text-amber-400",   bg: "bg-amber-500",   soft: "bg-amber-500/10",   border: "border-amber-500/30",   hex: "#fbbf24" },
   emerald:  { text: "text-emerald-400", bg: "bg-emerald-500", soft: "bg-emerald-500/10", border: "border-emerald-500/30", hex: "#10b981" },
-  blue:     { text: "text-blue-400", bg: "bg-blue-500", soft: "bg-blue-500/10", border: "border-blue-500/30", hex: "#3b82f6" },
-  cyan:     { text: "text-cyan-400", bg: "bg-cyan-500", soft: "bg-cyan-500/10", border: "border-cyan-500/30", hex: "#22d3ee" },
+  blue:     { text: "text-blue-400",    bg: "bg-blue-500",    soft: "bg-blue-500/10",    border: "border-blue-500/30",    hex: "#3b82f6" },
+  cyan:     { text: "text-cyan-400",    bg: "bg-cyan-500",    soft: "bg-cyan-500/10",    border: "border-cyan-500/30",    hex: "#22d3ee" },
 };
 
 function scoreTone(v) {
@@ -255,67 +49,35 @@ function scoreTone(v) {
   return "critical";
 }
 
+/* ── Primitive components ── */
+
 function SeverityBadge({ severity }) {
   const t = TONE[severity];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md border ${t.border} ${t.soft} px-2 py-0.5 text-xs font-mono font-semibold uppercase tracking-wide ${t.text}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${t.border} ${t.soft} ${t.text}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${t.bg} opacity-90`} />
       {severity}
     </span>
   );
 }
 
-function Card({ children, className = "", hover = true }) {
-  return (
-    <div className={`rounded-xl border border-slate-800 bg-slate-900 ${hover ? "transition-colors hover:border-slate-700" : ""} ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function SectionHeader({ eyebrow, title, subtitle, action }) {
-  return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <div>
-        {eyebrow && <div className="mb-1 text-xs font-mono uppercase tracking-wider text-slate-500">{eyebrow}</div>}
-        <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
-        {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
-      </div>
-      {action}
-    </div>
-  );
-}
-
-function ProgressBar({ value, tone = "blue", trackClass = "bg-slate-800" }) {
+function ProgressBar({ value, tone = "blue", trackClass = "" }) {
   const t = TONE[tone] || TONE.blue;
   return (
-    <div className={`h-1.5 w-full overflow-hidden rounded-full ${trackClass}`}>
-      <div className={`h-full rounded-full ${t.bg}`} style={{ width: `${value}%` }} />
-    </div>
-  );
-}
-
-function StageStatusIcon({ status, className = "h-4 w-4" }) {
-  if (status === "success") return <CheckCircle2 className={`${className} text-emerald-400`} />;
-  if (status === "warning") return <AlertTriangle className={`${className} text-amber-400`} />;
-  if (status === "running") return <Loader2 className={`${className} animate-spin text-blue-400`} />;
-  if (status === "error") return <X className={`${className} text-red-400`} />;
-  return <Circle className={`${className} text-slate-600`} />;
-}
-
-function TrendTag({ trend }) {
-  if (!trend) return null;
-  if (trend === "up") return <span className="inline-flex items-center gap-0.5 text-xs font-medium text-amber-400"><TrendingUp className="h-3 w-3" />up</span>;
-  if (trend === "down") return <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-400"><TrendingDown className="h-3 w-3" />down</span>;
-  return <span className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500"><Minus className="h-3 w-3" />flat</span>;
-}
-
-function Tooltip2({ label, children }) {
-  return (
-    <div className="group/tip relative flex items-center">
-      {children}
-      <div className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100 z-50">
-        {label}
-      </div>
+    <div
+      className={`h-1 w-full overflow-hidden rounded-full ${trackClass}`}
+      style={{ background: "rgba(255,255,255,0.06)" }}
+    >
+      <div
+        className="h-full rounded-full transition-all duration-700 ease-out"
+        style={{
+          width: `${value}%`,
+          background: `linear-gradient(90deg, ${t.hex} 0%, ${t.hex}cc 100%)`,
+          boxShadow: `0 0 8px ${t.hex}35`,
+        }}
+      />
     </div>
   );
 }
@@ -323,168 +85,189 @@ function Tooltip2({ label, children }) {
 /* ============================== SIDEBAR ============================== */
 
 const NAV_ITEMS = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
-  { key: "repository", label: "Repository", icon: GitBranch },
-  { key: "analysis", label: "Analysis", icon: ScanSearch },
-  { key: "issues", label: "Issues", icon: AlertTriangle },
-  { key: "architecture", label: "Architecture", icon: Cloud },
-  { key: "kubernetes", label: "Kubernetes", icon: Boxes },
-  { key: "docker", label: "Docker", icon: Container },
-  { key: "cicd", label: "CI/CD", icon: Workflow },
-  { key: "security", label: "Security", icon: ShieldAlert },
+  { key: "overview",        label: "Overview",        icon: LayoutDashboard },
+  { key: "repository",      label: "Repository",      icon: GitBranch },
+  { key: "analysis",        label: "Analysis",        icon: ScanSearch },
+  { key: "issues",          label: "Issues",          icon: AlertTriangle },
+  { key: "architecture",    label: "Architecture",    icon: Cloud },
+  { key: "kubernetes",      label: "Kubernetes",      icon: Boxes },
+  { key: "docker",          label: "Docker",          icon: Container },
+  { key: "cicd",            label: "CI/CD",           icon: Workflow },
+  { key: "security",        label: "Security",        icon: ShieldAlert },
   { key: "recommendations", label: "Recommendations", icon: Lightbulb },
-  { key: "reports", label: "Reports", icon: FileBarChart2 },
+  { key: "intelligence", label: "AI Intelligence", icon: Lightbulb },
+  { key: "reports",         label: "Reports",         icon: FileBarChart2 },
 ];
 
-function Sidebar({ collapsed, setCollapsed, page, setPage }) {
-  return (
-    <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-800 bg-slate-900 transition-all duration-200 sm:flex ${collapsed ? "w-16" : "w-64"}`}>
-      <div className={`flex h-16 items-center border-b border-slate-800 ${collapsed ? "justify-center px-0" : "justify-between px-4"}`}>
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <Cloud className="h-4 w-4 text-white" strokeWidth={2.25} />
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-slate-100">Cloud-ByteXL</span>
-          </div>
-        )}
-        {collapsed && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-            <Cloud className="h-4 w-4 text-white" strokeWidth={2.25} />
-          </div>
-        )}
-      </div>
+const NAV_GROUPS = [
+  { label: "Workspace", keys: ["overview", "repository", "analysis"] },
+  { label: "Intelligence", keys: ["issues", "security", "recommendations"] },
+  { label: "Infrastructure", keys: ["architecture", "cicd", "docker", "kubernetes"] },
+  { label: "Insights", keys: ["intelligence", "reports"] },
+];
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-        {NAV_ITEMS.map((item) => {
-          const active = page === item.key;
-          const ItemIcon = item.icon;
-          const btn = (
-            <button
-              key={item.key}
-              onClick={() => setPage(item.key)}
-              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors ${
-                collapsed ? "justify-center" : ""
-              } ${
-                active
-                  ? "bg-blue-500/10 text-blue-400 ring-1 ring-inset ring-blue-500/30"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-              }`}
-            >
-              <ItemIcon className="h-4 w-4 shrink-0" strokeWidth={2} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </button>
-          );
-          return collapsed ? <Tooltip2 key={item.key} label={item.label}>{btn}</Tooltip2> : btn;
-        })}
-      </nav>
-
-      <div className="space-y-0.5 border-t border-slate-800 px-2 py-3">
-        {[
-          { icon: Settings, label: "Settings" },
-          { icon: HelpCircle, label: "Help" },
-        ].map((it) => {
-          const ItemIcon = it.icon;
-          const content = (
-            <button className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 ${collapsed ? "justify-center" : ""}`}>
-              <ItemIcon className="h-4 w-4 shrink-0" strokeWidth={2} />
-              {!collapsed && <span>{it.label}</span>}
-            </button>
-          );
-          return collapsed ? <Tooltip2 key={it.label} label={it.label}>{content}</Tooltip2> : <div key={it.label}>{content}</div>;
-        })}
-        <div className={`mt-1 flex items-center gap-3 rounded-lg px-2.5 py-2 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-slate-200">SS</div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="truncate text-sm text-slate-200">Saksham Sharma</div>
-              <div className="truncate text-xs text-slate-500">DevOps Engineer</div>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 ${collapsed ? "justify-center" : ""}`}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4" /> Collapse</>}
-        </button>
-      </div>
-    </aside>
-  );
+function Sidebar({ collapsed, setCollapsed, page, setPage, repoConnected }) {
+  return <aside className={`workspace-sidebar ${collapsed ? "is-collapsed" : ""}`}>
+    <div className="workspace-brand"><div className="brand-mark"><Layers size={20} /></div>{!collapsed && <div><strong>Cloud-ByteXL<span> / </span></strong><small>DEVOPS INTELLIGENCE</small></div>}</div>
+    {!collapsed && <div className="workspace-switch"><span className="workspace-avatar">CB</span><div><strong>Engineering workspace</strong><small>Repository intelligence</small></div></div>}
+    <nav aria-label="Main navigation">{NAV_GROUPS.map(group => <div className="nav-group" key={group.label}>{!collapsed && <p>{group.label}</p>}{group.keys.map(key => { const item = NAV_ITEMS.find(n => n.key === key); const Icon = item.icon; return <button key={key} title={item.label} aria-current={page === key ? "page" : undefined} className={`workspace-nav-item ${page === key ? "active" : ""}`} onClick={() => setPage(key)}><Icon size={17} />{!collapsed && <><span>{item.label}</span>{key === "issues" && repoConnected && ISSUES.length > 0 && <em>{ISSUES.length}</em>}</>}</button>; })}</div>)}</nav>
+    <div className="sidebar-bottom">{!collapsed && <div className="workspace-note"><ScanSearch size={18} /><strong>Clarity from your code.</strong><p>Security, infrastructure, and delivery. One connected view.</p></div>}<button className="workspace-nav-item" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>{collapsed ? <ChevronRight size={17} /> : <><ChevronLeft size={17} /><span>Collapse sidebar</span></>}</button></div>
+  </aside>;
 }
 
 /* ============================== NAVBAR ============================== */
 
-function Navbar({ collapsed, onAnalyze, analyzing, repoConnected, onConnectRepo, notifOpen, setNotifOpen, profileOpen, setProfileOpen }) {
+function Navbar({ collapsed, onAnalyze, analyzing, repoConnected, onConnectRepo, notifOpen, setNotifOpen, profileOpen, setProfileOpen, onMobileMenuOpen }) {
   return (
-    <header className={`fixed right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900/95 px-4 transition-all duration-200 sm:px-6 ${collapsed ? "sm:left-16" : "sm:left-64"} left-0`}>
-      <div className="flex min-w-0 items-center gap-3">
+    <header
+      className={`workspace-navbar fixed right-0 top-0 z-30 flex h-16 items-center justify-between px-4 transition-all duration-300 sm:px-5 ${
+        collapsed ? "sm:left-16" : "sm:left-64"
+      } left-0`}
+      style={{
+        background: "rgba(6,9,18,0.88)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        borderBottom: "1px solid var(--border-subtle)",
+      }}
+    >
+      {/* Left */}
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 pr-2">
+        {/* Mobile hamburger — visible below sm breakpoint only */}
+        <button
+          onClick={onMobileMenuOpen}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted transition-all hover:bg-white/[0.06] hover:text-slate-300 sm:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+
         {repoConnected ? (
           <>
-            <button className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-200 hover:border-slate-700">
-              <Github className="h-3.5 w-3.5 text-slate-400" />
-              <span className="max-w-36 truncate font-medium sm:max-w-xs">{REPO.name}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+            <button
+              className="flex min-w-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-200 transition-all hover:bg-white/[0.05]"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-default)" }}
+              title={REPO.fullName}
+              onClick={onConnectRepo}
+            >
+              <Github className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span className="min-w-0 truncate font-medium sm:max-w-[260px]">{REPO.fullName}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
             </button>
-            <span className="hidden items-center gap-1.5 rounded-md bg-slate-800 px-2 py-1 text-xs font-mono text-slate-300 md:inline-flex">
-              <GitBranch className="h-3 w-3 text-slate-500" /> {REPO.branch}
+            <span
+              className="hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-mono text-xs text-slate-400 lg:inline-flex"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)" }}
+            >
+              <GitBranch className="h-3 w-3 text-faint" />
+              {REPO.branch}
             </span>
-            <span className="hidden items-center gap-1.5 text-xs text-slate-500 lg:inline-flex">
-              <Clock className="h-3 w-3" /> Analyzed {REPO.lastAnalyzed}
+            <span className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-faint xl:inline-flex">
+              <Clock className="h-3 w-3" />
+              {REPO.lastAnalyzed}
             </span>
           </>
         ) : (
-          <span className="text-sm text-slate-500">No repository connected</span>
+          <span className="text-sm text-faint">No repository connected</span>
         )}
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* Right */}
+      <div className="flex shrink-0 items-center gap-2">
         <button
           onClick={(e) => { e.stopPropagation(); onConnectRepo(); }}
-          className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 transition-colors hover:border-blue-500 hover:bg-slate-700"
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.05] hover:text-slate-100"
+          style={{ border: "1px solid var(--border-default)" }}
+          aria-label={repoConnected ? "Change repository" : "Connect repository"}
         >
           <Github className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{repoConnected ? "Change Repository" : "Connect Repository"}</span>
+          <span className="hidden lg:inline">
+            {repoConnected ? "Change Repo" : "Connect Repo"}
+          </span>
         </button>
+
         {repoConnected && (
           <button
             onClick={onAnalyze}
             disabled={analyzing}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ boxShadow: "0 0 14px rgba(59,130,246,0.35)" }}
+            aria-label="Re-analyze repository"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${analyzing ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">{analyzing ? "Analyzing…" : "Analyze Now"}</span>
+            <span className="hidden lg:inline">{analyzing ? "Analyzing…" : "Analyze Now"}</span>
           </button>
         )}
+
+        {/* Notifications */}
         <div className="relative">
-          <button onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }} className="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+          <button
+            onClick={(e) => { e.stopPropagation(); setNotifOpen(!notifOpen); setProfileOpen(false); }}
+            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-all hover:bg-white/[0.06] hover:text-slate-300"
+            disabled={!repoConnected}
+            aria-label="Notifications"
+            aria-expanded={notifOpen}
+          >
             <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+            <span
+              className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-blue-400"
+              style={{ boxShadow: "0 0 4px rgba(96,165,250,0.8)", border: "1.5px solid #060912" }}
+            />
           </button>
           {notifOpen && (
-            <div className="absolute right-0 top-10 w-72 rounded-lg border border-slate-800 bg-slate-900 p-2 shadow-xl">
-              <div className="px-2 py-1.5 text-xs font-mono uppercase tracking-wide text-slate-500">Notifications</div>
+            <div
+              className="absolute right-0 top-11 z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl p-2 shadow-2xl"
+              style={{ background: "#0e1525", border: "1px solid var(--border-default)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+                Notifications
+              </div>
               {[
-                { t: "2 new critical findings in Terraform", time: "2m ago" },
-                { t: "Security scan flagged 1 issue", time: "12m ago" },
-                { t: "Deployment pipeline succeeded", time: "1h ago" },
-              ].map((n, i) => (
-                <div key={i} className="rounded-md px-2 py-2 text-sm hover:bg-slate-800">
-                  <div className="text-slate-200">{n.t}</div>
-                  <div className="text-xs text-slate-500">{n.time}</div>
+                SEVERITY_COUNTS.critical > 0 && { t: `${SEVERITY_COUNTS.critical} critical finding${SEVERITY_COUNTS.critical === 1 ? "" : "s"} in the latest analysis`, time: REPO.lastAnalyzed, dot: "bg-red-400" },
+                SEVERITY_COUNTS.high > 0 && { t: `${SEVERITY_COUNTS.high} high-severity finding${SEVERITY_COUNTS.high === 1 ? "" : "s"} in the latest analysis`, time: REPO.lastAnalyzed, dot: "bg-amber-400" },
+                { t: `${REPO.name} analyzed — ${ISSUES.length} issue${ISSUES.length === 1 ? "" : "s"} found`, time: REPO.lastAnalyzed, dot: "bg-emerald-400" },
+              ].filter(Boolean).map((n, i) => (
+                <div
+                  key={i}
+                  className="flex cursor-pointer items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-white/[0.04]"
+                >
+                  <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${n.dot}`} />
+                  <div>
+                    <div className="text-slate-200">{n.t}</div>
+                    <div className="text-xs text-faint">{n.time}</div>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Profile */}
         <div className="relative">
-          <button onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-slate-200 hover:ring-2 hover:ring-slate-600">
+          <button
+            onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotifOpen(false); }}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white transition-all"
+            style={{
+              background: "linear-gradient(135deg, #2563eb 0%, #0891b2 100%)",
+              boxShadow: "0 0 10px rgba(59,130,246,0.35)",
+            }}
+            aria-label="Profile menu"
+            aria-expanded={profileOpen}
+          >
             SS
           </button>
           {profileOpen && (
-            <div className="absolute right-0 top-10 w-48 rounded-lg border border-slate-800 bg-slate-900 p-1 shadow-xl">
+            <div
+              className="absolute right-0 top-11 z-50 w-48 rounded-xl p-1.5 shadow-2xl"
+              style={{ background: "#0e1525", border: "1px solid var(--border-default)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               {["Profile", "Team settings", "Sign out"].map((it) => (
-                <button key={it} className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800">{it}</button>
+                <button
+                  key={it}
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200"
+                >
+                  {it}
+                </button>
               ))}
             </div>
           )}
@@ -494,7 +277,21 @@ function Navbar({ collapsed, onAnalyze, analyzing, repoConnected, onConnectRepo,
   );
 }
 
-/* ============================== ARCHITECTURE DIAGRAM ============================== */
+/* ============================== MOBILE NAV DRAWER ============================== */
+
+function MobileNav({ open, onClose, page, setPage }) {
+  if (!open) return null;
+  const handleKeys = event => {
+    if (event.key === "Escape") onClose();
+    if (event.key === "Tab") {
+      const controls = [...event.currentTarget.querySelectorAll("button")];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  };
+  return <><div className="mobile-nav-backdrop" onClick={onClose}/><aside className="mobile-nav-panel" role="dialog" aria-modal="true" aria-label="Navigation" onKeyDown={handleKeys}><div className="workspace-brand"><span className="brand-mark"><Layers size={20}/></span><div><strong>Cloud-ByteXL<span> / </span></strong><small>DEVOPS INTELLIGENCE</small></div><button autoFocus aria-label="Close navigation" onClick={onClose}><X size={18}/></button></div><nav aria-label="Mobile navigation">{NAV_GROUPS.map(group=><div className="nav-group" key={group.label}><p>{group.label}</p>{group.keys.map(key=>{const item=NAV_ITEMS.find(nav=>nav.key===key);const Icon=item.icon;return <button className={`workspace-nav-item ${page===key ? "active" : ""}`} aria-current={page===key ? "page" : undefined} key={key} onClick={()=>{setPage(key);onClose();}}><Icon size={17}/><span>{item.label}</span></button>;})}</div>)}</nav><div className="mobile-nav-footer"><ScanSearch size={16}/>Evidence from your repository.</div></aside></>;
+}
 
 function architectureIcon(label) {
   const value = label.toLowerCase();
@@ -591,7 +388,7 @@ function buildArchitectureGraph() {
   ];
 
   ordered.forEach((node, index) => {
-    node.x = 305;
+    node.x = 115;
     node.y = 12 + index * 76;
     node.w = 190;
     node.h = 54;
@@ -603,10 +400,7 @@ function buildArchitectureGraph() {
       id: "application",
       label: "Application / Source",
       icon: FileCode2,
-      x: 305,
-      y: 88,
-      w: 190,
-      h: 54,
+      x: 115, y: 88, w: 190, h: 54,
       desc: "No known deployment or infrastructure architecture was detected from the repository files.",
     };
     ordered.push(application);
@@ -616,7 +410,7 @@ function buildArchitectureGraph() {
   return {
     nodes: ordered,
     edges,
-    width: 800,
+    width: 420,
     height: Math.max(180, ordered.length * 76 + 30),
   };
 }
@@ -629,935 +423,323 @@ function elbowPath(a, b) {
   return `M ${ax} ${ay} L ${ax} ${midY} L ${bx} ${midY} L ${bx} ${by}`;
 }
 
-function ArchitectureDiagram({ full = false, onNodeClick, activeNode }) {
+function ArchitectureDiagram({ full = false, onNodeClick, activeNode, zoom = 1 }) {
   const graph = buildArchitectureGraph();
   const W = graph.width;
   const H = graph.height;
 
+  // Scale the fixed-size canvas down to the container so it never needs
+  // sideways scrolling on phones/tablets.
+  const wrapRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return undefined;
+    const update = () => setScale(Math.min(1, el.clientWidth / W) * zoom);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [W, zoom]);
+
   return (
-    <div className="overflow-x-auto">
-      <div className="relative mx-auto" style={{ width: W, height: H }}>
-        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="absolute inset-0">
-          {graph.edges.map((edge, index) => {
-            const a = graph.nodes.find((node) => node.id === edge.from);
-            const b = graph.nodes.find((node) => node.id === edge.to);
-            if (!a || !b) return null;
-            const d = elbowPath(a, b);
+    <div ref={wrapRef} className="w-full">
+      <div className="relative mx-auto" style={{ width: W * scale, height: H * scale }}>
+        <div
+          className="absolute left-0 top-0"
+          style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: "top left" }}
+        >
+          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="absolute inset-0">
+            {graph.edges.map((edge, index) => {
+              const a = graph.nodes.find((node) => node.id === edge.from);
+              const b = graph.nodes.find((node) => node.id === edge.to);
+              if (!a || !b) return null;
+              const d = elbowPath(a, b);
+              return (
+                <g key={`${edge.from}-${edge.to}-${index}`}>
+                  <path d={d} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" />
+                  <path d={d} fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4 5" opacity="0.4" />
+                  <circle className="topology-particle" r="3" fill="#22d3ee">
+                    <animateMotion dur={`${2.4 + index * 0.2}s`} repeatCount="indefinite" path={d} />
+                  </circle>
+                </g>
+              );
+            })}
+          </svg>
+
+          {graph.nodes.map((node) => {
+            const NodeIcon = node.icon;
+            const active = activeNode === node.id;
             return (
-              <g key={`${edge.from}-${edge.to}-${index}`}>
-                <path d={d} fill="none" stroke="#1e293b" strokeWidth="2" />
-                <path d={d} fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 5" opacity="0.55" />
-                <circle r="3" fill="#22d3ee">
-                  <animateMotion dur={`${2.4 + index * 0.2}s`} repeatCount="indefinite" path={d} />
-                </circle>
-              </g>
+              <button
+                key={node.id}
+                onClick={() => onNodeClick && onNodeClick(node.id)}
+                style={{
+                  left: node.x,
+                  top: node.y,
+                  width: node.w,
+                  height: node.h,
+                  background: active ? "rgba(6,9,18,0.9)" : "rgba(11,17,32,0.9)",
+                  border: active ? "1px solid rgba(34,211,238,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                }}
+                className={`absolute flex items-center gap-2.5 rounded-lg px-3 text-left transition-all ${
+                  active ? "ring-1 ring-cyan-400/40" : "hover:bg-white/[0.03]"
+                } ${full ? "cursor-pointer" : "cursor-default"}`}
+              >
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
+                  style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)" }}
+                >
+                  <NodeIcon className="h-4 w-4 text-blue-400" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-200">{node.label}</div>
+                </div>
+              </button>
             );
           })}
-        </svg>
-
-        {graph.nodes.map((node) => {
-          const NodeIcon = node.icon;
-          const active = activeNode === node.id;
-          return (
-            <button
-              key={node.id}
-              onClick={() => onNodeClick && onNodeClick(node.id)}
-              style={{ left: node.x, top: node.y, width: node.w, height: node.h }}
-              className={`absolute flex items-center gap-2.5 rounded-lg border bg-slate-900 px-3 text-left transition-all ${
-                active
-                  ? "border-cyan-400 ring-2 ring-cyan-400/30"
-                  : "border-slate-700 hover:border-blue-500/60 hover:bg-slate-800/80"
-              } ${full ? "cursor-pointer" : "cursor-default"}`}
-            >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-800">
-                <NodeIcon className="h-4 w-4 text-blue-400" strokeWidth={2} />
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-slate-100">{node.label}</div>
-              </div>
-            </button>
-          );
-        })}
+        </div>
       </div>
     </div>
   );
 }
 
-function ArchitectureSidePanel({ onViewFull }) {
+
+function GlassPanel({ eyebrow, title, icon: Icon, action, className = "", children }) {
   return (
-    <Card className="p-5">
-      <div className="mb-2 text-xs font-mono uppercase tracking-wide text-slate-500">Detected Architecture</div>
-      {ARCH.architectureLabels.length === 0 ? (
-        <p className="mb-5 text-sm text-slate-500">No known architectural files detected.</p>
-      ) : (
-        <div className="mb-5 space-y-2">
-          {ARCH.architectureLabels.map((label) => (
-            <div
-              key={label}
-              className="flex items-start gap-2 rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2 text-sm text-slate-200"
-            >
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-              <span>{label}</span>
-            </div>
-          ))}
+    <section className={`glass-panel ${className}`}>
+      <div className="glass-panel-heading">
+        <div className="glass-panel-title">
+          {Icon && <span className="panel-icon"><Icon size={17} /></span>}
+          <div><span className="panel-eyebrow">{eyebrow}</span><h2>{title}</h2></div>
         </div>
-      )}
-
-      <div className="mb-2 text-xs font-mono uppercase tracking-wide text-slate-500">Detected Cloud Provider</div>
-      <div className="mb-2 flex items-center gap-2">
-        <Cloud className="h-5 w-5 text-amber-400" />
-        <span className="text-base font-semibold text-slate-100">{ARCH.provider}</span>
+        {action}
       </div>
-      <p className="mb-5 text-xs leading-relaxed text-slate-500">{ARCH.assessment}</p>
-
-      <div className="mb-2 text-xs font-mono uppercase tracking-wide text-slate-500">Detected Cloud Resources</div>
-      {ARCH.services.length === 0 ? (
-        <p className="mb-5 text-sm text-slate-500">No provider-specific cloud resources detected.</p>
-      ) : (
-        <div className="mb-5 flex flex-wrap gap-1.5">
-          {ARCH.services.map((service) => (
-            <span key={service} className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-mono text-slate-300">
-              {service}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="mb-2 flex items-center justify-between text-xs font-mono uppercase tracking-wide text-slate-500">
-        <span>Architecture Confidence</span><span className="text-slate-300">{ARCH.confidence}%</span>
-      </div>
-      <ProgressBar value={ARCH.confidence} tone="blue" />
-      <button onClick={onViewFull} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-700">
-        View Full Architecture <ArrowRight className="h-3.5 w-3.5" />
-      </button>
-    </Card>
+      {children}
+    </section>
   );
 }
 
-/* ============================== OVERVIEW WIDGETS ============================== */
-
-function RepoInfoBar() {
-  const fields = [
-    { label: "Repository", value: REPO.name, icon: Github },
-    { label: "GitHub URL", value: REPO.url, icon: ExternalLink },
-    { label: "Branch", value: REPO.branch, icon: GitBranch },
-    { label: "Last Commit", value: REPO.lastCommitMsg, icon: GitCommit },
-    { label: "Commit Author", value: REPO.commitAuthor, icon: User },
-    { label: "Last Analysis", value: REPO.lastAnalyzed, icon: Clock },
-    { label: "Analysis Duration", value: REPO.analysisDuration, icon: ScanSearch },
-  ];
+function RepositoryHealthGauge() {
+  const score = Math.max(0, Math.min(100, Number(HEALTH.overall) || 0));
+  const tone = scoreTone(score);
+  const color = tone === "emerald" ? "#34d399" : tone === "amber" ? "#fbbf24" : "#fb7185";
+  const circumference = 2 * Math.PI * 76;
   return (
-    <Card className="p-5">
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-        {fields.map((f) => (
-          <div key={f.label} className="min-w-0">
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-mono uppercase tracking-wide text-slate-500">
-              <f.icon className="h-3 w-3" /> {f.label}
-            </div>
-            <div className="truncate text-sm text-slate-200" title={f.value}>{f.value}</div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function HealthScore() {
-  const tone = scoreTone(HEALTH.overall);
-  const data = [{ name: "health", value: HEALTH.overall, fill: TONE[tone].hex }];
-  return (
-    <Card className="p-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <div className="text-xs font-mono uppercase tracking-wide text-slate-500">Project Health</div>
-          <h2 className="mt-1 text-lg font-semibold text-slate-100">Overall Score</h2>
-        </div>
-        <span className={`rounded-md border px-2.5 py-1 text-xs font-medium ${TONE[tone].border} ${TONE[tone].soft} ${TONE[tone].text}`}>
-          {HEALTH.status}
-        </span>
-      </div>
-      <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[220px_1fr]">
-        <div className="relative mx-auto h-52 w-52 md:col-span-1">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart innerRadius="78%" outerRadius="100%" data={data} startAngle={90} endAngle={-270} barSize={14}>
-              <RadialBar dataKey="value" background={{ fill: "#1e293b" }} cornerRadius={20} />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono text-4xl font-bold text-slate-100">{HEALTH.overall}</span>
-            <span className="text-xs text-slate-500">out of 100</span>
-          </div>
-        </div>
-        <div className="space-y-3.5 md:col-span-2">
-          {SUBSCORES.map((s) => (
-            <div key={s.label}>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="text-slate-300">{s.label}</span>
-                <span className="font-mono text-slate-200">{s.value}</span>
-              </div>
-              <ProgressBar value={s.value} tone={s.tone} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function MetricCards({ onCloudResourcesClick }) {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-      {METRICS.map((m) => {
-        const MIcon = m.icon;
-        const toneCls = m.tone === "critical" ? "text-red-400" : m.tone === "warning" ? "text-amber-400" : "text-blue-400";
-        const isCloudResources = m.label === "Cloud Resources";
-
-        const card = (
-          <Card className="h-full p-4 transition hover:border-cyan-500/50 hover:bg-slate-900">
-            <div className="mb-3 flex items-center justify-between">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 ${toneCls}`}>
-                <MIcon className="h-4 w-4" strokeWidth={2} />
-              </div>
-              <TrendTag trend={m.trend} />
-            </div>
-            <div className="font-mono text-2xl font-bold text-slate-100">{m.value}</div>
-            <div className="mt-0.5 text-xs text-slate-500">{m.label}</div>
-            <div className="mt-1.5 text-xs text-slate-600">{m.note}</div>
-            {isCloudResources && <div className="mt-3 text-xs font-medium text-cyan-400">Click to view resources →</div>}
-          </Card>
-        );
-
-        return isCloudResources ? (
-          <button key={m.label} type="button" onClick={onCloudResourcesClick} className="text-left" aria-label="View detected cloud resources">
-            {card}
-          </button>
-        ) : (
-          <div key={m.label}>{card}</div>
-        );
-      })}
+    <div className="health-orbit" style={{ "--gauge-color": color }}>
+      <svg viewBox="0 0 200 200" role="img" aria-label={HEALTH.overall===null ? "Repository health unavailable" : `Repository health: ${score} out of 100`}>
+        <circle className="gauge-orbit" cx="100" cy="100" r="94" />
+        <circle className="gauge-track" cx="100" cy="100" r="76" />
+        <circle className="gauge-value" cx="100" cy="100" r="76"
+          stroke={color} strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - score / 100)} transform="rotate(-90 100 100)" />
+        <circle className="gauge-inner" cx="100" cy="100" r="62" />
+        <text x="100" y="101" textAnchor="middle" className="gauge-score">{HEALTH.overall===null ? "—" : score}</text>
+        <text x="100" y="122" textAnchor="middle" className="gauge-caption">OUT OF 100</text>
+      </svg>
     </div>
   );
 }
 
-function IssuesOverview({ onViewAll, onSelectIssue }) {
-  const donutData = [
-    { name: "Critical", value: SEVERITY_COUNTS.critical, fill: TONE.critical.hex },
-    { name: "High", value: SEVERITY_COUNTS.high, fill: TONE.high.hex },
-    { name: "Medium", value: SEVERITY_COUNTS.medium, fill: TONE.medium.hex },
-    { name: "Low", value: SEVERITY_COUNTS.low, fill: TONE.low.hex },
-  ];
-  return (
-    <Card className="p-5">
-      <SectionHeader
-        title="Issues Overview"
-        subtitle="Findings detected across source code, infrastructure, and CI/CD configuration."
-        action={<button onClick={onViewAll} className="text-sm font-medium text-blue-400 hover:text-blue-300">View All Issues →</button>}
-      />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="relative mx-auto h-40 w-40 md:col-span-1">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={donutData} dataKey="value" innerRadius={48} outerRadius={68} paddingAngle={3} stroke="none">
-                {donutData.map((d, i) => <Cell key={i} fill={d.fill} />)}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono text-2xl font-bold text-slate-100">{ISSUES.length}</span>
-            <span className="text-xs text-slate-500">total issues</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:col-span-2">
-          {Object.entries(SEVERITY_COUNTS).map(([sev, count]) => (
-            <div key={sev} className={`rounded-lg border ${TONE[sev].border} ${TONE[sev].soft} p-3`}>
-              <div className="flex items-center justify-between">
-                <SeverityBadge severity={sev} />
-                <span className={`font-mono text-xl font-bold ${TONE[sev].text}`}>{count}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="mt-5 divide-y divide-slate-800 border-t border-slate-800">
-        {ISSUES.slice(0, 3).map((iss) => (
-          <button key={iss.id} onClick={() => onSelectIssue(iss)} className="flex w-full items-start gap-3 py-3 text-left hover:bg-slate-800/40 rounded-lg px-2 -mx-2">
-            <SeverityBadge severity={iss.severity} />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium text-slate-200">{iss.title}</div>
-              <div className="mt-0.5 truncate font-mono text-xs text-slate-500">{iss.category} · {iss.file}:{iss.line}</div>
-            </div>
-            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
-          </button>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function TechStackGrid() {
-  return (
-    <Card className="p-5">
-      <SectionHeader title="Technology Stack" subtitle="Technologies detected across the repository." />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {TECH_STACK.map((t) => (
-          <div key={t.name} className="flex items-center gap-2.5 rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5">
-            <t.icon className="h-4 w-4 shrink-0 text-cyan-400" />
-            <div className="min-w-0">
-              <div className="truncate text-sm text-slate-200">{t.name}</div>
-              <div className="truncate text-xs text-slate-500">{t.category}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function CICDPreview({ onOpenPage }) {
-  return (
-    <Card className="p-5">
-      <SectionHeader
-        title="CI/CD Pipeline"
-        subtitle={`Last run ${CICD_META.lastRun} · ${CICD_META.duration}`}
-        action={<button onClick={onOpenPage} className="text-sm font-medium text-blue-400 hover:text-blue-300">Details →</button>}
-      />
-      <div className="flex flex-wrap items-center gap-2">
-        {CICD_STAGES.map((s, i) => (
-          <React.Fragment key={s.name}>
-            <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2">
-              <StageStatusIcon status={s.status} />
-              <span className="text-sm text-slate-200">{s.name}</span>
-            </div>
-            {i < CICD_STAGES.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-slate-700" />}
-          </React.Fragment>
-        ))}
-      </div>
-      <div className="mt-4 flex items-center gap-6 text-sm text-slate-400">
-        <span>Success rate: <span className="font-mono text-slate-200">{CICD_META.successRate}%</span></span>
-      </div>
-    </Card>
-  );
-}
-
-function SecurityPreview({ onOpenPage }) {
-  const tone = scoreTone(SECURITY.score);
-  return (
-    <Card className="p-5">
-      <SectionHeader
-        title="Security"
-        subtitle="Summary of security findings across infrastructure and containers."
-        action={<button onClick={onOpenPage} className="text-sm font-medium text-blue-400 hover:text-blue-300">View Security Report →</button>}
-      />
-      <div className="flex items-center gap-6">
-        <div className="text-center">
-          <div className={`font-mono text-3xl font-bold ${TONE[tone].text}`}>{SECURITY.score}</div>
-          <div className="text-xs text-slate-500">/ 100</div>
-        </div>
-        <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
-          {Object.entries(SECURITY.findings).map(([sev, count]) => (
-            <div key={sev} className="rounded-md border border-slate-800 bg-slate-800/40 px-2.5 py-2 text-center">
-              <div className={`font-mono text-lg font-semibold ${TONE[sev].text}`}>{count}</div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">{sev}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function RecommendationsList({ compact = false }) {
-  const list = compact ? RECOMMENDATIONS.slice(0, 3) : RECOMMENDATIONS;
-  return (
-    <Card className="p-5">
-      <SectionHeader eyebrow="AI-Assisted" title="Recommended Actions" subtitle="Review these suggestions and apply the fixes that make sense for your project." />
-      <div className="space-y-3">
-        {list.map((r, i) => (
-          <div key={r.id} className="rounded-lg border border-slate-800 p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-800 font-mono text-xs text-slate-400">{i + 1}</div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-slate-100">{r.title}</span>
-                  <SeverityBadge severity={r.severity} />
-                </div>
-                <p className="mt-1.5 text-sm text-slate-400"><span className="text-slate-500">Why it matters — </span>{r.why}</p>
-                <p className="mt-1 text-sm text-slate-400"><span className="text-slate-500">Suggested fix — </span>{r.action}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function ActivityTimeline() {
-  return (
-    <Card className="p-5">
-      <SectionHeader title="Recent Analysis Activity" />
-      <div className="space-y-4">
-        {ACTIVITY.map((a, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className="flex flex-col items-center">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              {i < ACTIVITY.length - 1 && <div className="my-1 h-6 w-px bg-slate-800" />}
-            </div>
-            <div className="min-w-0 flex-1 pb-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-slate-200">{a.label}</span>
-                <span className="shrink-0 font-mono text-xs text-slate-500">{a.time}</span>
-              </div>
-              <span className="text-xs text-emerald-500">Completed</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-/* ============================== PAGES ============================== */
-
-function OverviewPage({ setPage, onSelectIssue, onCloudResourcesClick }) {
+function OverviewPage({ setPage, onSelectIssue, onCloudResourcesClick, onAnalyze, analyzing }) {
   const [archActive, setArchActive] = useState(null);
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const findings = ["critical", "high", "medium", "low"].map(name => ({ name, value: Number(SECURITY.findings?.[name] ?? 0) }));
+  const total = findings.reduce((sum, item) => sum + item.value, 0);
+  const priority = (SEVERITY_COUNTS.critical || 0) + (SEVERITY_COUNTS.high || 0);
+  const rankedIssues = [...ISSUES].sort((a, b) =>
+    ["critical", "high", "medium", "low"].indexOf(a.severity) - ["critical", "high", "medium", "low"].indexOf(b.severity));
+  const workflows = ARCH.architectureLabels.filter(label => /CI.CD|Pipeline|DevOps|Actions/i.test(label));
+  const selectedNode = buildArchitectureGraph().nodes.find(node => node.id === archActive);
+  const go = (page, label) => <button className="glass-link" onClick={() => setPage(page)}>{label}<ArrowRight size={14} /></button>;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Project Overview</h1>
-        <p className="mt-1 text-sm text-slate-400">Intelligent analysis of your GitHub repository and cloud infrastructure.</p>
-      </div>
-      <RepoInfoBar />
-      <HealthScore />
-      <MetricCards onCloudResourcesClick={onCloudResourcesClick} />
-      <IssuesOverview onViewAll={() => setPage("issues")} onSelectIssue={onSelectIssue} />
-
-      <div>
-        <SectionHeader eyebrow="Signature" title={ARCH.title} subtitle={ARCH.reason} />
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
-          <Card className="p-5 lg:col-span-3">
-            <ArchitectureDiagram activeNode={archActive} onNodeClick={setArchActive} />
-          </Card>
-          <div className="lg:col-span-1">
-            <ArchitectureSidePanel onViewFull={() => setPage("architecture")} />
-          </div>
+    <div className="neon-overview">
+      <header className="intelligence-heading">
+        <div><div className="page-kicker"><span /> REPOSITORY INTELLIGENCE</div>
+          <h1>See the signal.<span> Ship with confidence.</span></h1>
+          <p>Your code, security, and infrastructure. One intelligent perspective.</p>
         </div>
+        <button className="neon-primary" onClick={onAnalyze} disabled={analyzing}>
+          <RefreshCw size={15} className={analyzing ? "animate-spin" : ""} />
+          {analyzing ? "Analyzing…" : "Run analysis"}
+        </button>
+      </header>
+
+      <div className="repo-context-strip">
+        <div className="repo-identity"><Github className="h-5 w-5" /><div><small>CONNECTED REPOSITORY</small><strong>{REPO.fullName}</strong></div></div>
+        <span className="context-branch"><GitBranch size={13} />{REPO.branch}</span>
+        {REPO.commitHash && <span className="context-commit"><GitCommit size={14} />{REPO.commitHash}</span>}
+        <div className="context-analysis"><span className="status-dot" />Analysis complete<small>{REPO.lastAnalyzed}</small></div>
       </div>
 
-      <TechStackGrid />
+      <section className="floating-metrics" aria-label="Repository metrics">
+        {METRICS.map((metric, index) => {
+          const Icon = metric.icon;
+          return <button className={`floating-metric metric-${index}`} key={metric.label}
+            onClick={() => metric.label === "Cloud Resources" ? onCloudResourcesClick() : setPage(metric.label === "Total Files" ? "repository" : metric.label === "Security Findings" ? "security" : "issues")}>
+            <div className="metric-top"><span className="metric-icon"><Icon size={18} /></span><ArrowRight size={13} /></div>
+            <strong>{metric.value}</strong><h2>{metric.label}</h2><p>{metric.note}</p>
+            <div className="metric-light" aria-hidden="true" />
+          </button>;
+        })}
+      </section>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <CICDPreview onOpenPage={() => setPage("cicd")} />
-        <SecurityPreview onOpenPage={() => setPage("security")} />
+      <div className="intelligence-grid">
+        <GlassPanel className="health-glass" eyebrow="THE BIG PICTURE" title="Repository health" icon={ScanSearch} action={go("analysis", "Analysis")}>
+          <div className="health-center"><RepositoryHealthGauge /><div className="health-verdict"><span className="glass-status">Latest assessment</span><h3>{HEALTH.status}</h3><p>Weighted scoring from your repository analysis.</p></div></div>
+          <div className="health-score-list">{SUBSCORES.map(score => <div key={score.label}><span>{score.label}</span><ProgressBar value={score.value} tone={score.tone} /><strong>{score.value}<small>/100</small></strong></div>)}{!SUBSCORES.length && <p className="glass-muted">Score breakdown is unavailable for this analysis.</p>}</div>
+        </GlassPanel>
+
+        <GlassPanel className="security-glass" eyebrow="EXPOSURE & PRIORITY" title="Security intelligence" icon={ShieldAlert} action={go("security", "Full report")}>
+          <div className="security-analytics">
+            <div className="security-ring"><ResponsiveContainer width="100%" height={180}><PieChart><Pie isAnimationActive={!reducedMotion} data={total ? findings : [{name:"empty",value:1}]} dataKey="value" innerRadius={62} outerRadius={78} paddingAngle={total ? 5 : 0} cornerRadius={4} stroke="none" startAngle={90} endAngle={-270}>
+              {(total ? findings : [{name:"empty"}]).map(item => <Cell key={item.name} fill={TONE[item.name]?.hex || "#23304b"} />)}
+            </Pie><Tooltip contentStyle={{background:"#0b1429",border:"1px solid #33425a",borderRadius:10,color:"#e2e8f0"}} /></PieChart></ResponsiveContainer><div className="donut-label"><strong>{total}</strong><span>security findings</span></div></div>
+            <div className="security-risk-summary"><span className="glass-muted">High-priority repository issues</span><strong>{priority}<span> to review</span></strong><p>Critical and high-severity findings across the repository.</p><div className="severity-bars">{findings.map(item => <div key={item.name}><i style={{background:TONE[item.name].hex}} /><span>{item.name}</span><strong>{item.value}</strong><div style={{"--severity-color":TONE[item.name].hex}}><span style={{width:`${total ? item.value / total * 100 : 0}%`}} /></div></div>)}</div></div>
+          </div>
+          <div className="security-findings"><div className="findings-subhead"><span>PRIORITY QUEUE</span>{go("issues", "View all findings")}</div>{rankedIssues.slice(0,3).map(issue => <button className="neon-finding" key={issue.id} onClick={() => onSelectIssue(issue)}><span className="finding-indicator" style={{background:TONE[issue.severity]?.hex}} /><div><strong>{issue.title}</strong><small>{issue.file} · {issue.category}</small></div><SeverityBadge severity={issue.severity} /><ChevronRight size={14} /></button>)}{!ISSUES.length && <div className="glass-empty"><CheckCircle2 size={19} />No issues detected in this repository analysis.</div>}</div>
+        </GlassPanel>
+
+        <GlassPanel className="topology-glass" eyebrow="EVIDENCE-BASED TOPOLOGY" title="Infrastructure architecture" icon={Cloud} action={go("architecture", "Explore map")}>
+          <div className="topology-toolbar"><span className="topology-badge"><span className="status-dot" />Repository evidence</span><button onClick={onCloudResourcesClick}>{ARCH.services.length} cloud resources <ExternalLink size={12} /></button></div>
+          <div className="neon-topology"><ArchitectureDiagram activeNode={archActive} onNodeClick={setArchActive} /></div>
+          <div className="topology-insight" aria-live="polite"><span className="panel-icon">{selectedNode ? <Layers size={16} /> : <ScanSearch size={16} />}</span><div><strong>{selectedNode ? selectedNode.label : ARCH.provider}</strong><p>{selectedNode ? selectedNode.desc : ARCH.assessment}</p></div></div>
+        </GlassPanel>
+
+        <GlassPanel className="pipeline-glass" eyebrow="BUILD → SHIP → OBSERVE" title="Delivery pipeline" icon={Workflow} action={go("cicd", "Details")}>
+          <div className="pipeline-status"><span className="glass-status">{workflows.length ? "Configuration detected" : "Awaiting configuration"}</span><small>Repository scan</small></div>
+          <ol className="pipeline-flow">
+            <li className="evidence-found"><span><Github className="h-4 w-4" /></span><div><strong>Source repository</strong><small>{REPO.name}</small></div><Check size={14} /></li>
+            <li className={workflows.length ? "evidence-found" : ""}><span><Workflow size={16} /></span><div><strong>Workflow configuration</strong><small>{workflows.length ? workflows.join(" · ") : "No CI/CD configuration detected"}</small></div>{workflows.length ? <Check size={14} /> : <Minus size={14} />}</li>
+            <li><span><Container size={16} /></span><div><strong>Build & deployment runs</strong><small>Execution telemetry unavailable</small></div><Circle size={12} /></li>
+          </ol>
+          <div className="pipeline-empty"><Plug size={18} /><div><strong>Run telemetry is not connected</strong><p>Stage results and execution history will appear when available. Configuration evidence is shown above.</p></div></div>
+        </GlassPanel>
+
+        <GlassPanel className="recommendations-glass" eyebrow="YOUR NEXT BEST ACTION" title="Priority recommendations" icon={Lightbulb} action={go("recommendations", "View all")}>
+          <div className="neon-recommendations">{RECOMMENDATIONS.slice(0,3).map((rec,index) => <article key={rec.id}><span className="recommendation-number">{String(index + 1).padStart(2,"0")}</span><div><div><h3>{rec.title}</h3><SeverityBadge severity={rec.severity} /></div><p>{rec.action}</p>{rec.relatedIssue && ISSUES.some(issue => issue.id === rec.relatedIssue) && <button className="glass-link" onClick={() => onSelectIssue(ISSUES.find(issue => issue.id === rec.relatedIssue))}>Review issue <ArrowRight size={13} /></button>}</div></article>)}{!RECOMMENDATIONS.length && <div className="glass-empty"><CheckCircle2 size={20} />No recommendations from the latest analysis.</div>}</div>
+        </GlassPanel>
+
+        <GlassPanel className="activity-glass" eyebrow="LATEST SIGNALS" title="Analysis activity" icon={Clock}>
+          <div className="neon-timeline">{ACTIVITY.map((activity,index) => <div key={`${activity.label}-${index}`}><span><Check size={12} /></span><div><strong>{activity.label}</strong><small>{activity.time}</small></div><span className="activity-done">Complete</span></div>)}</div>
+          <div className="security-notice"><ShieldAlert size={17} /><div><strong>{priority ? `${priority} priority issues need your attention` : "No critical or high-priority issues"}</strong><p>From the latest repository analysis.</p></div><button aria-label="Review security findings" onClick={() => setPage("issues")}><ArrowRight size={16} /></button></div>
+        </GlassPanel>
       </div>
-
-      <RecommendationsList compact />
-      <ActivityTimeline />
+      <div className="platform-split"><FutureAI/><FutureAI kind="prediction" onOpen={()=>setPage("intelligence")}/></div>
+      <footer className="neon-footer"><Layers size={14} /><span>Cloud-ByteXL</span><i />Repository intelligence, illuminated.<span className="footer-source">Powered by your repository. Grounded in evidence.</span></footer>
     </div>
   );
+}
+
+function PageHeader({ eyebrow, title, description, action }) {
+  return <header className="platform-heading"><div><div className="page-kicker"><span />{eyebrow}</div><h1>{title}</h1><p>{description}</p></div>{action}<span className="page-revision"><GitBranch size={12}/>{REPO.branch}<i/>{REPO.commitHash || "Revision unavailable"}</span></header>;
+}
+
+function PageStats({ items }) {
+  return <div className="page-stats">{items.map(([label,value,Icon=Layers]) => <div key={label}><span className="panel-icon"><Icon size={18}/></span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>;
+}
+
+function EmptyPanel({ title, detail, icon: Icon = ScanSearch }) {
+  return <div className="platform-empty"><span><Icon size={26}/></span><h3>{title}</h3><p>{detail}</p></div>;
+}
+
+function FindingRows({ items, onSelectIssue }) {
+  return <div className="platform-findings">{items.length ? items.map(issue => <button key={issue.id} onClick={() => onSelectIssue(issue)}><SeverityBadge severity={issue.severity}/><div><strong>{issue.title}</strong><small>{issue.file}:{issue.line} · {issue.category}</small><p>{issue.why}</p></div><ChevronRight size={16}/></button>) : <EmptyPanel title="No matching findings" detail="No findings match the current repository analysis and filters." icon={CheckCircle2}/>}</div>;
+}
+
+function FileTreeNode({ node, onSelect, selected, depth=0 }) {
+  const [expanded,setExpanded] = useState(depth === 0);
+  const folder = Boolean(node.children);
+  return <div><button className={`file-tree-item ${selected === node.path ? "selected" : ""}`} style={{paddingLeft:12+depth*14}} onClick={() => folder ? setExpanded(!expanded) : onSelect(node.path)} aria-expanded={folder ? expanded : undefined}>{folder ? <ChevronRight size={12} className={expanded ? "rotate-90" : ""}/> : <FileCode2 size={13}/>}<span>{node.name}</span>{folder && <small>{Object.keys(node.children).length}</small>}</button>{folder && expanded && Object.values(node.children).map(child => <FileTreeNode key={child.path} node={child} onSelect={onSelect} selected={selected} depth={depth+1}/>)}</div>;
+}
+
+function CodeExplorer({ paths, title="Source explorer" }) {
+  const [selected,setSelected] = useState("");
+  const [requestId,setRequestId] = useState(0);
+  const [source,setSource] = useState({loading:false,text:"",error:""});
+  const [query,setQuery] = useState("");
+  const tree = {};
+  paths.filter(path => path.toLowerCase().includes(query.toLowerCase())).forEach(path => {
+    let level=tree;
+    path.split("/").forEach((name,index,parts) => {
+      if(!level[name]) level[name]={name,path:parts.slice(0,index+1).join("/"),...(index<parts.length-1 ? {children:{}} : {})};
+      level=level[name].children;
+    });
+  });
+  useEffect(() => {
+    if(!selected) return;
+    const controller = new AbortController();
+    fetch(`${API_BASE}/api/github/file`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:REPO.url,path:selected,branch:REPO.analysisCommitSha || REPO.branch}),signal:controller.signal})
+      .then(async response => {const data=await response.json();if(!response.ok || data.status!=="SUCCESS") throw new Error(data.message || "File preview is unavailable.");return data;})
+      .then(data => setSource({loading:false,text:typeof data.content === "string" ? data.content : "",error:""}))
+      .catch(error => {if(error.name!=="AbortError") setSource({loading:false,text:"",error:error.message});});
+    return () => controller.abort();
+  },[selected,requestId]);
+  const selectFile = path => {setSource({loading:true,text:"",error:""});setSelected(path);setRequestId(id=>id+1);};
+  return <GlassPanel title={title} eyebrow="REPOSITORY FILES" icon={FolderTree} className="explorer-panel"><div className="code-explorer"><aside><label className="search-field"><ScanSearch size={14}/><input aria-label="Search repository files" placeholder="Find a file…" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="file-tree">{Object.values(tree).map(node=><FileTreeNode key={node.path} node={node} selected={selected} onSelect={selectFile}/>)}{!Object.keys(tree).length && <p className="inline-empty">No matching files.</p>}</div></aside><div className="source-pane"><div className="source-toolbar"><FileCode2 size={14}/><span>{selected || "Select a file to inspect"}</span>{selected && <a href={`${REPO.url}/blob/${encodeURIComponent(REPO.analysisCommitSha || REPO.branch)}/${selected.split('/').map(encodeURIComponent).join('/')}`} target="_blank" rel="noreferrer" aria-label="Open source on GitHub"><ExternalLink size={14}/></a>}</div>{source.loading ? <div className="platform-empty" role="status"><Loader2 className="animate-spin"/>Reading source from GitHub…</div> : source.error ? <EmptyPanel title="Preview unavailable" detail={source.error}/> : selected ? <pre className="source-code">{source.text || "This file is empty or has no text preview."}</pre> : <EmptyPanel title="Explore the source of truth" detail="Expand a folder and select a file. Code previews are loaded from the connected repository." icon={Code2}/>}</div></div></GlassPanel>;
 }
 
 function RepositoryPage() {
-  const maxCommit = Math.max(...CONTRIBUTORS.map((c) => c.commits));
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Repository</h1>
-        <p className="mt-1 text-sm text-slate-400">Structure, history, and contributors for {REPO.name}.</p>
-      </div>
-      <RepoInfoBar />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card className="p-5">
-          <SectionHeader title="Language Distribution" />
-          <div className="space-y-3">
-            {LANGUAGES.map((l) => (
-              <div key={l.name}>
-                <div className="mb-1 flex justify-between text-sm"><span className="text-slate-300">{l.name}</span><span className="font-mono text-slate-400">{l.pct}%</span></div>
-                <ProgressBar value={l.pct} tone="blue" />
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card className="p-5">
-          <SectionHeader title="Contributors" />
-          <div className="space-y-3">
-            {CONTRIBUTORS.map((c) => (
-              <div key={c.name} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-slate-200">
-                  {c.name.split(" ").map((p) => p[0]).join("")}
-                </div>
-                <div className="flex-1">
-                  <div className="mb-1 flex justify-between text-sm"><span className="text-slate-300">{c.name}</span><span className="font-mono text-xs text-slate-500">{c.commits} commits</span></div>
-                  <ProgressBar value={(c.commits / maxCommit) * 100} tone="cyan" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-      <Card className="p-5">
-        <SectionHeader title="File Structure" />
-        <div className="space-y-1 font-mono text-sm text-slate-300">
-          {REPOSITORY_FILES.length === 0 ? (
-            <div className="text-sm text-slate-500">No repository files loaded.</div>
-          ) : (
-            REPOSITORY_FILES.slice(0, 250).map((file, i) => {
-              const path = typeof file === "string" ? file : file.path;
-              const depth = Math.max(0, path.split("/").length - 1);
-              return (
-                <div key={`${path}-${i}`} style={{ paddingLeft: depth * 20 }} className="flex items-center gap-2 rounded px-1.5 py-0.5 hover:bg-slate-800/50">
-                  <FolderTree className="h-3.5 w-3.5 text-slate-600" />{path}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </Card>
-      <Card className="p-5">
-        <SectionHeader title="Recent Commits" />
-        <div className="divide-y divide-slate-800">
-          {COMMITS.map((c) => (
-            <div key={c.hash} className="flex items-center gap-3 py-2.5">
-              <GitCommit className="h-4 w-4 shrink-0 text-slate-600" />
-              <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-xs text-slate-400">{c.hash}</span>
-              <span className="min-w-0 flex-1 truncate text-sm text-slate-200">{c.message}</span>
-              <span className="shrink-0 text-xs text-slate-500">{c.author} · {c.time}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="p-5">
-        <SectionHeader title="Analysis History" />
-        <div className="divide-y divide-slate-800">
-          {ANALYSIS_HISTORY.map((a, i) => (
-            <div key={i} className="flex items-center justify-between py-2.5 text-sm">
-              <span className="text-slate-300">{a.date}</span>
-              <div className="flex items-center gap-5 font-mono text-xs">
-                <span className={TONE[scoreTone(a.score)].text}>{a.score}/100</span>
-                <span className="text-slate-500">{a.issues} issues</span>
-                <span className="text-slate-500">{a.duration}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
+  const paths=REPOSITORY_FILES.map(file=>typeof file === "string" ? file : file.path).filter(Boolean);
+  const colors=["#22d3ee","#a78bfa","#34d399","#fbbf24","#fb7185"];
+  return <div className="platform-page"><PageHeader eyebrow="SOURCE INTELLIGENCE" title="Repository explorer" description="Every file, contribution, and commit. Connected to your source of truth." action={<a className="neon-primary" href={REPO.url} target="_blank" rel="noreferrer"><Github className="h-4 w-4"/>Open repository</a>}/><PageStats items={[["Repository files",paths.length,Files],["Detected languages",LANGUAGES.length,Code2],["Contributors returned",CONTRIBUTORS.length,User],["Recent commits returned",COMMITS.length,GitCommit]]}/><div className="platform-split"><GlassPanel title={REPO.fullName} eyebrow="REPOSITORY PROFILE" icon={GitBranch}><div className="repo-profile"><h3>{REPO.name}</h3><p>{REPO.lastCommitMsg}</p><span><GitBranch size={14}/>{REPO.branch}</span><span><GitCommit size={14}/>{REPO.commitHash}</span></div><div className="language-layout">{LANGUAGES.length ? <><div className="language-donut"><ResponsiveContainer width="100%" height={180}><PieChart><Pie data={LANGUAGES} dataKey="pct" nameKey="name" innerRadius={53} outerRadius={72} paddingAngle={3} isAnimationActive={false}>{LANGUAGES.map((l,i)=><Cell key={l.name} fill={colors[i%colors.length]}/>)}</Pie><Tooltip contentStyle={{background:"#101b30",border:"1px solid #334155"}}/></PieChart></ResponsiveContainer></div><div>{LANGUAGES.map((language,index)=><div className="language-row" key={language.name}><i style={{background:colors[index%colors.length]}}/><span>{language.name}</span><strong>{language.pct}%</strong></div>)}</div></> : <EmptyPanel title="No language breakdown" detail="GitHub did not return language statistics for this repository."/>}</div></GlassPanel><GlassPanel title="The people behind the code" eyebrow="CONTRIBUTORS" icon={User}><div className="contributor-grid">{CONTRIBUTORS.map(person=><div key={person.name}><span>{person.name.slice(0,2).toUpperCase()}</span><div><strong>{person.name}</strong><small>{person.commits} contributions</small></div></div>)}{!CONTRIBUTORS.length && <EmptyPanel title="No contributor data" detail="No contributors were returned by GitHub."/>}</div></GlassPanel></div><CodeExplorer paths={paths}/><GlassPanel title="Recent changes" eyebrow="COMMIT FEED" icon={GitCommit}><div className="commit-feed">{COMMITS.map(commit=><a href={commit.url || REPO.url} target="_blank" rel="noreferrer" key={commit.hash}><span><GitCommit size={16}/></span><div><strong>{commit.message}</strong><small>{commit.author} · {commit.time}</small></div><code>{commit.hash}</code><ExternalLink size={13}/></a>)}</div></GlassPanel></div>;
 }
 
-function AnalysisPage() {
-  const [running, setRunning] = useState(false);
-  const [step, setStep] = useState(ANALYSIS_STEPS.length);
-
-  const start = () => {
-    setRunning(true);
-    setStep(0);
-    let i = 0;
-    const iv = setInterval(() => {
-      i += 1;
-      setStep(i);
-      if (i >= ANALYSIS_STEPS.length) { clearInterval(iv); setTimeout(() => setRunning(false), 500); }
-    }, 550);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Analysis</h1>
-          <p className="mt-1 text-sm text-slate-400">Run a fresh analysis or review the last completed scan.</p>
-        </div>
-        <button onClick={start} disabled={running} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60">
-          <RefreshCw className={`h-4 w-4 ${running ? "animate-spin" : ""}`} /> {running ? "Analyzing…" : "Start Analysis"}
-        </button>
-      </div>
-
-      <Card className="p-6">
-        {running ? (
-          <>
-            <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-200">Analyzing Repository…</span>
-              <span className="font-mono text-sm text-slate-400">{Math.round((step / ANALYSIS_STEPS.length) * 100)}%</span>
-            </div>
-            <ProgressBar value={(step / ANALYSIS_STEPS.length) * 100} tone="blue" />
-            <div className="mt-5 space-y-2.5">
-              {ANALYSIS_STEPS.map((s, i) => (
-                <div key={s} className="flex items-center gap-2.5 text-sm">
-                  <StageStatusIcon status={i < step ? "success" : i === step ? "running" : "pending"} />
-                  <span className={i <= step ? "text-slate-200" : "text-slate-600"}>{s}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-5 flex items-center gap-2 text-emerald-400"><CheckCircle2 className="h-5 w-5" /><span className="text-sm font-medium">Last analysis completed successfully</span></div>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {[["Score", `${HEALTH.overall}/100`], ["Issues", String(ISSUES.length)], ["Duration", REPO.analysisDuration], ["Completed", REPO.lastAnalyzed]].map(([k, v]) => (
-                <div key={k} className="rounded-lg border border-slate-800 bg-slate-800/40 p-3 text-center">
-                  <div className="font-mono text-lg font-semibold text-slate-100">{v}</div>
-                  <div className="text-xs text-slate-500">{k}</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </Card>
-      <Card className="p-5">
-        <SectionHeader title="Analysis History" />
-        <div className="divide-y divide-slate-800">
-          {ANALYSIS_HISTORY.map((a, i) => (
-            <div key={i} className="flex items-center justify-between py-2.5 text-sm">
-              <span className="text-slate-300">{a.date}</span>
-              <div className="flex items-center gap-5 font-mono text-xs">
-                <span className={TONE[scoreTone(a.score)].text}>{a.score}/100</span>
-                <span className="text-slate-500">{a.issues} issues</span>
-                <span className="text-slate-500">{a.duration}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
+function AnalysisPage({ onAnalyze, analyzing, onSelectIssue }) {
+  return <div className="platform-page"><PageHeader eyebrow="SCANNING CENTER" title="From source to signal." description="Run a real repository scan and inspect the evidence behind every score." action={<button className="neon-primary" onClick={onAnalyze} disabled={analyzing}><RefreshCw size={15} className={analyzing ? "animate-spin" : ""}/>{analyzing ? "Analyzing…" : "Start analysis"}</button>}/><div className="platform-split analysis-layout"><GlassPanel title="Latest repository assessment" eyebrow="ANALYSIS RESULTS" icon={ScanSearch}><div className="analysis-score"><RepositoryHealthGauge/><div><span className="glass-status">{analyzing ? "Analysis in progress" : "Scan completed"}</span><h3>{HEALTH.status}</h3><p>{REPO.fullName}</p><small>{REPO.lastAnalyzed} · Duration {REPO.analysisDuration}</small></div></div><div className="health-score-list">{SUBSCORES.map(score=><div key={score.label}><span>{score.label}</span><ProgressBar value={score.value} tone={score.tone}/><strong>{score.value}/100</strong></div>)}</div></GlassPanel><GlassPanel title="Inspection coverage" eyebrow="SCAN SCOPE" icon={Layers}><div className="scan-scope">{["Repository files","Source configuration","Security rules","Architecture evidence","Recommendations"].map((label,index)=><div key={label}><span>{String(index+1).padStart(2,"0")}</span><strong>{label}</strong><small>Included in assessment</small></div>)}</div><div className="evidence-note">Progress reflects the request lifecycle. The backend does not stream individual scan stages.</div></GlassPanel></div><GlassPanel title="Recorded scans" eyebrow="ANALYSIS HISTORY" icon={Clock}><div className="scan-history">{ANALYSIS_HISTORY.map((scan,index)=><div key={index}><Clock size={16}/><span>{scan.date}</span><strong>{scan.score}/100</strong><small>{scan.issues} findings · {scan.duration}</small></div>)}</div></GlassPanel><GlassPanel title="Findings from this scan" eyebrow="INSPECTION RESULTS" icon={AlertTriangle}><FindingRows items={ISSUES.slice(0,5)} onSelectIssue={onSelectIssue}/></GlassPanel></div>;
 }
 
 function IssuesPage({ onSelectIssue }) {
-  const [filter, setFilter] = useState("all");
-  const filtered = filter === "all" ? ISSUES : ISSUES.filter((i) => i.severity === filter);
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Issues</h1>
-        <p className="mt-1 text-sm text-slate-400">All detected problems across code, infrastructure, containers, and CI/CD.</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {["all", "critical", "high", "medium", "low"].map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-mono uppercase tracking-wide transition-colors ${
-              filter === f ? "border-blue-500/40 bg-blue-500/10 text-blue-400" : "border-slate-800 text-slate-400 hover:border-slate-700"
-            }`}
-          >
-            {f} {f !== "all" && `(${SEVERITY_COUNTS[f]})`}
-          </button>
-        ))}
-      </div>
-      <Card className="divide-y divide-slate-800 p-2">
-        {filtered.map((iss) => (
-          <button key={iss.id} onClick={() => onSelectIssue(iss)} className="flex w-full items-start gap-3 rounded-lg p-3 text-left hover:bg-slate-800/40">
-            <SeverityBadge severity={iss.severity} />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-slate-200">{iss.title}</div>
-              <div className="mt-1 font-mono text-xs text-slate-500">{iss.category} · {iss.file}:{iss.line}</div>
-              <div className="mt-1 text-xs text-slate-500 truncate">{iss.why}</div>
-            </div>
-            <span className="mt-0.5 shrink-0 text-xs font-medium text-blue-400">View Details</span>
-          </button>
-        ))}
-      </Card>
-    </div>
-  );
+  const [severity,setSeverity]=useState("all");const [query,setQuery]=useState("");const [category,setCategory]=useState("all");
+  const filtered=ISSUES.filter(issue=>(severity==="all" || issue.severity===severity)&&(category==="all" || issue.category===category)&&`${issue.title} ${issue.file} ${issue.why}`.toLowerCase().includes(query.toLowerCase()));
+  return <div className="platform-page"><PageHeader eyebrow="FINDINGS WORKBENCH" title="Know what needs attention." description="Investigate configuration risks, understand their impact, and prioritize remediation."/><div className="severity-cards">{["critical","high","medium","low"].map(level=><button key={level} onClick={()=>setSeverity(severity===level ? "all" : level)} className={severity===level ? "selected" : ""} style={{"--severity-color":TONE[level].hex}}><SeverityBadge severity={level}/><strong>{SEVERITY_COUNTS[level] || 0}</strong><small>repository findings</small></button>)}</div><GlassPanel title="Finding inventory" eyebrow={`${filtered.length} MATCHING FINDINGS`} icon={AlertTriangle} action={<button className="glass-link" onClick={()=>{setQuery("");setSeverity("all");setCategory("all");}}>Reset filters <RefreshCw size={12}/></button>}><div className="filter-toolbar"><label className="search-field"><ScanSearch size={16}/><input aria-label="Search issues" placeholder="Search findings or affected files…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter by category" value={category} onChange={e=>setCategory(e.target.value)}><option value="all">All categories</option>{[...new Set(ISSUES.map(issue=>issue.category))].map(value=><option key={value}>{value}</option>)}</select><select aria-label="Filter by severity" value={severity} onChange={e=>setSeverity(e.target.value)}>{["all","critical","high","medium","low"].map(value=><option key={value} value={value}>{value==="all" ? "All severities" : value}</option>)}</select></div>{filtered.length ? <div className="issue-table-wrap"><table className="issue-table"><thead><tr><th>Severity</th><th>Finding</th><th>Affected file</th><th>Category</th><th><span className="sr-only">Details</span></th></tr></thead><tbody>{filtered.map(issue=><tr key={issue.id}><td data-label="Severity"><SeverityBadge severity={issue.severity}/></td><td data-label="Finding"><button onClick={()=>onSelectIssue(issue)}>{issue.title}</button><p>{issue.why}</p></td><td data-label="File"><code>{issue.file}:{issue.line}</code></td><td data-label="Category">{issue.category}</td><td><button className="glass-link" onClick={()=>onSelectIssue(issue)} aria-label={`Inspect ${issue.title}`}>Inspect <ArrowRight size={13}/></button></td></tr>)}</tbody></table></div> : <EmptyPanel title="No matching findings" detail="Try a different search or severity filter."/>}</GlassPanel></div>;
 }
 
 function ArchitecturePage() {
-  const [active, setActive] = useState(null);
-  const [showFullArchitecture, setShowFullArchitecture] = useState(false);
-
-  const architectureGraph = buildArchitectureGraph();
-  const activeNode = architectureGraph.nodes.find((n) => n.id === active);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">
-          {ARCH.title}
-        </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          {ARCH.reason} Only evidence from the connected GitHub repository is visualized.
-        </p>
-      </div>
-
-      <Card className="p-5">
-        <SectionHeader
-          title="Strict Repository Architecture"
-          subtitle="Only exact file/folder matches from the GitHub repository are shown."
-        />
-        {ARCH.architectureLabels.length === 0 ? (
-          <p className="text-sm text-slate-500">No known architectural files detected.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {ARCH.architectureLabels.map((label) => (
-              <span key={label} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-                <CheckCircle2 className="h-4 w-4" />
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
-        <Card className="p-5 lg:col-span-3">
-          <ArchitectureDiagram
-            full
-            activeNode={active}
-            onNodeClick={(id) =>
-              setActive(id === active ? null : id)
-            }
-          />
-        </Card>
-
-        <div className="space-y-5 lg:col-span-1">
-          <ArchitectureSidePanel
-            onViewFull={() => setShowFullArchitecture(true)}
-          />
-
-          {activeNode && (
-            <Card className="p-5">
-              <div className="mb-2 flex items-center gap-2">
-                <activeNode.icon className="h-4 w-4 text-cyan-400" />
-                <span className="text-sm font-semibold text-slate-100">
-                  {activeNode.label}
-                </span>
-              </div>
-
-              <p className="text-sm text-slate-400">
-                {activeNode.desc}
-              </p>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Full Architecture Modal */}
-      {showFullArchitecture && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
-          onClick={() => setShowFullArchitecture(false)}
-        >
-          <div
-            className="w-full max-w-6xl rounded-xl border border-slate-700 bg-slate-950 p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-100">
-                  Full {ARCH.title}
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  {ARCH.assessment}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowFullArchitecture(false)}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="flex justify-center overflow-auto rounded-lg border border-slate-800 bg-slate-900 p-4">
-              <ArchitectureDiagram
-                full
-                activeNode={active}
-                onNodeClick={(id) =>
-                  setActive(id === active ? null : id)
-                }
-              />
-            </div>
-
-            {activeNode && (
-              <div className="mt-4 rounded-lg border border-slate-800 bg-slate-900 p-4">
-                <div className="flex items-center gap-2">
-                  <activeNode.icon className="h-4 w-4 text-cyan-400" />
-                  <span className="font-medium text-slate-100">
-                    {activeNode.label}
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  {activeNode.desc}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const [active,setActive]=useState(null);const [zoom,setZoom]=useState(1);const graph=buildArchitectureGraph();const node=graph.nodes.find(item=>item.id===active);
+  return <div className="platform-page"><PageHeader eyebrow="INFRASTRUCTURE ATLAS" title="See how it connects." description={ARCH.reason}/><PageStats items={[["Detected components",graph.nodes.length,Layers],["Observed connections",graph.edges.length,Workflow],["Cloud resources",ARCH.services.length,Cloud],["Detection confidence",`${ARCH.confidence}%`,ScanSearch]]}/><div className="architecture-workbench"><GlassPanel title="Repository topology" eyebrow="INTERACTIVE ARCHITECTURE" icon={Cloud} action={<div className="zoom-controls"><button aria-label="Zoom out" onClick={()=>setZoom(Math.max(.5,zoom-.25))}><Minus size={15}/></button><span>{Math.round(zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setZoom(Math.min(2,zoom+.25))}><span>+</span></button><button onClick={()=>setZoom(1)}>Reset</button></div>}><div className="architecture-viewport"><ArchitectureDiagram full zoom={zoom} activeNode={active} onNodeClick={setActive}/></div><div className="evidence-note">Select a node to inspect its evidence. Connections represent repository configuration, not live cloud telemetry.</div></GlassPanel><div className="architecture-inspector"><GlassPanel title={node ? node.label : "Component inspector"} eyebrow="SELECTED COMPONENT" icon={Layers}>{node ? <div className="inspector-body"><span className="panel-icon"><node.icon size={20}/></span><p>{node.desc}</p><span className="glass-status">Repository evidence</span></div> : <EmptyPanel title="Select a component" detail="Choose a node in the topology to inspect its context."/>}</GlassPanel><GlassPanel title="Detection evidence" eyebrow={ARCH.provider} icon={FileCode2}><div className="evidence-chips">{ARCH.architectureLabels.map(label=><span key={label}>{label}</span>)}{!ARCH.architectureLabels.length && <p className="inline-empty">No recognized infrastructure configurations detected.</p>}</div><p className="inspector-assessment">{ARCH.assessment}</p></GlassPanel></div></div></div>;
 }
 
-function InfraFindingsPage({ title, subtitle, category, meta }) {
-  const items = ISSUES.filter((i) => i.category === category);
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{title}</h1>
-        <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {meta.map(([k, v]) => (
-          <Card key={k} className="p-4 text-center">
-            <div className="font-mono text-xl font-bold text-slate-100">{v}</div>
-            <div className="mt-0.5 text-xs text-slate-500">{k}</div>
-          </Card>
-        ))}
-      </div>
-      <Card className="p-5">
-        <SectionHeader title="Related Findings" subtitle={`Issues detected in ${category.toLowerCase()} configuration.`} />
-        {items.length === 0 ? (
-          <p className="text-sm text-slate-500">No issues detected in this area.</p>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {items.map((iss) => (
-              <div key={iss.id} className="flex items-start gap-3 py-3">
-                <SeverityBadge severity={iss.severity} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-200">{iss.title}</div>
-                  <div className="mt-0.5 font-mono text-xs text-slate-500">{iss.file}:{iss.line}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
+function InfraFindingsPage({ title, category, onSelectIssue }) {
+  const paths=REPOSITORY_FILES.map(file=>typeof file==="string" ? file : file.path).filter(Boolean);
+  const items=ISSUES.filter(issue=>issue.category===category);
+  const affected=new Set(items.map(issue=>issue.file));
+  const files=paths.filter(path=>affected.has(path) || (category==="Docker" ? /(^|\/)(Dockerfile[^/]*|[^/]*\.dockerfile|docker-compose[^/]*|compose\.ya?ml|\.dockerignore)$/i.test(path) : /(^|\/)(k8s|kubernetes|helm|charts)(\/)|(^|\/)(deployment|service|ingress|statefulset|daemonset|configmap|secret|chart|values)\.ya?ml$/i.test(path)));
+  return <div className="platform-page"><PageHeader eyebrow={category==="Docker" ? "CONTAINER INTELLIGENCE" : "ORCHESTRATION INTELLIGENCE"} title={`${title}, under the microscope.`} description={category==="Docker" ? "Inspect build configuration and container security from actual repository files." : "Review manifests, workload configuration, and YAML risks detected in your source."}/><PageStats items={[["Matching configuration files",files.length,FileCode2],["Related findings",items.length,AlertTriangle],["Priority findings",items.filter(issue=>["critical","high"].includes(issue.severity)).length,ShieldAlert],["Inspection source","Repository",GitBranch]]}/><div className="platform-split"><GlassPanel title="Configuration assessment" eyebrow="FINDINGS & REMEDIATION" icon={category==="Docker" ? Container : Boxes}><FindingRows items={items} onSelectIssue={onSelectIssue}/></GlassPanel><GlassPanel title="What this view knows" eyebrow="EVIDENCE BOUNDARY" icon={ScanSearch}><div className="inspector-body"><h3>{files.length ? "Configuration detected" : "No matching configuration detected"}</h3><p>{category==="Docker" ? "Dockerfiles and Compose configuration are identified from repository paths and analysis findings. Running images and container telemetry are unavailable." : "Matching manifests and Helm configuration are identified from repository paths and analysis findings. Cluster status and deployed workload counts are unavailable."}</p></div></GlassPanel></div><CodeExplorer paths={files} title={category==="Docker" ? "Dockerfile & Compose explorer" : "Manifest & YAML explorer"}/></div>;
 }
 
-function CICDPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">CI/CD</h1>
-        <p className="mt-1 text-sm text-slate-400">Pipeline stages, run history, and reliability trends.</p>
-      </div>
-      <Card className="p-6">
-        <div className="mb-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-2">
-          {CICD_STAGES.map((s, i) => (
-            <React.Fragment key={s.name}>
-              <div className="flex w-full items-center gap-2.5 rounded-lg border border-slate-800 bg-slate-800/40 px-4 py-3 sm:w-auto">
-                <StageStatusIcon status={s.status} className="h-5 w-5" />
-                <span className="text-sm font-medium text-slate-200">{s.name}</span>
-              </div>
-              {i < CICD_STAGES.length - 1 && <ArrowRight className="hidden h-4 w-4 shrink-0 text-slate-700 sm:block" />}
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-4 border-t border-slate-800 pt-5 text-center">
-          <div><div className="font-mono text-lg font-semibold text-slate-100">{CICD_META.lastRun}</div><div className="text-xs text-slate-500">Last Run</div></div>
-          <div><div className="font-mono text-lg font-semibold text-slate-100">{CICD_META.duration}</div><div className="text-xs text-slate-500">Duration</div></div>
-          <div><div className="font-mono text-lg font-semibold text-emerald-400">{CICD_META.successRate}%</div><div className="text-xs text-slate-500">Success Rate</div></div>
-        </div>
-      </Card>
-      <Card className="p-5">
-        <SectionHeader title="Pipeline Duration Trend" subtitle="Build duration (seconds) across the last 7 runs." />
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={CICD_HISTORY}>
-            <CartesianGrid stroke="#1e293b" vertical={false} />
-            <XAxis dataKey="run" stroke="#64748b" fontSize={12} />
-            <YAxis stroke="#64748b" fontSize={12} />
-            <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, fontSize: 12 }} />
-            <Line type="monotone" dataKey="duration" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: "#3b82f6" }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
-    </div>
-  );
+function CICDPage({ onSelectIssue, onOpenIntelligence }) {
+  const paths=REPOSITORY_FILES.map(file=>typeof file==="string" ? file : file.path).filter(Boolean).filter(path=>/(^|\/)\.github\/workflows\/|(^|\/)(Jenkinsfile|\.gitlab-ci\.ya?ml|azure-pipelines\.ya?ml)$/i.test(path));
+  const findings=ISSUES.filter(issue=>issue.category==="CI/CD");
+  return <div className="platform-page"><PageHeader eyebrow="DELIVERY OPERATIONS" title="From commit to deployment." description="Inspect pipeline configuration and delivery risks. Execution data is shown only when available."/><PageStats items={[["Workflow files",paths.length,Workflow],["Configuration findings",findings.length,AlertTriangle],["Latest execution","Unavailable",Clock],["Deployment status","Unavailable",Cloud]]}/><GlassPanel title="Delivery evidence" eyebrow="PIPELINE VISIBILITY" icon={Workflow}><div className="delivery-stages">{[["Source",REPO.name,true,GitBranch],["Workflow",paths.length ? `${paths.length} configurations detected` : "Not detected",paths.length>0,Workflow],["Execution","Run telemetry unavailable",false,Container],["Deployment","Deployment telemetry unavailable",false,Cloud]].map(([label,detail,available,Icon])=><div key={label} className={available ? "available" : ""}><span><Icon size={23}/></span><strong>{label}</strong><small>{detail}</small><em>{available ? "Evidence available" : "Not connected"}</em></div>)}</div></GlassPanel><div className="platform-split"><GlassPanel title="Execution history & logs" eyebrow="PERSISTED EXECUTIONS" icon={Clock}><button className="glass-link" onClick={onOpenIntelligence}>Open execution history <ArrowRight size={14}/></button><EmptyPanel title="Execution history is available in AI Intelligence" detail="Open AI Intelligence for persisted Actions attempts, historical evaluation and stored RCA. Syncing history is separate from source analysis; deployment telemetry is not inferred." icon={Plug}/></GlassPanel><FutureAI kind="prediction" onOpen={onOpenIntelligence}/></div><GlassPanel title="Pipeline configuration risks" eyebrow="FAILURE PREVENTION" icon={ShieldAlert}><FindingRows items={findings} onSelectIssue={onSelectIssue}/></GlassPanel><CodeExplorer paths={paths} title="Workflow source"/></div>;
 }
 
 function SecurityPage({ onSelectIssue }) {
-  const tone = scoreTone(SECURITY.score);
-  const barData = Object.entries(SECURITY.findings).map(([sev, count]) => ({ sev, count, fill: TONE[sev].hex }));
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Security</h1>
-        <p className="mt-1 text-sm text-slate-400">Security posture across cloud infrastructure, containers, and configuration.</p>
-      </div>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
-        <Card className="flex flex-col items-center justify-center p-6 lg:col-span-1">
-          <span className={`font-mono text-4xl font-bold ${TONE[tone].text}`}>{SECURITY.score}</span>
-          <span className="mt-1 text-xs text-slate-500">Security Score / 100</span>
-        </Card>
-        <Card className="p-5 lg:col-span-3">
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={barData} layout="vertical" margin={{ left: 10 }}>
-              <XAxis type="number" hide />
-              <YAxis type="category" dataKey="sev" stroke="#94a3b8" fontSize={12} width={70} />
-              <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                {barData.map((d, i) => <Cell key={i} fill={d.fill} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-      <Card className="p-5">
-        <SectionHeader title="Top Security Findings" />
-        <div className="divide-y divide-slate-800">
-          {ISSUES.filter((i) => i.severity === "critical" || i.severity === "high").map((iss) => (
-            <button key={iss.id} onClick={() => onSelectIssue(iss)} className="flex w-full items-start gap-3 py-3 text-left hover:bg-slate-800/40 rounded-lg px-2 -mx-2">
-              <SeverityBadge severity={iss.severity} />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-slate-200">{iss.title}</div>
-                <div className="mt-0.5 font-mono text-xs text-slate-500">{iss.file}:{iss.line}</div>
-              </div>
-              <span className="mt-0.5 shrink-0 text-xs font-medium text-blue-400">View Details</span>
-            </button>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
+  const values=["critical","high","medium","low"].map(name=>({name,value:Number(SECURITY.findings?.[name] || 0),fill:TONE[name].hex}));
+  return <div className="platform-page"><PageHeader eyebrow="SECURITY OPERATIONS" title="Reduce exposure. Build trust." description="Security posture, severity distribution, and remediation priorities from the repository scan."/><PageStats items={[["Security score",SECURITY.score===null ? "Unavailable" : `${SECURITY.score}/100`,ShieldAlert],["Security findings",values.reduce((a,b)=>a+b.value,0),AlertTriangle],["Critical repository issues",SEVERITY_COUNTS.critical,AlertOctagon],["High repository issues",SEVERITY_COUNTS.high,AlertCircle]]}/><div className="platform-split"><GlassPanel title="Security posture" eyebrow="SEVERITY DISTRIBUTION" icon={ShieldAlert}><div className="security-posture"><div className="security-score-display"><strong>{SECURITY.score ?? "—"}</strong><small>SECURITY SCORE / 100</small><span className="glass-status">Latest repository scan</span></div><ResponsiveContainer width="100%" height={220}><BarChart data={values} layout="vertical" margin={{left:10,right:20}}><XAxis type="number" allowDecimals={false} stroke="#94a3b8" fontSize={10}/><YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} width={64}/><Tooltip contentStyle={{background:"#0b1429",border:"1px solid #334155"}}/><Bar dataKey="value" radius={[0,5,5,0]} isAnimationActive={false}>{values.map(item=><Cell key={item.name} fill={item.fill}/>)}</Bar></BarChart></ResponsiveContainer></div></GlassPanel><GlassPanel title="Remediation priorities" eyebrow="ACT ON THE EVIDENCE" icon={Lightbulb}><div className="remediation-summary">{["critical","high","medium","low"].map(level=><div key={level}><SeverityBadge severity={level}/><strong>{SEVERITY_COUNTS[level]}</strong><p>{level==="critical" ? "Review immediately" : level==="high" ? "Prioritize remediation" : level==="medium" ? "Schedule improvements" : "Review when practical"}</p></div>)}</div></GlassPanel></div><GlassPanel title="Priority repository alerts" eyebrow="CRITICAL & HIGH SEVERITY" icon={AlertOctagon}><FindingRows items={ISSUES.filter(issue=>["critical","high"].includes(issue.severity))} onSelectIssue={onSelectIssue}/></GlassPanel><GlassPanel title="All detected findings" eyebrow="INVESTIGATE & REMEDIATE" icon={ScanSearch}><FindingRows items={ISSUES} onSelectIssue={onSelectIssue}/></GlassPanel></div>;
 }
 
-function RecommendationsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Recommendations</h1>
-        <p className="mt-1 text-sm text-slate-400">Review each suggestion and apply the fix manually — nothing here is changed automatically.</p>
-      </div>
-      <RecommendationsList />
-    </div>
-  );
+function RecommendationsPage({ onSelectIssue }) {
+  const [filter,setFilter]=useState("all");const list=RECOMMENDATIONS.filter(item=>filter==="all" || item.severity===filter);
+  return <div className="platform-page"><PageHeader eyebrow="REMEDIATION STUDIO" title="Turn insight into action." description="Evidence-backed suggestions for your repository. Review and apply fixes in your own workflow."/><div className="platform-split"><PageStats items={[["Recommendations",RECOMMENDATIONS.length,Lightbulb],["Priority actions",RECOMMENDATIONS.filter(item=>["critical","high"].includes(item.severity)).length,ShieldAlert]]}/><div className="remediation-banner"><Lightbulb size={22}/><div><strong>Your changes stay in your hands.</strong><p>Suggestions are based on scan findings. No source changes are applied automatically.</p></div></div></div><div className="filter-toolbar"><span className="glass-muted">Filter recommendations</span><select aria-label="Filter recommendations" value={filter} onChange={e=>setFilter(e.target.value)}>{["all","critical","high","medium","low"].map(value=><option key={value} value={value}>{value==="all" ? "All severities" : value}</option>)}</select></div><div className="recommendation-board">{list.map((rec,index)=>{const issue=ISSUES.find(item=>item.id===rec.relatedIssue);return <GlassPanel key={rec.id} title={rec.title} eyebrow={`ACTION ${String(index+1).padStart(2,"0")}`} icon={Lightbulb} action={<SeverityBadge severity={rec.severity}/>}><div className="recommendation-body">{issue && <span className="affected-file"><FileCode2 size={13}/>{issue.file}:{issue.line}</span>}<h4>Why it matters</h4><p>{rec.why || issue?.why || "Review this recommendation against your repository configuration."}</p><h4>Suggested fix</h4><div className="suggested-fix">{rec.action}</div>{issue && <details><summary>Inspect detected configuration</summary><pre className="source-code">{issue.snippet}</pre></details>}{issue && <button className="glass-link" onClick={()=>onSelectIssue(issue)}>Open related finding <ArrowRight size={14}/></button>}</div></GlassPanel>;})}</div>{!list.length && <GlassPanel title="Recommendation queue" eyebrow="LATEST ASSESSMENT" icon={Lightbulb}><EmptyPanel title="No matching recommendations" detail="The current analysis has no recommendations at this severity." icon={CheckCircle2}/></GlassPanel>}</div>;
+}
+
+function FutureAI({ kind="chat", onOpen }) {
+  if(kind==="prediction") return <GlassPanel title="Pipeline intelligence" eyebrow="AI INTELLIGENCE / EXPERIMENTAL" icon={Workflow}><div className="future-ai-body"><span className="planned-tag">Real Actions data · measured baselines</span><h3>Predict. Diagnose. Verify.</h3><p>Collect workflow history, evaluate an experimental model, and inspect evidence-grounded root causes. Readiness and limitations are reported from the backend.</p><button className="glass-link" onClick={onOpen}>Open AI Intelligence <ArrowRight size={14}/></button></div></GlassPanel>;
+  return <GlassPanel title="AI DevOps copilot" eyebrow="PLANNED FEATURE · NOT ACTIVE" icon={Lightbulb} className="future-ai"><div className="future-ai-body"><span className="planned-tag">Coming in a future release</span><h3>Your next question. In context.</h3><p>A planned conversational workspace for repository findings and DevOps guidance. Chat is not connected.</p><div className="future-chat-input"><span>Ask about this repository…</span><button disabled aria-label="AI chat is not available"><ArrowRight size={16}/></button></div></div></GlassPanel>;
 }
 
 function ReportsPage({ onExport }) {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Reports</h1>
-          <p className="mt-1 text-sm text-slate-400">A shareable summary of the latest analysis.</p>
-        </div>
-        <button onClick={onExport} className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-600">
-          <Download className="h-4 w-4" /> Export Report
-        </button>
-      </div>
-      <Card className="p-5">
-        <SectionHeader title="Executive Summary" />
-        <p className="text-sm leading-relaxed text-slate-400">
-          {REPO.name} scored {HEALTH.overall}/100 in the latest analysis, rated "{HEALTH.status}". Of {METRICS.find((m) => m.label === "Total Files")?.value || 0} files scanned,
-          {ISSUES.length} issues were detected — {SEVERITY_COUNTS.critical} critical and {SEVERITY_COUNTS.high} high severity.
-          Findings and recommendations below are generated from the connected repository scan.
-        </p>
-      </Card>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <HealthScore />
-        <TechStackGrid />
-      </div>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <SecurityPreview onOpenPage={() => {}} />
-        <CICDPreview onOpenPage={() => {}} />
-      </div>
-      <RecommendationsList />
-    </div>
-  );
+  const [preview,setPreview]=useState(true);
+  return <div className="platform-page reports-page"><PageHeader eyebrow="INTELLIGENCE BRIEFING" title="The complete picture." description="An executive-ready view of repository health, security exposure, and recommended actions." action={<button className="neon-primary" onClick={onExport}><Download size={15}/>Download JSON report</button>}/><PageStats items={[["Health score",HEALTH.overall===null ? "Unavailable" : `${HEALTH.overall}/100`,ScanSearch],["Repository files",REPOSITORY_FILES.length,Files],["Findings",ISSUES.length,ShieldAlert],["Recommendations",RECOMMENDATIONS.length,Lightbulb]]}/><div className="report-controls"><span className="glass-status">Latest completed assessment</span><button className="glass-link" onClick={()=>setPreview(!preview)}>{preview ? "Hide report preview" : "Show report preview"}<FileBarChart2 size={14}/></button><button className="glass-link" onClick={()=>window.print()}>Print / save PDF <Download size={14}/></button></div>{preview && <div className="report-preview"><div className="report-cover"><span>CLOUD-BYTEXL / INTELLIGENCE REPORT</span><h2>{REPO.fullName}</h2><p>Repository assessment · {REPO.branch} · {REPO.commitHash}</p><strong>{HEALTH.status}</strong></div><GlassPanel title="Executive summary" eyebrow="01 / ASSESSMENT" icon={FileBarChart2}><div className="executive-summary"><RepositoryHealthGauge/><p>The latest analysis of <strong>{REPO.name}</strong> returned a health score of <strong>{HEALTH.overall}/100</strong>. Across {REPOSITORY_FILES.length} repository files, {ISSUES.length} findings were identified, including {SEVERITY_COUNTS.critical} critical and {SEVERITY_COUNTS.high} high-severity issues. {RECOMMENDATIONS.length} recommendations are available for review.</p></div></GlassPanel><div className="platform-split"><GlassPanel title="Health breakdown" eyebrow="02 / QUALITY" icon={ScanSearch}><div className="report-scores">{SUBSCORES.map(score=><div key={score.label}><span>{score.label}</span><ProgressBar value={score.value} tone={score.tone}/><strong>{score.value}/100</strong></div>)}</div></GlassPanel><GlassPanel title="Security exposure" eyebrow="03 / RISK" icon={ShieldAlert}><div className="report-security">{Object.entries(SECURITY.findings).map(([level,count])=><div key={level}><SeverityBadge severity={level}/><strong>{count}</strong></div>)}</div></GlassPanel></div><GlassPanel title="Recommended next steps" eyebrow="04 / ACTION PLAN" icon={Lightbulb}><div className="report-actions">{RECOMMENDATIONS.map((rec,index)=><div key={rec.id}><span>{index+1}</span><div><strong>{rec.title}</strong><p>{rec.action}</p></div><SeverityBadge severity={rec.severity}/></div>)}{!RECOMMENDATIONS.length && <p>No recommendations returned by this scan.</p>}</div></GlassPanel><div className="evidence-note">This report summarizes repository evidence. Runtime infrastructure status, live pipeline results, and AI predictions are not included.</div></div>}</div>;
 }
 
 /* ============================== MODALS & TOASTS ============================== */
@@ -1565,48 +747,95 @@ function ReportsPage({ onExport }) {
 function IssueDetailModal({ issue, onClose, onMarkReviewed, reviewed }) {
   if (!issue) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div style={{ maxHeight: "85vh" }} className="w-full max-w-xl overflow-y-auto rounded-xl border border-slate-800 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-slate-800 bg-slate-900 p-5">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label="Issue details"
+        onKeyDown={event => {if(event.key === "Escape") onClose();}}
+        className="w-full max-w-xl overflow-y-auto rounded-2xl shadow-2xl"
+        style={{ maxHeight: "85vh", background: "#0b1120", border: "1px solid rgba(255,255,255,0.1)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="sticky top-0 flex items-start justify-between gap-4 p-5"
+          style={{ background: "#0b1120", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        >
           <div>
             <SeverityBadge severity={issue.severity} />
-            <h3 className="mt-2 text-base font-semibold text-slate-100">{issue.title}</h3>
-            <div className="mt-1 font-mono text-xs text-slate-500">{issue.category} · {issue.file}:{issue.line}</div>
+            <h3 className="mt-2 text-base font-bold text-slate-100">{issue.title}</h3>
+            <div className="mt-1 font-mono text-xs text-faint">
+              {issue.category} · {issue.file}:{issue.line}
+            </div>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-300"><X className="h-4 w-4" /></button>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded-lg p-1.5 text-muted transition-all hover:bg-white/[0.06] hover:text-slate-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <div className="space-y-4 p-5">
           <div>
-            <div className="mb-1.5 text-xs font-mono uppercase tracking-wide text-slate-500">Detected Configuration</div>
-            <pre className="overflow-x-auto rounded-lg border border-slate-800 bg-black/40 p-3 font-mono text-xs text-slate-300">{issue.snippet}</pre>
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Detected Configuration
+            </div>
+            <pre
+              className="overflow-x-auto rounded-xl p-4 font-mono text-xs text-slate-300"
+              style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              {issue.snippet}
+            </pre>
           </div>
           <div>
-            <div className="mb-1 text-xs font-mono uppercase tracking-wide text-slate-500">Why This Is a Problem</div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Why This Is a Problem
+            </div>
             <p className="text-sm text-slate-300">{issue.why}</p>
           </div>
           <div>
-            <div className="mb-1 text-xs font-mono uppercase tracking-wide text-slate-500">Potential Impact</div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Potential Impact
+            </div>
             <p className="text-sm text-slate-300">{issue.impact}</p>
           </div>
-          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
-            <div className="mb-1 text-xs font-mono uppercase tracking-wide text-blue-400">Recommended Solution</div>
+          <div
+            className="rounded-xl p-4"
+            style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)" }}
+          >
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-400">
+              Recommended Solution
+            </div>
             <p className="text-sm text-slate-200">{issue.recommendation}</p>
           </div>
           <div>
-            <div className="mb-1 text-xs font-mono uppercase tracking-wide text-slate-500">Related Infrastructure</div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Related Infrastructure
+            </div>
             <p className="text-sm text-slate-300">{issue.related}</p>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 p-4">
-          <button className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-600">
+        <div
+          className="flex items-center justify-end gap-3 p-4"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <button
+            onClick={() => window.open(`${REPO.url}/blob/${encodeURIComponent(REPO.analysisCommitSha || REPO.branch)}/${issue.file.split('/').map(encodeURIComponent).join('/')}#L${issue.line || 1}`, "_blank", "noopener,noreferrer")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-300 transition-all hover:text-slate-100"
+            style={{ border: "1px solid rgba(255,255,255,0.09)" }}
+          >
             <ExternalLink className="h-3.5 w-3.5" /> View on GitHub
           </button>
           <button
             onClick={() => onMarkReviewed(issue.id)}
             disabled={reviewed}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Check className="h-3.5 w-3.5" /> {reviewed ? "Reviewed" : "Mark as Reviewed"}
+            <Check className="h-3.5 w-3.5" />
+            {reviewed ? "Reviewed" : "Mark as Reviewed"}
           </button>
         </div>
       </div>
@@ -1618,24 +847,56 @@ function ConnectRepoModal({ open, onClose, onConnect }) {
   const [url, setUrl] = useState("");
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-slate-100">Connect GitHub Repository</h3>
-          <button onClick={onClose} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-300"><X className="h-4 w-4" /></button>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(10px)" }}
+      onClick={onClose}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label="Connect GitHub repository"
+        onKeyDown={event => {if(event.key === "Escape") onClose();}}
+        className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ background: "#0b1120", border: "1px solid rgba(255,255,255,0.1)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-100">Connect GitHub Repository</h3>
+            <p className="mt-0.5 text-sm text-muted">Enter any public repository URL to analyze</p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded-lg p-1.5 text-muted transition-all hover:bg-white/[0.06] hover:text-slate-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        <label className="mb-1.5 block text-xs font-mono uppercase tracking-wide text-slate-500">Repository URL</label>
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5">
-          <Github className="h-4 w-4 text-slate-500" />
+        <label htmlFor="repository-url" className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+          Repository URL
+        </label>
+        <div
+          className="mb-5 flex items-center gap-2.5 rounded-xl px-3 py-3 transition-all focus-within:ring-2 focus-within:ring-blue-500/30"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
+        >
+          <Github className="h-4 w-4 shrink-0 text-muted" />
           <input
+            id="repository-url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && onConnect(url)}
             placeholder="github.com/your-org/your-repo"
-            className="w-full bg-transparent text-sm text-slate-200 placeholder-slate-600 outline-none"
+            className="w-full bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
+            autoFocus
           />
         </div>
-        <button onClick={() => onConnect(url)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-500">
-          <Plug className="h-4 w-4" /> Connect Repository
+        <button
+          onClick={() => onConnect(url)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-all hover:bg-blue-500"
+          style={{ background: "#2563eb", boxShadow: "0 0 18px rgba(59,130,246,0.35)" }}
+        >
+          <Plug className="h-4 w-4" />
+          Connect &amp; Analyze Repository
         </button>
       </div>
     </div>
@@ -1644,49 +905,79 @@ function ConnectRepoModal({ open, onClose, onConnect }) {
 
 function EmptyState({ onConnect }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
-        <Github className="h-7 w-7 text-slate-400" />
+    <div
+      className="onboarding-view flex flex-col items-center justify-center px-6 text-center"
+      style={{
+        background: "radial-gradient(ellipse at 50% 30%, rgba(37,99,235,0.08) 0%, transparent 65%)",
+      }}
+    >
+      <div
+        className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl"
+        style={{
+          background: "linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%)",
+          boxShadow: "0 0 40px rgba(59,130,246,0.25)",
+          border: "1px solid rgba(59,130,246,0.3)",
+        }}
+      >
+        <Github className="h-9 w-9 text-white" />
       </div>
-      <h1 className="text-xl font-semibold text-slate-100">Connect your first GitHub repository</h1>
-      <p className="mt-2 max-w-md text-sm text-slate-400">
-        Let Cloud-ByteXL analyze your code, infrastructure, containers, Kubernetes configuration, and CI/CD pipeline.
+
+      <h1 className="text-2xl font-bold tracking-tight text-slate-100">
+        Connect your GitHub repository
+      </h1>
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
+        Let Cloud-ByteXL analyze your code, infrastructure, containers,
+        Kubernetes configuration, and CI/CD pipeline — all in one place.
       </p>
-      <button onClick={onConnect} className="mt-6 flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-500">
-        <Github className="h-4 w-4" /> Connect GitHub Repository
+
+      <button
+        onClick={onConnect}
+        className="mt-8 flex items-center gap-2.5 rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-500"
+        style={{ background: "#2563eb", boxShadow: "0 0 22px rgba(59,130,246,0.4)" }}
+      >
+        <Github className="h-4 w-4" />
+        Connect Repository
       </button>
+
+      <div className="mx-auto mt-12 grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          { label: "Security Analysis", desc: "Detect vulnerabilities in Terraform, Docker, and Kubernetes configurations automatically." },
+          { label: "CI/CD Intelligence", desc: "Inspect workflow configuration and delivery risks from repository evidence." },
+          { label: "Architecture Mapping", desc: "Visualize your infrastructure stack from repository evidence, not assumptions." },
+        ].map((f) => (
+          <div
+            key={f.label}
+            className="rounded-xl p-4 text-left"
+            style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="mb-2 text-sm font-semibold text-slate-300">{f.label}</div>
+            <div className="text-xs leading-relaxed text-faint">{f.desc}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function AnalyzingOverlay({ step }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-        <div className="mb-5 flex items-center gap-2.5">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
-          <span className="text-sm font-medium text-slate-100">Analyzing Repository…</span>
-        </div>
-        <ProgressBar value={(step / ANALYSIS_STEPS.length) * 100} tone="blue" />
-        <div className="mt-5 space-y-2.5">
-          {ANALYSIS_STEPS.map((s, i) => (
-            <div key={s} className="flex items-center gap-2.5 text-sm">
-              <StageStatusIcon status={i < step ? "success" : i === step ? "running" : "pending"} />
-              <span className={i <= step ? "text-slate-200" : "text-slate-600"}>{s}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function AnalyzingOverlay() {
+  return <div className="scan-overlay" role="dialog" aria-modal="true" aria-label="Analyzing repository"><div className="scan-overlay-panel"><span className="scan-orb"><ScanSearch size={32}/></span><div className="page-kicker">REPOSITORY INTELLIGENCE</div><h2>Reading the signals.</h2><p role="status">Fetching repository data and analyzing configuration. This may take a moment.</p><div className="scan-indeterminate" aria-label="Analysis in progress"><span/></div><div className="scan-overlay-scope">{ANALYSIS_STEPS.map(label=><span key={label}>{label}</span>)}</div><small>Results appear after the backend completes the assessment.</small></div></div>;
 }
 
 function Toasts({ toasts }) {
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-50 space-y-2">
       {toasts.map((t) => (
-        <div key={t.id} className="pointer-events-auto flex items-center gap-2.5 rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-slate-100 shadow-xl">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400" /> {t.message}
+        <div
+          key={t.id}
+          className="pointer-events-auto flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm text-slate-100 shadow-2xl"
+          style={{
+            background: "rgba(14,21,37,0.95)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          {t.message}
         </div>
       ))}
     </div>
@@ -1696,143 +987,115 @@ function Toasts({ toasts }) {
 function CloudResourcesModal({ resources, onClose }) {
   const resourceList = Array.isArray(resources) ? resources : [];
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-          <div><h2 className="text-lg font-semibold text-white">Cloud Resources Found</h2><p className="mt-1 text-sm text-slate-400">{resourceList.length} resources detected from the repository analysis</p></div>
-          <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white">✕</button>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl overflow-hidden rounded-2xl shadow-2xl"
+        style={{ background: "#0b1120", border: "1px solid rgba(255,255,255,0.1)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <div>
+            <h2 className="text-lg font-bold text-white">Cloud Resources Found</h2>
+            <p className="mt-1 text-sm text-muted">
+              {resourceList.length} resources detected from the repository analysis
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded-lg p-1.5 text-muted transition-all hover:bg-white/[0.06] hover:text-slate-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-6">
           {resourceList.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-8 text-center"><Cloud className="mx-auto h-8 w-8 text-slate-600" /><p className="mt-3 text-sm font-medium text-slate-300">No cloud resources detected</p><p className="mt-1 text-xs leading-5 text-slate-500">The repository analysis did not find provider-specific cloud resource definitions.</p></div>
+            <div
+              className="rounded-xl p-8 text-center"
+              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <Cloud className="mx-auto h-8 w-8 text-faint" />
+              <p className="mt-3 text-sm font-medium text-slate-300">No cloud resources detected</p>
+              <p className="mt-1 text-xs leading-5 text-faint">
+                The repository analysis did not find provider-specific cloud resource definitions.
+              </p>
+            </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">{resourceList.map((resource,index)=>(<div key={`${resource}-${index}`} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"><div className="flex items-start gap-3"><div className="mt-0.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-2"><Cloud className="h-4 w-4 text-cyan-400" /></div><div className="min-w-0"><div className="break-words text-sm font-medium text-slate-200">{resource}</div><div className="mt-1 text-xs text-slate-500">Detected resource</div></div></div></div>))}</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {resourceList.map((resource, index) => (
+                <div
+                  key={`${resource}-${index}`}
+                  className="rounded-xl p-4"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="mt-0.5 rounded-lg p-2"
+                      style={{ background: "rgba(34,211,238,0.08)", border: "1px solid rgba(34,211,238,0.15)" }}
+                    >
+                      <Cloud className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="break-words text-sm font-medium text-slate-200">{resource}</div>
+                      <div className="mt-1 text-xs text-faint">Detected resource</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-        <div className="flex justify-end border-t border-slate-800 px-6 py-4"><button type="button" onClick={onClose} className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700">Close</button></div>
+        <div
+          className="flex justify-end px-6 py-4"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:text-slate-100 hover:bg-white/[0.06]"
+            style={{ border: "1px solid rgba(255,255,255,0.09)" }}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+/* ============================== DATA FUNCTIONS ============================== */
+
+
+
 /* ============================== APP ============================== */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
-
-function applyAnalysisData(analysis) {
-  if (!analysis) return;
-
-  HEALTH = {
-    overall: Number(analysis.overall ?? 0),
-    status: analysis.status || "Analysis completed",
-  };
-
-  SUBSCORES = Array.isArray(analysis.subscores) ? analysis.subscores : SUBSCORES;
-  ISSUES = Array.isArray(analysis.issues) ? analysis.issues : [];
-  SEVERITY_COUNTS = analysis.severityCounts || { critical: 0, high: 0, medium: 0, low: 0 };
-  SECURITY = analysis.security || { score: 100, findings: SEVERITY_COUNTS };
-  RECOMMENDATIONS = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
-
-  const architecture = analysis.architecture || {};
-  const detectedArchitecture = architecture.detected || {};
-  ARCH = {
-    ...ARCH,
-    title: architecture.title || "Repository Architecture",
-    reason: architecture.reason || "Architecture is determined from repository evidence.",
-    assessment: architecture.cloudAssessment || "No cloud resource evidence was detected.",
-    provider: architecture.provider || "Not detected",
-    confidence: Number(architecture.confidence ?? 0),
-    services: Array.isArray(detectedArchitecture.cloudResources)
-      ? detectedArchitecture.cloudResources
-      : [],
-    architectureLabels: Array.isArray(architecture.architectureLabels)
-      ? architecture.architectureLabels
-      : [],
-    detected: detectedArchitecture,
-    evidence: Array.isArray(architecture.evidence) ? architecture.evidence : [],
-  };
-
-  const metrics = analysis.metrics || {};
-  METRICS = METRICS.map((metric) => {
-    if (metric.label === "Issues Detected") return { ...metric, value: String(metrics.issues ?? ISSUES.length), note: "From latest repository scan" };
-    if (metric.label === "Critical Issues") return { ...metric, value: String(metrics.critical ?? SEVERITY_COUNTS.critical), note: metrics.critical ? "Needs immediate review" : "None detected" };
-    if (metric.label === "Security Findings") {
-      const total = metrics.securityFindings ?? Object.values(SEVERITY_COUNTS).reduce((a, b) => a + b, 0);
-      return { ...metric, value: String(total), note: `${SEVERITY_COUNTS.critical} critical · ${SEVERITY_COUNTS.high} high` };
-    }
-    if (metric.label === "Cloud Resources") {
-      const resources = Array.isArray(detectedArchitecture.cloudResources) ? detectedArchitecture.cloudResources : [];
-      return {
-        ...metric,
-        value: String(metrics.cloudResourceCount ?? resources.length),
-        note: resources.length ? "Detected from repository analysis" : "No cloud resources detected",
-      };
-    }
-    return metric;
-  });
-
-  const now = new Date();
-  ANALYSIS_HISTORY = [{
-    date: now.toLocaleString(),
-    score: HEALTH.overall,
-    issues: ISSUES.length,
-    duration: REPO.analysisDuration,
-  }];
-
-  ACTIVITY = [
-    { time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), label: "Repository analyzed", status: "done" },
-    { time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), label: `${REPOSITORY_FILES.length} repository files scanned`, status: "done" },
-  ];
-}
-
-function applyRepositoryData(data) {
-  const repository = data?.repository || {};
-  REPO = {
-    ...REPO,
-    name: repository.name || "Unknown repository",
-    fullName: repository.fullName || repository.name || "Unknown repository",
-    url: repository.url || "",
-    branch: repository.branch || "main",
-    lastCommitMsg: data?.commits?.[0]?.message || "No commits found",
-    commitHash: data?.commits?.[0]?.hash || "",
-    commitAuthor: data?.commits?.[0]?.author || repository.owner || "Unknown",
-    lastAnalyzed: "just now",
-    analysisDuration: "—",
-  };
-
-  LANGUAGES = Array.isArray(data?.languages) ? data.languages : [];
-  CONTRIBUTORS = Array.isArray(data?.contributors) ? data.contributors : [];
-  COMMITS = Array.isArray(data?.commits) ? data.commits.map((commit) => ({
-    hash: commit.hash || (commit.sha ? commit.sha.slice(0, 7) : ""),
-    message: commit.message || "No commit message",
-    author: commit.author || "Unknown",
-    time: commit.date ? new Date(commit.date).toLocaleString() : "—",
-    url: commit.url || "",
-  })) : [];
-  REPOSITORY_FILES = Array.isArray(data?.files) ? data.files : [];
-
-  const totalFiles = data?.fileCount ?? REPOSITORY_FILES.length;
-  METRICS = METRICS.map((metric) =>
-    metric.label === "Total Files"
-      ? { ...metric, value: String(totalFiles), note: `Across ${LANGUAGES.length} languages` }
-      : metric
-  );
-}
-
 export default function App() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [page, setPage] = useState("overview");
-  const [repoConnected, setRepoConnected] = useState(false);
+  const [collapsed, setCollapsed]           = useState(() => typeof window !== "undefined" && window.innerWidth < 1024);
+  const [page, setPage]                     = useState("overview");
+  const [mobileNavOpen, setMobileNavOpen]   = useState(false);
+  const [repoConnected, setRepoConnected]   = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showResourcesModal, setShowResourcesModal] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeStep, setAnalyzeStep] = useState(0);
-  const [selectedIssue, setSelectedIssue] = useState(null);
-  const [reviewedIds, setReviewedIds] = useState([]);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [toasts, setToasts] = useState([]);
-  const [, setRepoVersion] = useState(0);
+  const [connectionError,setConnectionError] = useState("");
+  const analysisRequest = useRef(null);
+  const [analyzing, setAnalyzing]           = useState(false);
+  const [analyzeStep, setAnalyzeStep]       = useState(0);
+  const [selectedIssue, setSelectedIssue]   = useState(null);
+  const [reviewedIds, setReviewedIds]       = useState([]);
+  const [notifOpen, setNotifOpen]           = useState(false);
+  const [profileOpen, setProfileOpen]       = useState(false);
+  const [toasts, setToasts]                 = useState([]);
+  useSyncExternalStore(subscribeRepository, getRepositoryRevision, getRepositoryRevision);
+  useEffect(() => { window.scrollTo(0, 0); }, [page]);
+  useEffect(() => () => analysisRequest.current?.abort(), []);
 
   const pushToast = (message) => {
     const id = Date.now();
@@ -1855,35 +1118,37 @@ export default function App() {
       return;
     }
 
+    analysisRequest.current?.abort();
+    const controller=new AbortController();analysisRequest.current=controller;
+    setConnectionError("");
     setShowConnectModal(false);
     setAnalyzing(true);
     setAnalyzeStep(1);
     pushToast("Connecting to GitHub…");
 
     try {
-      const response = await fetch(`${API_BASE}/api/github/repository`, {
+      const data = await requestJson(`${API_BASE}/api/github/repository`, {
+        signal:controller.signal,timeoutMs:180000,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: repoUrl }),
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== "SUCCESS") {
-        throw new Error(data.message || data.error || "Failed to connect GitHub repository");
-      }
+      if(controller.signal.aborted || analysisRequest.current!==controller)return;
 
-      applyRepositoryData(data);
-      applyAnalysisData(data.analysis);
+      publishRepositoryData(data);
       setRepoConnected(true);
-      setRepoVersion((v) => v + 1);
+      if(data.databaseWarning)setConnectionError(data.databaseWarning);
       setAnalyzeStep(ANALYSIS_STEPS.length);
       setPage("overview");
       pushToast(`Connected to ${data.repository?.fullName || data.repository?.name}`);
     } catch (error) {
+      if(error.name==="AbortError" || analysisRequest.current!==controller)return;
+      setConnectionError(error.message || "Repository analysis unavailable.");
       setRepoConnected(false);
       pushToast(error.message || "Failed to connect GitHub repository");
     } finally {
-      setTimeout(() => setAnalyzing(false), 350);
+      if(analysisRequest.current===controller)setAnalyzing(false);
     }
   };
 
@@ -1893,45 +1158,93 @@ export default function App() {
   };
 
   const handleExport = () => {
-    pushToast("Report exported to PDF");
+    const report = {repository:REPO,health:HEALTH,subscores:SUBSCORES,security:SECURITY,issues:ISSUES,recommendations:RECOMMENDATIONS,architecture:ARCH};
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:"application/json"}));
+    const anchor=document.createElement("a");anchor.href=url;anchor.download=`${REPO.name}-analysis.json`;anchor.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    pushToast("Repository analysis report downloaded");
   };
 
   const closeMenus = () => { setNotifOpen(false); setProfileOpen(false); };
 
   let content;
-  if (!repoConnected) {
+  if (!repoConnected || !REPO.url) {
     content = <EmptyState onConnect={() => setShowConnectModal(true)} />;
   } else {
     switch (page) {
-      case "overview": content = <OverviewPage setPage={setPage} onSelectIssue={setSelectedIssue} onCloudResourcesClick={() => setShowResourcesModal(true)} />; break;
-      case "repository": content = <RepositoryPage />; break;
-      case "analysis": content = <AnalysisPage />; break;
-      case "issues": content = <IssuesPage onSelectIssue={setSelectedIssue} />; break;
-      case "architecture": content = <ArchitecturePage />; break;
-      case "docker": content = (
-        <InfraFindingsPage
-          title="Docker" subtitle="Container build and runtime configuration detected in the repository." category="Docker"
-          meta={[["Images", "3"], ["Dockerfiles", "2"], ["Base Image", "python:3.12-slim"], ["Findings", "1"]]}
-        />
-      ); break;
-      case "kubernetes": content = (
-        <InfraFindingsPage
-          title="Kubernetes" subtitle="Manifests, deployments, and services discovered in the cluster configuration." category="Kubernetes"
-          meta={[["Deployments", "4"], ["Services", "6"], ["Node Pools", "2"], ["Findings", "1"]]}
-        />
-      ); break;
-      case "cicd": content = <CICDPage />; break;
-      case "security": content = <SecurityPage onSelectIssue={setSelectedIssue} />; break;
-      case "recommendations": content = <RecommendationsPage />; break;
-      case "reports": content = <ReportsPage onExport={handleExport} />; break;
-      default: content = <OverviewPage setPage={setPage} onSelectIssue={setSelectedIssue} onCloudResourcesClick={() => setShowResourcesModal(true)} />;
+      case "overview":
+        content = <OverviewPage onAnalyze={runAnalysis} analyzing={analyzing} setPage={setPage} onSelectIssue={setSelectedIssue} onCloudResourcesClick={() => setShowResourcesModal(true)} />;
+        break;
+      case "repository":
+        content = <RepositoryPage />;
+        break;
+      case "analysis":
+        content = <AnalysisPage onAnalyze={runAnalysis} analyzing={analyzing} onSelectIssue={setSelectedIssue} />;
+        break;
+      case "issues":
+        content = <IssuesPage onSelectIssue={setSelectedIssue} />;
+        break;
+      case "architecture":
+        content = <ArchitecturePage />;
+        break;
+      case "docker":
+        content = (
+          <InfraFindingsPage
+            title="Docker"
+            subtitle="Container build and runtime configuration detected in the repository."
+            category="Docker"
+            onSelectIssue={setSelectedIssue}
+          />
+        );
+        break;
+      case "kubernetes":
+        content = (
+          <InfraFindingsPage
+            title="Kubernetes"
+            subtitle="Manifests, deployments, and services discovered in the cluster configuration."
+            category="Kubernetes"
+            onSelectIssue={setSelectedIssue}
+          />
+        );
+        break;
+      case "cicd":
+        content = <CICDPage onSelectIssue={setSelectedIssue} onOpenIntelligence={()=>setPage("intelligence")} />;
+        break;
+      case "security":
+        content = <SecurityPage onSelectIssue={setSelectedIssue} />;
+        break;
+      case "recommendations":
+        content = <RecommendationsPage onSelectIssue={setSelectedIssue} />;
+        break;
+      case "intelligence":
+        content = <AIIntelligence key={REPO.fullName} repository={REPO.fullName} apiBase={API_BASE} />;
+        break;
+      case "reports":
+        content = <ReportsPage onExport={handleExport} />;
+        break;
+      default:
+        content = <OverviewPage onAnalyze={runAnalysis} analyzing={analyzing} setPage={setPage} onSelectIssue={setSelectedIssue} onCloudResourcesClick={() => setShowResourcesModal(true)} />;
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100" onClick={closeMenus}>
-      {repoConnected && <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} page={page} setPage={setPage} />}
-      {repoConnected && (
+    <div
+      className={`app-frame min-h-screen text-slate-100 ${page === "overview" || !repoConnected ? "overview-frame" : ""}`}
+      style={{ background: "var(--bg-base)" }}
+      onClick={closeMenus}
+    >
+      <div className="ambient-scene" aria-hidden="true"><div className="ambient-wave wave-cyan" /><div className="ambient-wave wave-violet" /><div className="ambient-wave wave-emerald" /></div>
+      {(
+        <Sidebar
+          repoConnected={repoConnected}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          page={page}
+          setPage={setPage}
+        />
+      )}
+
+      {(
         <Navbar
           collapsed={collapsed}
           onAnalyze={runAnalysis}
@@ -1942,17 +1255,42 @@ export default function App() {
           setNotifOpen={setNotifOpen}
           profileOpen={profileOpen}
           setProfileOpen={setProfileOpen}
+          onMobileMenuOpen={() => setMobileNavOpen(true)}
         />
       )}
-      <main className={`transition-all duration-200 ${repoConnected ? (collapsed ? "sm:pl-16" : "sm:pl-64") : ""} ${repoConnected ? "pt-16" : ""}`}>
-        <div className={repoConnected ? "mx-auto max-w-7xl p-4 sm:p-6 lg:p-8" : ""}>
+
+      {/* Mobile navigation drawer */}
+      {(
+        <MobileNav
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          page={page}
+          setPage={setPage}
+        />
+      )}
+
+      <main
+        className={`transition-all duration-300 ${
+          collapsed ? "sm:pl-16" : "sm:pl-64"
+        } pt-16`}
+      >
+        <div className="workspace-content mx-auto p-4 sm:p-6 lg:p-8">
+          {connectionError && <div className="ai-alert error" role="alert"><AlertTriangle size={18}/><p>{connectionError}</p></div>}
           {content}
         </div>
       </main>
 
-      <ConnectRepoModal open={showConnectModal} onClose={() => setShowConnectModal(false)} onConnect={handleConnect} />
+      {/* Modals */}
+      <ConnectRepoModal
+        open={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onConnect={handleConnect}
+      />
       {showResourcesModal && (
-        <CloudResourcesModal resources={ARCH.services} onClose={() => setShowResourcesModal(false)} />
+        <CloudResourcesModal
+          resources={ARCH.services}
+          onClose={() => setShowResourcesModal(false)}
+        />
       )}
       <IssueDetailModal
         issue={selectedIssue}

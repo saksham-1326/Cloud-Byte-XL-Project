@@ -106,3 +106,38 @@ jobs:
           if docker container inspect cloud-bytexl-container > /dev/null 2>&1; then
             docker rm -f cloud-bytexl-container || echo '::warning::Container cleanup failed.'
           fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend-app
+    env:
+      VITE_ENABLE_MODEL_TRAINING: 'false'
+      VITE_ENABLE_LIVE_PREDICTIONS: 'false'
+      VITE_ENABLE_PROVIDER_CALLS: 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-app/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend contract tests
+        run: npm test
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Build frontend production bundle
+        run: npm run build

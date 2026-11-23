@@ -124,9 +124,14 @@ def test_metrics_single_class_are_honest():
     assert result['roc_auc'] is None and result['pr_auc'] is None
 
 
-def test_completed_run_cannot_get_live_prediction():
+@pytest.mark.parametrize('status,conclusion', [
+    ('completed','failure'), ('in_progress',None), ('requested',None),
+    ('waiting',None), ('pending',None), ('queued','failure'),
+])
+def test_nonqueued_or_known_outcome_cannot_get_live_prediction(status, conclusion):
     class Client:
-        def run(self,*args):return {'id':1,'run_attempt':1,'status':'completed','conclusion':'failure'}
+        def run(self,*args):return {'id':1,'run_attempt':1,'head_sha':'target',
+                                   'status':status,'conclusion':conclusion}
     class Store:
         def query(self,*args):return None
         def models(self,*args):raise AssertionError('Must reject before consulting model')
