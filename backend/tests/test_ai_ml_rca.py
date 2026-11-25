@@ -154,6 +154,8 @@ def test_shadow_prediction_persistence_and_execution_race(monkeypatch):
         def predict_proba(self,rows):return np.array([[.3,.7]])
         def __getitem__(self,key):return object()
     monkeypatch.setattr(ml,'load_model',lambda model:Pipeline())
+    import backend.ai_intelligence.service as service_module
+    monkeypatch.setattr(service_module,'assess_release',lambda metrics:{'status':'shadow_eligible'})
     class Store:
         def __init__(self):self.persisted=[]
         def models(self,repo):return [{'status':'experimental','version':'test-version','created_at':BASE,'trained_through':BASE,'metrics':{'threshold':.6,'feature_version':ml.FEATURE_VERSION}}]
