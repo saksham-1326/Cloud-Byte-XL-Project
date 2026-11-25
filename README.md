@@ -1111,3 +1111,28 @@ the original version and its metrics remain intact. Render Free may sleep,
 so no continuous observer service-level guarantee is made.
 
 Hosted worker startup optimization: on instance startup, a missing walk-forward audit is calculated from already stored, labeled Neon history **before** collecting additional remote GitHub Actions logs. This reduces dependence on a long external sync during a Render Free wake period. The audit is still retrospective; it does not supply a prospective accuracy guarantee.
+
+### Evidence-gated experimental shadow predictions
+
+Model training is distinct from authorization to emit live risk scores.
+Every newly trained model stores an explicit `release_gate` assessment.
+The public AI Intelligence screen displays the model's release decision and
+precise supporting reasons.
+
+The conservative `shadow-release-v1` policy requires at least three
+failed and ten successful runs in the untouched chronological holdout;
+failure recall >= 70% and failure precision >= 50% on that holdout;
+at least five failed and twenty successful replay targets; and >= 70%
+recall, >= 50% precision, plus lower Brier error than the historical
+failure-rate baseline in a walk-forward replay **of the same model
+family**. The current rolling replay covers the logistic baseline only;
+another selected model cannot borrow its evaluation.
+
+If criteria are not met, the hosted observer records an
+`insufficient_data` event with the actual reasons and does not emit
+an unsupported shadow probability. Passing would permit **no-impact
+experimental shadow scoring only**, never autonomous repair or a claim
+of proven prospective accuracy. These thresholds are a conservative
+project release policy, not established universal guarantees. New
+training data and proper independent evaluation are needed before
+reconsidering the model's suitability.
