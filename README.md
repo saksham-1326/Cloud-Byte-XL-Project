@@ -1028,3 +1028,39 @@ The following deployment commit adds the separately reviewed hosting safeguards,
 production API-origin checks, Vercel routing and fresh PostgreSQL bootstrap. The
 combined suite has 24 contract and 23 component tests (47 total). Historical browser
 acceptance remains valid; cloud creation and public deployment still require approval.
+
+## Hosted background AI (free-tier best-effort)
+
+The Render WSGI entry point optionally starts a bounded background thread when
+`HOSTED_AI_ENABLED=1`. It authenticates to Neon with a separate
+`AI_WORKER_DATABASE_URL` belonging to the `cloud_bytexl_ai_worker` role.
+The visitor-facing `DATABASE_URL` **must remain** the dedicated
+`cloud_bytexl_public_demo` SELECT-only role. Never expose either connection
+URL in Vercel, source control, screenshots or logs.
+
+The background worker requests at most 40 recent GitHub Actions runs per
+poll, syncs stored attempts and available evidence, trains the existing
+**experimental** model on chronologically eligible historical data, produces
+historical backtests and grounded **rules-based** RCA for failures, and makes
+best-effort queued-run shadow predictions only while a queued run is still
+eligible. The browser automatically reloads read-only AI results every minute.
+Nothing gives visitors permission to run a training job or write to Neon.
+
+Required Render settings: `HOSTED_AI_ENABLED=1`,
+`AI_WORKER_DATABASE_URL=<direct TLS URL for the restricted AI worker role>`,
+`PUBLIC_DEMO_MODE=1`, `RCA_PROVIDER=none`,
+`CI_CALLBACK_ENABLED=0` and an authorized read-only `GITHUB_TOKEN`.
+Do not substitute the database owner or public reader for the worker connection.
+Keep one Gunicorn worker as configured. This feature uses no paid LLM API.
+
+**Limitations:** Render Free sleeps during inactivity, so its daemon thread is
+not a durable scheduler; it can miss short-lived queued CI runs. Historical
+backtesting must never be described as verified prospective accuracy.
+Model artifact files live on Render's ephemeral disk and must be retrained
+after a restart; earlier version rows remain in Neon. Rule-based RCA is
+identified as evidence rules, not falsely labeled Gemini-generated.
+The worker intentionally does not offer unrestricted live training, automatic
+fixes, deployment mutations, paid provider calls, or model generalization
+guarantees. For reliable always-on observation, use an appropriately
+scheduled and tested architecture rather than claiming the Free instance is
+continuous. This section describes hosted experimental intelligence only.
