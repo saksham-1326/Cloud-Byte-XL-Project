@@ -11,6 +11,7 @@ from .collector import synchronize
 from .github import redact, GitHubError
 from .store import label, timestamp
 from . import ml
+from .quality import assess as assess_release
 from .rca import analyze, configured_provider, provider_configuration
 
 
@@ -56,6 +57,11 @@ class IntelligenceService:
         if not models:
             return self._decision(repo,run,'insufficient_data','No fitted experimental model is available. No probability generated.')
         model=models[0]
+        release=assess_release(model['metrics'])
+        if release['status'] != 'shadow_eligible':
+            return self._decision(repo,run,'insufficient_data',
+                                  'Model is not approved for shadow predictions: '+
+                                  '; '.join(release['reasons'])[:480])
         if model['trained_through'] and timestamp(model['trained_through'])>=timestamp(run['created_at']):
             return self._decision(repo,run,'skipped','Training outcomes overlap the target prediction time.')
         snapshot=self.client.snapshot(repo,run)
