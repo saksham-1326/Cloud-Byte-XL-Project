@@ -15,7 +15,7 @@ from .ai_intelligence.store import Store
 from .ai_intelligence.service import IntelligenceService
 
 LOG = logging.getLogger("cloud_bytexl.hosted_ai")
-RUN_LIMIT = 40
+RUN_LIMIT = 100
 POLL_SECONDS = 90
 HISTORY_SECONDS = 1800
 
@@ -65,9 +65,17 @@ def process_cycle(service, repo, history_due):
     # after an instance restart; preserve model-version identities in Neon.
     artifact_ok = bool(experimental and experimental[0].get("artifact_path")
                        and os.path.isfile(experimental[0]["artifact_path"]))
-    if not artifact_ok:
+    # Refit only after enough genuinely new chronological examples exist.
+    # An old fitted model is not silently treated as current after history grows.
+    eligible = sum(r["attempt"] == 1 and r.get("completed_at")
+                   and r.get("conclusion") in ("failure", "success")
+                   for r in service.store.runs(repo))
+    model_size = int(experimental[0]["metrics"].get("dataset_size", 0)) if experimental else 0
+    needs_refresh = eligible >= model_size + 12
+    if not artifact_ok or needs_refresh:
         model = service.train(repo)
-        LOG.info("Experimental training status: %s", model.get("status"))
+        LOG.info("Experimental training status: %s, observed=%s, previous=%s",
+                 model.get("status"), eligible, model_size)
 
     failures = [r for r in reversed(service.store.runs(repo))
                 if r["status"] == "completed" and r.get("conclusion") == "failure"]
