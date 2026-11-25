@@ -26,7 +26,7 @@ export async function requestJson(url, options = {}) {
   } catch (error) {
     if (timedOut) throw new Error("Backend request timed out. The operation may still be running; refresh before retrying.", { cause: error });
     if (error.name === "AbortError") throw error;
-    if (error instanceof TypeError) throw new Error("Cannot reach the backend. Start Flask on the configured local API address.", { cause: error });
+    if (error instanceof TypeError) throw new Error("Cannot reach the backend. Check the configured API address and server availability.", { cause: error });
     throw error;
   } finally {
     clearTimeout(timer);

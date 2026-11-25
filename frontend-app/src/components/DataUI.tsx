@@ -1,0 +1,8 @@
+import type {ReactNode} from 'react';
+import {Panel,PanelHeader,EmptySignal} from './Primitives';
+export function Notice({children,error=false}:{children:ReactNode;error?:boolean}){return <div className={`notice ${error?'error':''}`} role={error?'alert':'status'}>{children}</div>;}
+export function Metric({label,value,note}:{label:string;value:ReactNode;note?:string}){return <div className="metric-card"><small>{label}</small><strong>{value ?? 'Unavailable'}</strong>{note&&<span>{note}</span>}</div>;}
+export function Table({headers,children,empty}:{headers:string[];children:ReactNode;empty?:boolean}){return empty?<EmptySignal icon="database" title="No stored records" copy="No matching records are available for this repository."/>:<div className="table-scroll" role="region" aria-label={headers.join(', ')} tabIndex={0}><table><thead><tr>{headers.map(h=><th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>;}
+export function Section({title,kicker,children,actions}:{title:string;kicker:string;children:ReactNode;actions?:ReactNode}){return <Panel><PanelHeader kicker={kicker} title={title} actions={actions}/><div className="panel-body">{children}</div></Panel>;}
+export function Severity({value}:{value:string}){return <span className={`severity ${value.toLowerCase()}`}>{value}</span>;}
+export function Score({value}:{value:number|null|undefined}){return <div className="health-gauge-unavailable"><div className="radial-empty"><span>{typeof value==='number'&&Number.isFinite(value)?value:'—'}</span><small>{typeof value==='number'?'REPOSITORY SCORE / 100':'UNAVAILABLE'}</small></div></div>;}

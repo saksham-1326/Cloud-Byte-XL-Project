@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Recoverable pre-migration snapshot and local browser artifacts
+.migration-baseline/
+playwright-report/
+test-results/

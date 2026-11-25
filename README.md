@@ -10,14 +10,14 @@ Understand what changed, why a pipeline failed, and what historical workflow dat
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
 ![Docker](https://img.shields.io/badge/Containers-Docker-2496ED?logo=docker&logoColor=white)
 ![Gemini](https://img.shields.io/badge/RCA-Gemini_API-8E75B2?logo=googlegemini&logoColor=white)
 
 **Verified checkpoint — November 20, 2026:** [174 backend tests passed on `main`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/44762894885), including PostgreSQL 17, migration upgrades, callback persistence after a Flask restart, and Docker verification. This checkpoint belongs to merge commit [`a476582`](https://github.com/saksham-1326/Cloud-Byte-XL-Project/commit/a4765826fa8526b97c159ac3b93d2b65bb993ebb); it is not a permanent test-count or model-accuracy claim.
 
-> **Project status:** PR #6 is merged into `main`; backend services, the existing React integration and both CI jobs are verified. Prediction remains experimental, with zero verified prospective predictions; external callback delivery and live observation remain disabled. Historical demo/RCA data remain separate from independent human verification. See the [post-merge AI verification](docs/AI_VERIFICATION_20261123.md) for actual candidate results, observation preflight and remaining approval requirements. Deployment remains separately gated.
+> **Project status:** Published main contains the verified PR #6 integration. This revision contains the Figma/TypeScript frontend replacement; local browser acceptance passed at all four requested widths. CI for this revision and hosted deployment require separate verification. Prediction remains experimental, with zero verified prospective predictions; external callback delivery and live observation remain disabled. Historical demo/RCA data remain separate from independent human verification. See the [post-merge AI verification](docs/AI_VERIFICATION_20261123.md) for actual candidate results, observation preflight and remaining approval requirements. Deployment remains separately gated.
 
 **Explore:** [Overview](#project-overview) · [Features](#key-features) · [Prediction](#ai-feature-1--pipeline-failure-prediction) · [RCA](#ai-feature-2--root-cause-analysis) · [Architecture](#system-architecture) · [Setup](#installation-and-setup) · [Testing](#testing-and-cicd) · [Callbacks](#durable-ci-callbacks) · [Technical contributions](#final-year-project-context-and-technical-contributions)
 
@@ -40,12 +40,12 @@ The project is an engineering prototype with measurable backend verification. It
 | --- | --- | --- |
 | GitHub repository analysis | Implemented | Repository connection, metadata/source retrieval, file inventory, technology detection, heuristic health scores, findings, and recommendations. |
 | Infrastructure and security inspection | Implemented, static | Evidence from Docker, GitHub Actions, Kubernetes, Terraform, CloudFormation/SAM, Bicep, and related configuration. Checks include permissive ingress, wildcard permissions, runtime users, moving image/action references, and possible committed credentials. |
-| React dashboard | Committed release-branch integration | Repository analysis updates overview/findings/security/architecture/report data. CI/CD links to persisted AI history; historical metrics, RCA evidence and unavailable states remain distinct. Desktop AI, mobile 400px and tablet 768px checks passed according to the user's manual inspection; full demo rehearsal and error/console checks remain on the checklist. |
+| React dashboard | Figma replacement; local browser acceptance passed | React/TypeScript pages preserve Flask repository analysis, findings, historical AI history, metrics and inline RCA evidence. Replacement layouts, all 12 destinations and authentic source previews passed at 1440/1024/768/390px locally. |
 | Actions history collection | Implemented | Incremental ingestion by repository/run/attempt, historical commit/configuration snapshots, log redaction, and explicit handling of inaccessible logs. |
 | Root-cause analysis | Implemented, bounded validation | Deterministic diagnostics, optional Gemini/OpenAI providers, evidence citations, local validation guards, stored reports, and human-review APIs. |
 | Pipeline failure prediction | Experimental | Baseline/model comparison, chronological backtests, queued-run inference safeguards, and future-outcome matching. |
 | Durable CI callbacks | Implemented and tested locally/in CI | Mandatory authentication, repository allowlist, explicit run/deployment binding, transactional receipts, idempotency, and restart persistence. External delivery remains disabled. |
-| Frontend/Figma integration and public callback deployment | Frontend integrated; external delivery planned | The existing React integration is committed on the release branch. Public callback deployment requires separate work and approval. |
+| Frontend/Figma integration and public callback deployment | Figma replacement; external delivery disabled | The new Figma design is integrated in this revision. Public callbacks and cloud deployment require separate approval. |
 
 Repository security checks are heuristics over bounded source inspection. They are not a complete secret scanner, dependency-vulnerability service, live cloud-account audit, or compliance certification. Inferred architecture and health scores describe repository evidence, not verified running infrastructure.
 
@@ -165,7 +165,7 @@ The dotted callback path is exercised by isolated sender/Flask/PostgreSQL tests 
 
 | Layer | Technologies in the repository |
 | --- | --- |
-| Frontend | React 19, Vite 8, Tailwind CSS 3, Recharts, Lucide React |
+| Frontend | React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4; existing Lucide-based contract helpers |
 | Backend | Python 3.13, Flask, Flask-CORS, python-dotenv |
 | Storage | PostgreSQL; psycopg 3 with binary distribution |
 | Machine learning | scikit-learn, NumPy, joblib |
@@ -386,7 +386,7 @@ eight original npm findings to development tooling and records their advisory
 IDs, exposure and compatible fixes. The locally patched dependency graph reports
 **zero full-audit and zero production-only vulnerabilities** after a clean
 install. Vite is pinned to **8.2.4**, ESLint to **10.15.0**; React, Tailwind and
-production dependency versions are unchanged. Twelve frontend tests, lint/build
+production dependency versions were unchanged at that historical checkpoint. The current local replacement separately migrates Tailwind and test tooling, as documented below. Twelve frontend tests, lint/build
 and seven relevant Flask/API contracts pass. The security fix was pushed as
 `c50f560fd507153ec7c24fc21ba27b6befe676c3`; both backend and frontend checks
 passed on that head in [GitHub CI run 45139343901](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/45139343901).
@@ -479,16 +479,18 @@ Cloud-ByteXL/
     ├── package.json
     ├── package-lock.json
     ├── index.html
-    ├── vite.config.js
-    ├── tailwind.config.js
-    ├── postcss.config.js
+    ├── vite.config.ts
+    ├── tsconfig.json
+    ├── vitest.config.ts
     ├── public/
     └── src/
-        ├── App.jsx
-        ├── App.css
-        ├── index.css
-        ├── main.jsx
-        └── assets/
+        ├── App.tsx
+        ├── main.tsx
+        ├── components/
+        ├── features/
+        ├── hooks/
+        ├── styles/
+        └── api.js / aiContract.js / repositoryData.js
 ```
 
 Generated model files, local environment files, validation reports, virtual environments, and untracked frontend artifacts are not prerequisites supplied by this source tree.
@@ -512,7 +514,7 @@ For project evaluation or a technical interview, a reproducible demonstration ca
 
 - **ML generalization:** collect more independent, naturally occurring workflow outcomes and evaluate genuine future queued predictions before making accuracy or calibration claims.
 - **RCA validation:** expand independent datasets, human review, and cross-job causal analysis. A citation match alone does not establish that every claim follows from the evidence.
-- **Frontend acceptance:** the dedicated AI dashboard and approved frontend/Figma integration are committed; complete the full demo rehearsal and remaining console, error-state and outage checks.
+- **Frontend acceptance:** the local Figma replacement passed responsive checks at 1440/1024/768/390px on November 25. Source previews also passed after quota recovery; see [browser acceptance](frontend-app/BROWSER_ACCEPTANCE.md).
 - **Fresh installation:** provide a reviewed bootstrap/migration path for the original deployment tables. Existing AI/CI migrations are additive, not a complete application-database installer.
 - **Callback operations:** separately evaluate remote HTTPS delivery, identity/secret lifecycle, and automatic trusted run registration. No tunnel or public endpoint is enabled by the current workflow.
 - **Service hardening:** the current local-admin identity model, legacy endpoints, development server, and repository heuristics are not a production multi-tenant security boundary.
@@ -928,3 +930,64 @@ suggested decisions and points to the separate packet and blank templates. Zero
 completed independent reviews and zero verified prospective predictions remain.
 The prospective timing gate is NO-GO; Byte-XL credential identity still requires
 operator confirmation. Neither blocks the authentic historical demonstration.
+
+## Local Figma frontend replacement (November 24, 2026)
+
+The isolated `feature/figma-frontend-replacement` worktree uses the supplied Figma
+design in the existing `frontend-app` application. It has one TypeScript entry
+point and reusable shell, data hooks, cards/tables and feature pages for Mission
+Control, Repository, Analysis, Issues, Security, Recommendations, Architecture,
+CI/CD, Docker, Kubernetes, Reports and AI Intelligence. See
+[frontend migration notes](frontend-app/MIGRATION.md) for file scope, verification,
+manual acceptance and the recoverable pre-migration snapshot.
+
+Repository analysis and SHA-pinned file previews use the unchanged Flask contracts.
+Local catalog saves and hosted read-only warnings remain distinct. Full scan
+history is session-only; restoring a catalog does not restore an analysis. Stored
+workflow attempts, historical metrics/backtests, model identities, original RCA
+claims/uncertainty and inline evidence are displayed without fabricated telemetry.
+Citation buttons now focus the matching quoted evidence; unresolved IDs stay
+unresolved. Security and infrastructure screens describe source rules, not
+complete vulnerability scanning, Docker operations or a Kubernetes connection.
+Reports provide actual-data JSON export and browser print/save PDF.
+
+React, React DOM and Vite retain their reviewed versions. Tailwind was deliberately
+migrated from 3 to 4 with its Vite plugin; old PostCSS configuration and obsolete
+UI/styles were removed after automated checks, with a recoverable local snapshot.
+TypeScript checking is part of `npm run build`. `npm test` runs Node contracts and
+Vitest/React component tests; `npm run lint` includes TSX. Use the existing Node 22
+setup, `npm ci --prefix frontend-app` and the same Vite development command above.
+For hosting, configure an explicit HTTPS `VITE_API_BASE_URL`. Hosting safeguards,
+Vercel SPA routing and fresh database bootstrap remain a separate deployment patch.
+
+Production omits local administration, sync, training, prediction, new RCA and
+human-review submission controls. All three VITE_ENABLE_* settings remain false.
+No provider, monitoring or retraining was started. Historical model limitations,
+zero established independent human reviews and zero verified prospective results
+remain unchanged. No data/model/backend implementation change accompanies the UI.
+
+On November 25, Playwright with installed sandboxed Chrome verified the actual
+production build against local Flask and authentic read-only PostgreSQL history.
+All 12 destinations passed at 1440/1024/768/390px, with no observed page overflow,
+card overlap or JavaScript page errors. JSON download, print, historical AI data,
+RCA citations and hosted read-only controls were exercised. Source previews
+returned genuine HTTP 200 at 1440/1024px initially and at 768/390px after the
+unauthenticated GitHub quota reset. **Local frontend acceptance is PASS**; no
+credential substitution was used. The local production test forwards an inert
+HTTPS API origin to loopback Flask; deployed TLS/CORS is not verified by this.
+
+Browser testing fixed case-insensitive GitHub repository identity comparison,
+report-button overlap, and report/print readability. **24 Node contract tests and
+23 React component tests passed (47 total)**; TypeScript, lint and production
+build passed. Full and production npm audits were rerun with zero findings. The prior 12
+backend/API regressions remain an earlier checkpoint; no backend or dependency
+changes accompanied these browser fixes. See [browser evidence and limitations](frontend-app/BROWSER_ACCEPTANCE.md).
+Browser verification did not deploy the application or alter the frozen submission package.
+
+### Frontend-only publication boundary
+
+This revision excludes the separately prepared 22-file deployment patch. Its
+production API-origin guard, Vercel routing, WSGI/hosting and PostgreSQL bootstrap
+are not included. The clean frontend suite has 21 contract and 23 component tests
+(44 total); the earlier 47-test combined-worktree checkpoint included three
+deployment-only configuration tests. Backend implementation remains main-compatible.

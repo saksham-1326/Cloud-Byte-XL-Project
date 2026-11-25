@@ -75,7 +75,7 @@ test("a JSON array or missing success status cannot appear as a successful analy
   await assert.rejects(requestJson("http://localhost/fixture"), /supported status/);
 });
 
-test("network failure gives a local backend startup message", async t => {
+test("network failure explains configured backend availability", async t => {
   t.mock.method(globalThis, "fetch", async () => { throw new TypeError("network details"); });
   await assert.rejects(requestJson("http://localhost/fixture"), /Cannot reach the backend/);
 });
