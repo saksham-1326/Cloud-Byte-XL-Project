@@ -61,12 +61,13 @@ def test_supported_shadow_eligibility_is_not_proof_of_prospective_accuracy():
     assert "never prove prospective accuracy" in result["limitation"]
 
 
-def test_unvalidated_model_skips_queued_run_without_fetching_snapshot():
+def test_unvalidated_model_skips_queued_run_without_fetching_snapshot(monkeypatch):
+    monkeypatch.setenv('PUBLIC_DEMO_MODE','1')
     from backend.ai_intelligence.service import IntelligenceService
 
     class Store:
         def models(self,repo):
-            return [{"status":"experimental","version":"bad","created_at":"2025-01-01T00:00:00+00:00",
+            return [{"status":"experimental","version":"bad","created_at":__import__("datetime").datetime(2025,1,1,tzinfo=__import__("datetime").timezone.utc),
                      "metrics":{"feature_version":"prequeue-v2-utc-standardized","test":{"confusion_matrix":[[10,0],[0,0]]}}}]
         def query(self,*args,**kwargs):return []
     class Client:
