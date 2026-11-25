@@ -35,3 +35,29 @@ def test_history_is_bounded_to_one_api_page(monkeypatch):
     results = hosted_ai.BoundedClient().runs("saksham-1326/cloud-byte-xl-project")
     assert len(results) == 3
     assert calls == [f"/repos/saksham-1326/cloud-byte-xl-project/actions/runs?per_page={hosted_ai.RUN_LIMIT}"]
+
+
+def test_existing_model_audit_precedes_remote_sync(monkeypatch):
+    from backend.ai_intelligence import collector
+    sequence = []
+    class Store:
+        refreshed = False
+        def models(self, repo):
+            return [{"status":"experimental","artifact_path":__file__,
+                     "metrics":{"dataset_size":50, **({"walkforward":{"eligible_evaluations":1}} if self.refreshed else {})}}]
+        def runs(self, repo): return []
+        def reports(self, repo): return []
+    class Client:
+        def runs(self,repo): return []
+    class Service:
+        def __init__(self):
+            self.store=Store()
+            self.client=Client()
+        def train(self, repo):
+            sequence.append("audit")
+            self.store.refreshed=True
+            return {"status":"experimental"}
+    monkeypatch.setattr(collector,"synchronize",
+                        lambda client,store,repo: sequence.append("sync") or {"processed_attempts":0})
+    hosted_ai.process_cycle(Service(),"example/repo",True)
+    assert sequence == ["audit","sync"]
