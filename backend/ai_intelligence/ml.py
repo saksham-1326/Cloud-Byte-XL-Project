@@ -95,8 +95,10 @@ def train(store,repo):
         store.features(repo,run,values,provenance,run["created_at"])
         rows.append({"run":run,"values":values,"provenance":provenance,"label":label(run["conclusion"])})
     training,validation,test=temporal_split(rows)
+    from .walkforward import replay
+    walkforward=replay(rows)
     version=str(uuid.uuid4())
-    result={"feature_version":FEATURE_VERSION,"preprocessing":"DictVectorizer + train-only StandardScaler", "version":version,"status":"insufficient_data","dataset_size":len(rows),"class_distribution":{"success":sum(r["label"]==0 for r in rows),"failure":sum(r["label"]==1 for r in rows)},
+    result={"walkforward":walkforward,"feature_version":FEATURE_VERSION,"preprocessing":"DictVectorizer + train-only StandardScaler", "version":version,"status":"insufficient_data","dataset_size":len(rows),"class_distribution":{"success":sum(r["label"]==0 for r in rows),"failure":sum(r["label"]==1 for r in rows)},
             "split_sizes":{"train":len(training),"validation":len(validation),"test":len(test)},"excluded":excluded,
             "evaluation_date":datetime.now(timezone.utc).isoformat(),"label_policy":"Only success=0 and failure=1; all other conclusions excluded. Attempts >1 excluded from training.",
             "split_policy":"Chronological 60/20/20; purge shared commits across partitions; train outcomes must precede validation predictions.",

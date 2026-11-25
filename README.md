@@ -1085,3 +1085,27 @@ eligible completed first attempts. Existing historical model versions and
 their metrics remain intact; no results are overwritten or fabricated.
 The independent, prospective queued-run prediction path remains best-effort
 and is not advertised as reliable with Render Free sleeping.
+
+### Chronological rolling-origin evaluation (experimental)
+
+Beyond the original untouched 60/20/20 chronological holdout, a **retrospective
+walk-forward replay** evaluates a separate fixed logistic regression baseline
+on successive historical runs. Before each target run's creation timestamp,
+it fits using only earlier runs whose outcomes already completed; it excludes
+same-commit runs and duplicate commits, and requires at least ten prior
+independent examples with at least two failures and two successes.
+
+The replay includes a historical failure-rate comparator under the same
+evaluation protocol, fixed threshold 0.5, observed evaluation class counts,
+skipped-run reasons, and an audit trail of prior-training cutoff timestamps.
+Its results are displayed separately from the selected model's held-out
+evaluation. **Never use the replay scores to choose the deployed model or
+claim a verified, prospective live prediction.** If replayed targets
+contain only one outcome class, the dashboard explicitly declares failure
+recall, F1 and ROC-AUC *not measurable*. These limitations cannot be solved
+by injecting synthetic failure labels into the reported results.
+
+The hosted background worker recomputes the new audit once for existing
+model versions that lack it by fitting and saving a distinct new version;
+the original version and its metrics remain intact. Render Free may sleep,
+so no continuous observer service-level guarantee is made.
