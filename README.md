@@ -1064,3 +1064,24 @@ fixes, deployment mutations, paid provider calls, or model generalization
 guarantees. For reliable always-on observation, use an appropriately
 scheduled and tested architecture rather than claiming the Free instance is
 continuous. This section describes hosted experimental intelligence only.
+
+### Accuracy evidence, model selection, and honest holdout reporting
+
+The AI dashboard renders the actual chronological holdout and **all fitted candidate
+comparisons** rather than presenting the best accuracy without context. If the
+test interval contains no failed runs, failure recall/F1 and discrimination
+are displayed as **Not measurable**, even if the stored sklearn value is 0;
+an all-success interval is not proof of accurate failure detection.
+The selected model is based on validation F1 and validation Brier score,
+never on the final test set. A majority-class dummy baseline may legitimately
+win when validation has insufficient failed runs. Training uses only the
+target repository's traceable, pre-outcome GitHub Actions history: importing
+unrelated public datasets or duplicating failure cases to raise an accuracy
+number would be misleading and is not done.
+
+The hosted worker now reads at most 100 recent runs per bounded GitHub API
+request and retrains only on a model restart or after at least 12 additional
+eligible completed first attempts. Existing historical model versions and
+their metrics remain intact; no results are overwritten or fabricated.
+The independent, prospective queued-run prediction path remains best-effort
+and is not advertised as reliable with Render Free sleeping.
