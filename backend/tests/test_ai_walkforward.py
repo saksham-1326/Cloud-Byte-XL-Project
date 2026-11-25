@@ -40,7 +40,7 @@ def test_walkforward_does_not_use_future_or_same_commit_labels():
     rows[0]["run"]["completed_at"] = BASE + timedelta(days=100)
     changed = replay(rows)
     assert changed["eligible_evaluations"] <= original["eligible_evaluations"]
-    duplicate = item(25, True, commit="sha-24")
+    duplicate = item(25, True, commit="sha-23")
     check = replay(rows + [duplicate])
     assert check["excluded"]["duplicate_commit"] >= 1
 
