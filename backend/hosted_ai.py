@@ -56,6 +56,17 @@ def process_cycle(service, repo, history_due):
     if not history_due:
         return
 
+    # Recalculate the new evidence audit from already-synchronized rows first.
+    # Remote log backfilling can take longer than a Render Free instance stays
+    # awake, so never make model audit depend on that network-bound operation.
+    try:
+        saved = service.store.models(repo)
+        if saved and 'walkforward' not in saved[0]['metrics']:
+            audited = service.train(repo)
+            LOG.info("Existing history walk-forward audit status: %s", audited.get("status"))
+    except Exception as exc:
+        LOG.warning("Existing history replay unavailable: %s", type(exc).__name__)
+
     from .ai_intelligence.collector import synchronize
     result = synchronize(service.client, service.store, repo)
     LOG.info("Historical synchronization processed %s attempts", result["processed_attempts"])
