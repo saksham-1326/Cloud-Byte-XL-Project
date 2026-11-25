@@ -38,7 +38,8 @@ def worker_connection():
 
 class BoundedClient(ActionsClient):
     def runs(self, repo):
-        return super().runs(repo)[:RUN_LIMIT]
+        # One bounded GitHub request rather than paging through the full history.
+        return self.get(f"/repos/{repository_name(repo)}/actions/runs?per_page={RUN_LIMIT}")["workflow_runs"]
 
 
 def process_cycle(service, repo, history_due):
