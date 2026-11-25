@@ -14,6 +14,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, average_precision_score, roc_auc_score, brier_score_loss
 from .store import timestamp, label
+from .quality import assess as assess_release
 
 FEATURE_VERSION="prequeue-v2-utc-standardized"
 ARTIFACTS=Path(__file__).resolve().parents[1]/"ai_artifacts"
@@ -105,6 +106,7 @@ def train(store,repo):
             "limitation":"Small, repository-specific data with deliberately induced failures. Not evidence of production generalization."}
     if len(rows)<12 or len(training)<6 or len(validation)<2 or len(test)<2 or min(sum(r['label']==v for r in training) for v in [0,1])<2:
         result["reason"]="Insufficient independent chronological samples or class diversity for defensible fitting/evaluation."
+        result["release_gate"]=assess_release(result)
         store.model(repo,version,result);return result
     X=[r["values"] for r in training];y=[r["label"] for r in training]
     candidates={"dummy":DummyClassifier(strategy="prior"),"logistic":LogisticRegression(max_iter=2000,class_weight="balanced",random_state=42),"random_forest":RandomForestClassifier(n_estimators=100,max_depth=4,min_samples_leaf=2,class_weight="balanced",random_state=42,n_jobs=1)}
@@ -126,6 +128,7 @@ def train(store,repo):
                   trained_through=max(timestamp(r['run']['completed_at']) for r in training).isoformat(),
                   feature_names=pipeline[0].get_feature_names_out().tolist(),
                   backtest=[{"run_id":r['run']['run_id'],"attempt":r['run']['attempt'],"probability":float(p),"label":r['label'],"features":r['values'],"feature_time":r['provenance']['prediction_time']} for r,p in zip(test,probabilities)])
+    result["release_gate"]=assess_release(result)
     ARTIFACTS.mkdir(exist_ok=True);path=ARTIFACTS/(version+".joblib")
     joblib.dump(pipeline,path);digest=hashlib.sha256(path.read_bytes()).hexdigest()
     store.model(repo,version,result,str(path),digest)
