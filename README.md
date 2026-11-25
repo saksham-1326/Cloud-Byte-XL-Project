@@ -222,7 +222,7 @@ Apply the checked-in migrations:
 .\backend\venv\Scripts\python.exe -m backend.ai_intelligence.cli migrate
 ```
 
-**Fresh-database boundary:** migrations 001–004 create the AI subsystem, and 005 creates callback bindings/receipts. They do **not** bootstrap the original `users`, `repositories`, `deployments`, `deployment_logs`, and `failure_analysis` tables. A complete legacy-schema bootstrap is not currently checked in. AI history/RCA storage can use the new schema, but original deployment-history features and durable deployment registration require those legacy tables and valid existing records. Preserve the original project database schema when upgrading; do not invent missing tables from UI examples.
+**Fresh database:** `python -m backend.bootstrap --confirm-database <new-database-name>` now initializes the five original application tables from checked-in schema only and applies existing migrations 001–005 transactionally. It requires an explicitly identified empty database or its own matching bootstrap receipt; existing nonempty legacy databases are rejected. No historical records are copied. See [hosted setup and dedicated reader creation](docs/VERCEL_RENDER_DEPLOYMENT.md#clean-postgresql-initialization--no-legacy-dump-needed). Existing databases continue to use the additive AI migration command; do not bootstrap them.
 
 ### Start the backend on loopback
 
@@ -252,7 +252,10 @@ Open [http://127.0.0.1:5173](http://127.0.0.1:5173). The frontend defaults to th
 To build the frontend package:
 
 ```powershell
+# Public build setting only; replace fixture with the approved Render origin.
+$env:VITE_API_BASE_URL = 'https://backend.example.invalid'
 npm run build --prefix frontend-app
+Remove-Item Env:VITE_API_BASE_URL
 ```
 
 The dedicated AI dashboard and required styles are committed in `frontend-app`. Repository-root experimental Node files are not required. Authentic demo records, credentials and model binaries remain local/private; a fresh clone alone does not recreate that populated demo.
@@ -515,7 +518,7 @@ For project evaluation or a technical interview, a reproducible demonstration ca
 - **ML generalization:** collect more independent, naturally occurring workflow outcomes and evaluate genuine future queued predictions before making accuracy or calibration claims.
 - **RCA validation:** expand independent datasets, human review, and cross-job causal analysis. A citation match alone does not establish that every claim follows from the evidence.
 - **Frontend acceptance:** the local Figma replacement passed responsive checks at 1440/1024/768/390px on November 25. Source previews also passed after quota recovery; see [browser acceptance](frontend-app/BROWSER_ACCEPTANCE.md).
-- **Fresh installation:** provide a reviewed bootstrap/migration path for the original deployment tables. Existing AI/CI migrations are additive, not a complete application-database installer.
+- **Fresh installation:** use the explicit, checksummed schema-only bootstrap for a new empty database. Existing AI/CI migrations remain additive; existing private databases must not be bootstrapped or copied to hosting.
 - **Callback operations:** separately evaluate remote HTTPS delivery, identity/secret lifecycle, and automatic trusted run registration. No tunnel or public endpoint is enabled by the current workflow.
 - **Service hardening:** the current local-admin identity model, legacy endpoints, development server, and repository heuristics are not a production multi-tenant security boundary.
 - **Further monitoring:** broaden operational metrics and AI evaluation without conflating static repository evidence, historical backtests, and real deployed runtime observations.
@@ -931,6 +934,40 @@ completed independent reviews and zero verified prospective predictions remain.
 The prospective timing gate is NO-GO; Byte-XL credential identity still requires
 operator confirmation. Neither blocks the authentic historical demonstration.
 
+## Vercel + Render preparation (November 24, 2026)
+
+[Deployment guide](docs/VERCEL_RENDER_DEPLOYMENT.md) specifies Vercel with project
+root `frontend-app`, Render native Python/Gunicorn and a new managed PostgreSQL
+database. `render.yaml`, `gunicorn.conf.py` and `frontend-app/vercel.json` prepare
+hosting without activating resources. Production starts with
+`gunicorn --config gunicorn.conf.py backend.wsgi:app`, never the Flask development
+server. No AWS deployment, Compose or Nginx setup is needed.
+
+The hosted entry point requires `PUBLIC_DEMO_MODE=1`, explicit HTTPS CORS origins,
+an allowlisted repository, TLS PostgreSQL and disabled providers/debug/callbacks.
+It exposes only status, approved stored AI-history reads and read-only GitHub
+repository/file analysis. Training, predictions, RCA generation, human-review
+submissions, webhooks, callbacks and other routes are denied. Repository analysis
+skips database persistence and explains this with a read-only warning. Runtime
+uses a dedicated SELECT-only database role; `/readyz` validates its readiness.
+Local development behavior remains separate.
+
+A fresh managed database has no historical demo data, model metadata or trained
+model binaries. A separate approved, sanitized export with provenance is required
+before publishing authentic history. Original/demo/observation databases, evidence,
+saved model artifacts and the finalized submission ZIP remain unchanged. No cloud
+resources or live observers have been started. Historical ML accuracy remains
+50% on six test runs with 0% failure recall; verified prospective predictions and
+independent human RCA reviews remain zero.
+
+Production frontend builds now require `VITE_API_BASE_URL` to be an explicit HTTPS
+backend origin, with no `/api` suffix or localhost fallback. Set all three
+`VITE_ENABLE_*` flags false. `VITE_*` values are public, never secrets. CI supplies
+an inert HTTPS build fixture and includes a Linux Gunicorn smoke check; GitHub execution
+for this deployment revision is checked separately after publication. The guide includes costs/free-tier
+limits, account approvals, clean bootstrap commands, data publication controls,
+deployment verification and rollback. No deployment is authorized yet.
+
 ## Local Figma frontend replacement (November 24, 2026)
 
 The isolated `feature/figma-frontend-replacement` worktree uses the supplied Figma
@@ -958,7 +995,7 @@ TypeScript checking is part of `npm run build`. `npm test` runs Node contracts a
 Vitest/React component tests; `npm run lint` includes TSX. Use the existing Node 22
 setup, `npm ci --prefix frontend-app` and the same Vite development command above.
 For hosting, configure an explicit HTTPS `VITE_API_BASE_URL`. Hosting safeguards,
-Vercel SPA routing and fresh database bootstrap remain a separate deployment patch.
+Vercel SPA routing and fresh database bootstrap are included in the separate deployment commit.
 
 Production omits local administration, sync, training, prediction, new RCA and
 human-review submission controls. All three VITE_ENABLE_* settings remain false.
@@ -986,8 +1023,8 @@ Browser verification did not deploy the application or alter the frozen submissi
 
 ### Frontend-only publication boundary
 
-This revision excludes the separately prepared 22-file deployment patch. Its
-production API-origin guard, Vercel routing, WSGI/hosting and PostgreSQL bootstrap
-are not included. The clean frontend suite has 21 contract and 23 component tests
-(44 total); the earlier 47-test combined-worktree checkpoint included three
-deployment-only configuration tests. Backend implementation remains main-compatible.
+The frontend-only commit passed 21 contract and 23 component tests (44 total).
+The following deployment commit adds the separately reviewed hosting safeguards,
+production API-origin checks, Vercel routing and fresh PostgreSQL bootstrap. The
+combined suite has 24 contract and 23 component tests (47 total). Historical browser
+acceptance remains valid; cloud creation and public deployment still require approval.

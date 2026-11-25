@@ -58,7 +58,7 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          python -m pip install -r backend/requirements.txt
+          python -m pip install -r backend/requirements-production.txt
           python -m pip check
 
       - name: Check Python syntax
@@ -71,6 +71,9 @@ jobs:
       - name: Run complete backend tests (offline AI fixtures)
         id: tests
         run: python -m pytest backend/tests/ -v
+
+      - name: Production WSGI smoke test
+        run: python -m backend.tools.check_wsgi
 
       - name: Build Docker image
         id: docker_build
@@ -115,6 +118,7 @@ jobs:
         working-directory: frontend-app
     env:
       VITE_ENABLE_MODEL_TRAINING: 'false'
+      VITE_API_BASE_URL: 'https://backend.example.invalid'
       VITE_ENABLE_LIVE_PREDICTIONS: 'false'
       VITE_ENABLE_PROVIDER_CALLS: 'false'
     steps:

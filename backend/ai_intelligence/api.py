@@ -26,6 +26,11 @@ def register_ai(app,connect):
 
     @bp.before_request
     def protect():
+        if os.getenv('PUBLIC_DEMO_MODE')=='1':
+            public_reads={'overview','runs','predictions','reports','models','evaluation','outcomes'}
+            if request.method=='OPTIONS':return None
+            if request.method in ('GET','HEAD') and request.endpoint.split('.')[-1] in public_reads:return None
+            return jsonify(status='FAILED',message='Public demo is read-only; AI mutations and webhooks are disabled.'),403
         if request.method=='OPTIONS' or request.endpoint=='ai_intelligence.workflow_hook':return None
         if not authorize():return jsonify(status='FAILED',message='AI administrator authorization required.'),403
         if request.method=='POST' and not request.is_json:return jsonify(status='FAILED',message='JSON request body required.'),415

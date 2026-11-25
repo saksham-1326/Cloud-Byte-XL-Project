@@ -1,5 +1,12 @@
 // Shared error/timeout handling for the existing Flask contracts. No secrets here.
-export const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:5000").replace(/\/+$/, "");
+const configuredBase = import.meta.env?.VITE_API_BASE_URL;
+if (import.meta.env?.PROD) {
+  const target = configuredBase ? new URL(configuredBase) : null;
+  if (!target || target.protocol !== "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) || target.username || target.password || target.search || target.hash || target.pathname !== "/") {
+    throw new Error("Production requires VITE_API_BASE_URL to be an HTTPS backend origin.");
+  }
+}
+export const API_BASE = (configuredBase || "http://127.0.0.1:5000").replace(/\/+$/, "");
 
 export async function requestJson(url, options = {}) {
   const { signal, timeoutMs = 15000, ...init } = options;

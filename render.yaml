@@ -1,0 +1,33 @@
+# Preparation only. Importing this blueprint creates resources; approval required.
+services:
+  - type: web
+    name: cloud-bytexl-api
+    runtime: python
+    plan: free
+    autoDeployTrigger: 'off'
+    buildCommand: pip install -r backend/requirements-production.txt
+    startCommand: gunicorn --config gunicorn.conf.py backend.wsgi:app
+    healthCheckPath: /readyz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.14
+      - key: PYTHON_DOTENV_DISABLED
+        value: '1'
+      - key: PUBLIC_DEMO_MODE
+        value: '1'
+      - key: FLASK_DEBUG
+        value: '0'
+      - key: RCA_PROVIDER
+        value: none
+      - key: CI_CALLBACK_ENABLED
+        value: '0'
+      - key: AI_ALLOWED_REPOSITORIES
+        value: saksham-1326/cloud-byte-xl-project
+      - key: DB_SSLMODE
+        value: require
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+# Database provisioning is deliberately not declared. Select a provider/plan and
+# bootstrap a NEW target with owner credentials before starting this web service.

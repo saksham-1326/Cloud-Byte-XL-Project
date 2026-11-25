@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 import logging
+import sys
 from dotenv import load_dotenv
 from werkzeug.exceptions import HTTPException
 
@@ -29,7 +30,7 @@ CORS(app, origins=[origin.strip() for origin in os.getenv(
 
 # Detached Windows processes can have invalid stdout/stderr handles. Never
 # let diagnostic output break an otherwise successful repository analysis.
-log_handler = RotatingFileHandler(
+log_handler = logging.StreamHandler(sys.stdout) if os.getenv('PUBLIC_DEMO_MODE')=='1' else RotatingFileHandler(
     Path(__file__).with_name("backend.log"), maxBytes=2_000_000,
     backupCount=2, encoding="utf-8",
 )
@@ -56,17 +57,15 @@ def handle_api_error(error):
 # PostgreSQL connection
 # ============================================================
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", "5432")),
-    "dbname": os.getenv("DB_NAME", "bytexl"),
-    "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", ""),
-}
+try:
+    from .database import configuration as database_configuration, connect as database_connect
+except ImportError:
+    from database import configuration as database_configuration, connect as database_connect
+DB_CONFIG = database_configuration()
 
 
 def get_db_connection():
-    return psycopg.connect(**DB_CONFIG, connect_timeout=5)
+    return database_connect(DB_CONFIG,readonly=os.getenv('PUBLIC_DEMO_MODE')=='1')
 
 
 # ============================================================
@@ -1678,13 +1677,11 @@ def connect_github_repository():
         # --------------------------------------------------------
 
         try:
-            repository_id = save_github_repository(
-                repository_data
-            )
-
-            response["repository"]["databaseId"] = (
-                repository_id
-            )
+            if os.getenv('PUBLIC_DEMO_MODE')=='1':
+                response['databaseWarning']='Public demo analysis is read-only; this repository was not saved to PostgreSQL.'
+            else:
+                repository_id = save_github_repository(repository_data)
+                response["repository"]["databaseId"] = repository_id
 
         except Exception as database_error:
             # GitHub ingestion remains successful even if
