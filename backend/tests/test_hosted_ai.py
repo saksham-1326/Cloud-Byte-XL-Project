@@ -44,7 +44,7 @@ def test_existing_model_audit_precedes_remote_sync(monkeypatch):
         refreshed = False
         def models(self, repo):
             return [{"status":"experimental","artifact_path":__file__,
-                     "metrics":{"dataset_size":50, **({"walkforward":{"eligible_evaluations":1}} if self.refreshed else {})}}]
+                     "metrics":{"dataset_size":50, **({"walkforward":{"eligible_evaluations":1},"release_gate":{"status":"insufficient_evidence"}} if self.refreshed else {})}}]
         def runs(self, repo): return []
         def reports(self, repo): return []
     class Client:

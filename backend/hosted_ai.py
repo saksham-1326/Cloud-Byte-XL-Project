@@ -61,7 +61,7 @@ def process_cycle(service, repo, history_due):
     # awake, so never make model audit depend on that network-bound operation.
     try:
         saved = service.store.models(repo)
-        if saved and 'walkforward' not in saved[0]['metrics']:
+        if saved and ('walkforward' not in saved[0]['metrics'] or 'release_gate' not in saved[0]['metrics']):
             audited = service.train(repo)
             LOG.info("Existing history walk-forward audit status: %s", audited.get("status"))
     except Exception as exc:
@@ -83,7 +83,7 @@ def process_cycle(service, repo, history_due):
                    for r in service.store.runs(repo))
     model_size = int(experimental[0]["metrics"].get("dataset_size", 0)) if experimental else 0
     # Deploy a one-time rolling audit for legacy versions that lack it.
-    needs_refresh = eligible >= model_size + 12 or bool(experimental and 'walkforward' not in experimental[0]['metrics'])
+    needs_refresh = eligible >= model_size + 12 or bool(experimental and ('walkforward' not in experimental[0]['metrics'] or 'release_gate' not in experimental[0]['metrics']))
     if not artifact_ok or needs_refresh:
         model = service.train(repo)
         LOG.info("Experimental training status: %s, observed=%s, previous=%s",
