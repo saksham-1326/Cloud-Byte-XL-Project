@@ -18,6 +18,17 @@ export function useIntelligence(repository:string,adminToken='') {
     const controller=new AbortController();active.current=controller;void load(controller.signal);
     return()=>{controller.abort();active.current?.abort();};
   },[repository,load]);
+  // Re-read historical intelligence while the dashboard is open. No write or
+  // provider request is issued from a public browser.
+  useEffect(()=>{
+    if(!repository)return;
+    let current:AbortController|null=null;
+    const interval=setInterval(()=>{
+      if(document.visibilityState==='hidden')return;
+      current?.abort();current=new AbortController();void load(current.signal);
+    },60000);
+    return()=>{clearInterval(interval);current?.abort();};
+  },[repository,load]);
   const refresh=()=>{if(!repository)return;active.current?.abort();const controller=new AbortController();active.current=controller;setRefreshing(true);void load(controller.signal);};
   return {data:result.repository===repository?result.data:null,error:result.repository===repository?result.error:'',loading:Boolean(repository)&&(refreshing||result.repository!==repository),refresh};
 }
