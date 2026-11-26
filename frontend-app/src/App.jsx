@@ -1198,7 +1198,11 @@ export default function App() {
   const closeMenus = () => { setNotifOpen(false); setProfileOpen(false); };
 
   let content;
-  if (!repoConnected || !REPO.url) {
+  // Historical AI evidence exists in Neon independently of a fresh, potentially
+  // slow source scan. Do not gate the AI workspace behind repository analysis.
+  if (page === "intelligence" && (!repoConnected || !REPO.url)) {
+    content = <AIIntelligence repository="saksham-1326/Cloud-Byte-XL-Project" apiBase={API_BASE} />;
+  } else if (!repoConnected || !REPO.url) {
     content = <EmptyState onConnect={() => setShowConnectModal(true)} />;
   } else {
     switch (page) {
