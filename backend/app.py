@@ -454,7 +454,7 @@ def _raw_github_text(owner, repo, revision, path):
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, headers=headers, method="GET")
     try:
-        with urllib.request.urlopen(req, timeout=8) as response:
+        with urllib.request.urlopen(req, timeout=5) as response:
             raw = response.read(300_000)
             return raw.decode("utf-8", errors="ignore")
     except Exception as error:
@@ -894,10 +894,10 @@ def analyze_repository(repo_endpoint, default_branch, files, tree_truncated=Fals
     for path in priority + secondary:
         if path not in ordered:
             ordered.append(path)
-    # Keep analysis broad but bounded. Fetch files in parallel so one slow
-    # GitHub/raw request cannot make the whole repository analysis appear
-    # frozen for many minutes.
-    selected = ordered[:100]
+    # Keep the initial HTTP scan inside the browser timeout and Gunicorn limit.
+    # Prioritize configuration evidence and identify partial inspection honestly.
+    # A larger batch belongs in a background job, not a blocking HTTP request.
+    selected = ordered[:48]
     fetched = {}
 
     log_message(f"Starting source analysis: {len(selected)} files selected")
