@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronRight, Bell, RefreshCw, ExternalLink, Check, X,
   Clock, Circle, CheckCircle2, AlertCircle, AlertOctagon, ChevronDown,
   Database, Layers, Code2, FileCode2, Package, Files,
-  Minus, ArrowRight, Loader2, Plug, GitCommit,
+  Minus, ArrowRight, Loader2, Plug, GitCommit, Compass, ScanEye, ArrowUp,
   FolderTree, Download, Menu,
 } from "lucide-react";
 import {
@@ -1081,6 +1081,8 @@ function CloudResourcesModal({ resources, onClose }) {
 export default function App() {
   const [collapsed, setCollapsed]           = useState(() => typeof window !== "undefined" && window.innerWidth < 1024);
   const [page, setPage]                     = useState("overview");
+  const [viewMode, setViewMode] = useState("showcase");
+  const [xray, setXray] = useState(false);
   const [mobileNavOpen, setMobileNavOpen]   = useState(false);
   const [repoConnected, setRepoConnected]   = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
