@@ -1,16 +1,21 @@
-# React + Vite
+# Cloud-ByteXL Frontend — Mission Control UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the user-provided **Cloud-ByteXL-Frontend-UI.zip** React 19 + Vite 8 frontend integrated into the existing Cloud-ByteXL repository. It replaces the previous frontend UI only, keeping Flask, Render, Neon PostgreSQL, the existing inference/quality guards and repository-analysis APIs unchanged. The interactive landing page and Mission Control workspace come from the uploaded design.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd frontend-app
+npm ci
+npm run dev
+```
 
-## React Compiler
+Set `VITE_API_BASE_URL` to the existing Flask origin, e.g. `http://127.0.0.1:5000`. For production Vercel this must be `https://cloud-bytexl-api.onrender.com` (no `/api` suffix). `npm test`, `npm run lint` and `npm run build` are required before deployment.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Production security and limitations
 
-## Expanding the ESLint configuration 1234
+The public hosted demo is **read-only**. Set `VITE_ENABLE_ADMIN_ACTIONS=false`, `VITE_ENABLE_MODEL_TRAINING=false`, `VITE_ENABLE_LIVE_PREDICTIONS=false`, and `VITE_ENABLE_PROVIDER_CALLS=false`. Backend AI worker and GitHub synchronization operate behind a separate restricted server-side Neon role. The frontend only reads persisted results and can request safe repository analysis. Live training, mutations, Gemini provider calls and unvalidated predictions are **not** activated by cosmetic buttons. No secrets go into `VITE_` variables or frontend source.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The AI Intelligence screen shows actual stored model history, chronological holdout, observed RCA evidence and quality gate. The rolling replay is retrospective rather than independent real-time proof. Do not claim high prospective failure prediction accuracy unless supported by new evaluation. Docker/Kubernetes/cloud actions that lack a live backend integration must be presented as informational, not as deployed infrastructure controls.
+
+Hosting remains Vercel Hobby frontend + Render Free backend + Neon Free PostgreSQL; paid upgrades are not authorized.
