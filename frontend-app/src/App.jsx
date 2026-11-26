@@ -10,7 +10,7 @@ import {
   Clock, Circle, CheckCircle2, AlertCircle, AlertOctagon, ChevronDown,
   Database, Layers, Code2, FileCode2, Package, Files,
   Minus, ArrowRight, Loader2, Plug, GitCommit, Compass, ScanEye, ArrowUp,
-  FolderTree, Download, Menu,
+  FolderTree, Download, Menu, Sparkles, ShieldCheck, Activity,
 } from "lucide-react";
 import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart,
@@ -1336,6 +1336,14 @@ export default function App() {
         } pt-16`}
       >
         <div className="workspace-content mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="workspace-route" aria-label="Current workspace location">
+            <div className="workspace-route__crumbs"><Layers size={14}/><span>Cloud-ByteXL</span><span className="route-divider">/</span><span>Engineering workspace</span><span className="route-divider">/</span><span>{NAV_ITEMS.find(item=>item.key===page)?.label || "Overview"}</span></div>
+            <span className={`workspace-route__tag ${repoConnected ? "" : "workspace-route__tag--empty"}`}><i/>{repoConnected ? "REPOSITORY CONNECTED" : "AWAITING REPOSITORY"}</span>
+          </div>
+          {repoConnected && <div className="workspace-identity">
+            <div className="workspace-identity__main"><span className="workspace-identity__icon">{page === "intelligence" ? <Sparkles size={21}/> : page === "security" ? <ShieldCheck size={21}/> : <Activity size={21}/>}</span><div><span className="workspace-identity__eyebrow">DEVOPS INTELLIGENCE / {NAV_GROUPS.find(group=>group.keys.includes(page))?.label.toUpperCase() || "WORKSPACE"}</span><h1>{NAV_ITEMS.find(item=>item.key===page)?.label || "Overview"} workspace</h1><p>Repository evidence, actionable findings and measured intelligence from your connected source.</p></div></div>
+            <span className="workspace-identity__pill">EVIDENCE-FIRST · READ ONLY</span>
+          </div>}
           {connectionError && <div className="ai-alert error" role="alert"><AlertTriangle size={18}/><p>{connectionError}</p></div>}
           {content}
         </div>
