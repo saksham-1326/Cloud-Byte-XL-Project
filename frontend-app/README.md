@@ -23,3 +23,21 @@ Hosting remains Vercel Hobby frontend + Render Free backend + Neon Free PostgreS
 ## Unified mission-control interface (November 2026)
 
 The entire application shares the same visual language as the new Cloud-ByteXL mission-control design: cyan and violet accents, midnight glass panels, a common workspace identity/banner, consistent page breadcrumbs, navigation, responsive cards, repository analysis, AI Intelligence and report workspaces. The shared theme is implemented in `src/mission-theme.css` and imported **after** the earlier component styles in `src/main.jsx`; its components are rendered across the existing page switch in `src/App.jsx`, not restricted to the Architecture/landing view. No backend, database, GitHub authorization, read-only policies, prediction release gates or evaluation data are modified by this UI styling task.
+
+### Repository scan recovery and separate AI access
+
+Repository analysis on the hosted Free instance has a bounded 75-second
+frontend timeout, elapsed-time indicator, a Cancel and go back control, and
+Escape-key cancellation. A failed refresh keeps the last analyzed repository;
+invalid/incomplete responses are not accepted as successful evidence.
+The backend inspects at most 48 prioritized GitHub text files per synchronous
+request with individual five-second source timeouts. Coverage may be partial
+and must not be presented as exhaustive.
+
+The AI Intelligence navigation route is available before connecting a
+repository; it shows previously stored evidence for the approved
+`saksham-1326/Cloud-Byte-XL-Project` in Neon without rerunning analysis.
+The initial AI overview allows up to 60 seconds for Render Free startup.
+The hosted AI workspace remains read-only, historical predictions are
+experimental, and independently verified prospective performance is not yet
+established.

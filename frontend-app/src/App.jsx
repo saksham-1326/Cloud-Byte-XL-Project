@@ -960,8 +960,8 @@ function EmptyState({ onConnect }) {
   );
 }
 
-function AnalyzingOverlay() {
-  return <div className="scan-overlay" role="dialog" aria-modal="true" aria-label="Analyzing repository"><div className="scan-overlay-panel"><span className="scan-orb"><ScanSearch size={32}/></span><div className="page-kicker">REPOSITORY INTELLIGENCE</div><h2>Reading the signals.</h2><p role="status">Fetching repository data and analyzing configuration. This may take a moment.</p><div className="scan-indeterminate" aria-label="Analysis in progress"><span/></div><div className="scan-overlay-scope">{ANALYSIS_STEPS.map(label=><span key={label}>{label}</span>)}</div><small>Results appear after the backend completes the assessment.</small></div></div>;
+function AnalyzingOverlay({ onCancel, elapsedSeconds }) {
+  return <div className="scan-overlay" role="dialog" aria-modal="true" aria-label="Analyzing repository"><div className="scan-overlay-panel"><span className="scan-orb"><ScanSearch size={32}/></span><div className="page-kicker">REPOSITORY INTELLIGENCE</div><h2>Reading the signals.</h2><p role="status">Fetching repository metadata and reviewing bounded source evidence. Render Free may be waking up.</p><div className="scan-indeterminate" aria-label="Analysis in progress"><span/></div><div className="scan-overlay-scope">{ANALYSIS_STEPS.map(label=><span key={label}>{label}</span>)}</div><small>Elapsed: {elapsedSeconds}s. A scan timeout or error will return control to you.</small><button type="button" className="scan-cancel-button" onClick={onCancel} aria-label="Cancel repository analysis">Cancel scan and go back</button></div></div>;
 }
 
 function Toasts({ toasts }) {
@@ -1090,7 +1090,7 @@ export default function App() {
   const [connectionError,setConnectionError] = useState("");
   const analysisRequest = useRef(null);
   const [analyzing, setAnalyzing]           = useState(false);
-  const [analyzeStep, setAnalyzeStep]       = useState(0);
+  const [analysisElapsed, setAnalysisElapsed] = useState(0);
   const [selectedIssue, setSelectedIssue]   = useState(null);
   const [reviewedIds, setReviewedIds]       = useState([]);
   const [notifOpen, setNotifOpen]           = useState(false);
@@ -1099,6 +1099,25 @@ export default function App() {
   useSyncExternalStore(subscribeRepository, getRepositoryRevision, getRepositoryRevision);
   useEffect(() => { window.scrollTo(0, 0); }, [page]);
   useEffect(() => () => analysisRequest.current?.abort(), []);
+  useEffect(() => {
+    if (!analyzing) return;
+    const started = Date.now();
+    const timer = setInterval(() => setAnalysisElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [analyzing]);
+  useEffect(() => {
+    if (!analyzing) return;
+    const onEscape = (event) => {
+      if (event.key === "Escape") {
+        analysisRequest.current?.abort();
+        analysisRequest.current = null;
+        setAnalyzing(false);
+        setConnectionError("Repository scan cancelled. You can retry or choose another repository.");
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [analyzing]);
 
   const pushToast = (message) => {
     const id = Date.now();
@@ -1125,13 +1144,13 @@ export default function App() {
     const controller=new AbortController();analysisRequest.current=controller;
     setConnectionError("");
     setShowConnectModal(false);
+    setAnalysisElapsed(0);
     setAnalyzing(true);
-    setAnalyzeStep(1);
     pushToast("Connecting to GitHub…");
 
     try {
       const data = await requestJson(`${API_BASE}/api/github/repository`, {
-        signal:controller.signal,timeoutMs:180000,
+        signal:controller.signal,timeoutMs:75000,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: repoUrl }),
@@ -1139,19 +1158,24 @@ export default function App() {
 
       if(controller.signal.aborted || analysisRequest.current!==controller)return;
 
+      if (!data?.repository?.fullName || !data?.analysis || !Array.isArray(data?.files)) {
+        throw new Error("Repository analysis returned incomplete evidence. Retry after checking Render availability.");
+      }
       publishRepositoryData(data);
       setRepoConnected(true);
       if(data.databaseWarning)setConnectionError(data.databaseWarning);
-      setAnalyzeStep(ANALYSIS_STEPS.length);
       setPage("overview");
       pushToast(`Connected to ${data.repository?.fullName || data.repository?.name}`);
     } catch (error) {
       if(error.name==="AbortError" || analysisRequest.current!==controller)return;
       setConnectionError(error.message || "Repository analysis unavailable.");
-      setRepoConnected(false);
+      // Preserve the last successfully analyzed repository when a refresh fails.
       pushToast(error.message || "Failed to connect GitHub repository");
     } finally {
-      if(analysisRequest.current===controller)setAnalyzing(false);
+      if(analysisRequest.current===controller){
+        analysisRequest.current=null;
+        setAnalyzing(false);
+      }
     }
   };
 
@@ -1171,7 +1195,11 @@ export default function App() {
   const closeMenus = () => { setNotifOpen(false); setProfileOpen(false); };
 
   let content;
-  if (!repoConnected || !REPO.url) {
+  // Historical AI evidence exists in Neon independently of a fresh, potentially
+  // slow source scan. Do not gate the AI workspace behind repository analysis.
+  if (page === "intelligence" && (!repoConnected || !REPO.url)) {
+    content = <AIIntelligence repository="saksham-1326/Cloud-Byte-XL-Project" apiBase={API_BASE} />;
+  } else if (!repoConnected || !REPO.url) {
     content = <EmptyState onConnect={() => setShowConnectModal(true)} />;
   } else {
     switch (page) {
@@ -1367,7 +1395,12 @@ export default function App() {
         onMarkReviewed={handleMarkReviewed}
         reviewed={selectedIssue ? reviewedIds.includes(selectedIssue.id) : false}
       />
-      {analyzing && <AnalyzingOverlay step={analyzeStep} />}
+      {analyzing && <AnalyzingOverlay elapsedSeconds={analysisElapsed} onCancel={() => {
+        analysisRequest.current?.abort();
+        analysisRequest.current = null;
+        setAnalyzing(false);
+        setConnectionError("Repository scan cancelled. You can retry or choose another repository.");
+      }} />}
       <Toasts toasts={toasts} />
       {floatingDock}
     </div>

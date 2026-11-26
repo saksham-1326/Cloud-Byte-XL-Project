@@ -1136,3 +1136,20 @@ of proven prospective accuracy. These thresholds are a conservative
 project release policy, not established universal guarantees. New
 training data and proper independent evaluation are needed before
 reconsidering the model's suitability.
+
+### Hosted repository scan responsiveness and AI evidence access
+
+The hosted public workspace now bounds synchronous GitHub source inspection to at
+most 48 priority-selected text files (five-second individual raw-file read
+timeouts, twelve parallel readers). It can still return partial coverage;
+inspected evidence is never fabricated. The browser scan has a 75-second
+deadline with a visible Cancel action and Escape keyboard handling, and
+always restores navigation on success or failure. A failed refresh preserves
+the last successful repository assessment.
+
+Public AI Intelligence is readable even if a new repository scan has not
+completed, using the existing allowlisted Cloud-ByteXL repository's Neon
+history. Its historical overview tolerates Render Free cold startup for up
+to 60 seconds. Only past evidence, model evaluations, and grounded RCA are
+available; prospective prediction accuracy remains unverified, and hosted
+training/provider actions stay disabled. No paid resources are enabled.
