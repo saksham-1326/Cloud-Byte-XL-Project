@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import "./index.css";
 import "./overview.css";
 import "./platform.css";
+import "./mission-theme.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
