@@ -1091,7 +1091,6 @@ export default function App() {
   const analysisRequest = useRef(null);
   const [analyzing, setAnalyzing]           = useState(false);
   const [analysisElapsed, setAnalysisElapsed] = useState(0);
-  const [analyzeStep, setAnalyzeStep]       = useState(0);
   const [selectedIssue, setSelectedIssue]   = useState(null);
   const [reviewedIds, setReviewedIds]       = useState([]);
   const [notifOpen, setNotifOpen]           = useState(false);
@@ -1147,7 +1146,6 @@ export default function App() {
     setShowConnectModal(false);
     setAnalysisElapsed(0);
     setAnalyzing(true);
-    setAnalyzeStep(1);
     pushToast("Connecting to GitHub…");
 
     try {
@@ -1166,7 +1164,6 @@ export default function App() {
       publishRepositoryData(data);
       setRepoConnected(true);
       if(data.databaseWarning)setConnectionError(data.databaseWarning);
-      setAnalyzeStep(ANALYSIS_STEPS.length);
       setPage("overview");
       pushToast(`Connected to ${data.repository?.fullName || data.repository?.name}`);
     } catch (error) {
