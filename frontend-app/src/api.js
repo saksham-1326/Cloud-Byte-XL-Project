@@ -1,12 +1,5 @@
 // Shared error/timeout handling for the existing Flask contracts. No secrets here.
-const configuredBase = import.meta.env?.VITE_API_BASE_URL;
-if (import.meta.env?.PROD) {
-  const target = configuredBase ? new URL(configuredBase) : null;
-  if (!target || target.protocol !== "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) || target.username || target.password || target.search || target.hash || target.pathname !== "/") {
-    throw new Error("Production requires VITE_API_BASE_URL to be an HTTPS backend origin.");
-  }
-}
-export const API_BASE = (configuredBase || "http://127.0.0.1:5000").replace(/\/+$/, "");
+export const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:5000").replace(/\/+$/, "");
 
 export async function requestJson(url, options = {}) {
   const { signal, timeoutMs = 15000, ...init } = options;
@@ -33,7 +26,7 @@ export async function requestJson(url, options = {}) {
   } catch (error) {
     if (timedOut) throw new Error("Backend request timed out. The operation may still be running; refresh before retrying.", { cause: error });
     if (error.name === "AbortError") throw error;
-    if (error instanceof TypeError) throw new Error("Cannot reach the backend. Check the configured API address and server availability.", { cause: error });
+    if (error instanceof TypeError) throw new Error("Cannot reach the backend. Check the configured Render API address and server readiness.", { cause: error });
     throw error;
   } finally {
     clearTimeout(timer);
