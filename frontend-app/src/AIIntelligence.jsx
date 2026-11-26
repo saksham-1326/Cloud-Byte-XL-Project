@@ -27,12 +27,12 @@ export default function AIIntelligence({ repository, apiBase }) {
     return requestJson(`${apiBase}/api/ai/v1${path}`,{...options,headers:{...(options.body ? {"Content-Type":"application/json"} : {}),...(adminToken ? {"X-AI-Admin":adminToken} : {})}});
   },[apiBase,adminToken]);
   const load=useCallback(async(signal)=>{
-    try {const result=await request(`/overview?repository=${encodeURIComponent(repository)}`,{signal});setData(result.data);setError("");}
+    try {const result=await request(`/overview?repository=${encodeURIComponent(repository)}`,{signal,timeoutMs:60000});setData(result.data);setError("");}
     catch(e){if(e.name!=="AbortError")setError(e.message);}finally{setLoading(false);}
   },[request,repository]);
   useEffect(()=>{
     const controller=new AbortController();
-    request(`/overview?repository=${encodeURIComponent(repository)}`,{signal:controller.signal})
+    request(`/overview?repository=${encodeURIComponent(repository)}`,{signal:controller.signal,timeoutMs:60000})
       .then(result=>{setData(result.data);setError("");setLoading(false);})
       .catch(e=>{if(e.name!=="AbortError"){setError(e.message);setLoading(false);}});
     return()=>controller.abort();
