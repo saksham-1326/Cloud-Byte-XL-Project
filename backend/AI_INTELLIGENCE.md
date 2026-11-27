@@ -1,5 +1,9 @@
 # AI Intelligence: setup, demonstration, and verification
 
+## Final live verification — 2026-11-27
+
+A genuine failed `Lint frontend` step exposed an evidence-rule defect: ESLint source coordinates and its `1 problem (1 error, 0 warnings)` summary were counted as pytest errors. New analyses classify explicit linter diagnostics as `lint_failure`, preserve the diagnostic citations, and recommend correcting the cited lint rule. Lint evidence cannot support a provider claim that unit tests failed. Regression tests use the redacted public diagnostic from Actions run `45795104375`, attempt 1. Existing database reports and historical evaluations are preserved; previously stored `unit_test_failure` reports for this lint pattern remain historical, incorrect diagnoses until separately reviewed. The exact provider call performed before this fix is not re-counted as a post-fix provider test. See [final verification](../docs/FINAL_PROJECT_VERIFICATION.md).
+
 ## RCA reliability improvements — 2026-11-15
 
 This checkpoint supersedes the earlier Gemini accuracy results below. Four

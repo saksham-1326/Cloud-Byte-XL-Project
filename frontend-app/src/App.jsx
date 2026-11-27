@@ -1,6 +1,7 @@
 import MissionControlLanding from "./MissionControlLanding.jsx";
 import AIIntelligence from "./AIIntelligence.jsx";
 import { API_BASE, requestJson } from "./api.js";
+import { buildRepositoryReport } from "./repositoryData.js";
 import { DEMO_REPOSITORY, DEMO_REPOSITORY_URL, validateDemoRepository } from "./repoAccess.js";
 import { REPO, HEALTH, SUBSCORES, METRICS, SEVERITY_COUNTS, ISSUES, ARCH, SECURITY, RECOMMENDATIONS, ACTIVITY, CONTRIBUTORS, COMMITS, LANGUAGES, REPOSITORY_FILES, ANALYSIS_STEPS, ANALYSIS_HISTORY, subscribeRepository, getRepositoryRevision, publishRepositoryData } from "./repositoryData.js";
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
@@ -1150,6 +1151,7 @@ export default function App() {
     setAnalyzing(true);
     pushToast("Connecting to GitHub…");
 
+    const scanStarted = performance.now();
     try {
       const data = await requestJson(`${API_BASE}/api/github/repository`, {
         signal:controller.signal,timeoutMs:75000,
@@ -1163,6 +1165,7 @@ export default function App() {
       if (!data?.repository?.fullName || !data?.analysis || !Array.isArray(data?.files)) {
         throw new Error("Repository analysis returned incomplete evidence. Retry after checking Render availability.");
       }
+      data.scanDurationMs = Math.max(0, performance.now() - scanStarted);
       publishRepositoryData(data);
       setRepoConnected(true);
       // An intentional public-demo write restriction is informational, not a scan error.
@@ -1190,7 +1193,7 @@ export default function App() {
   };
 
   const handleExport = () => {
-    const report = {repository:REPO,health:HEALTH,subscores:SUBSCORES,security:SECURITY,issues:ISSUES,recommendations:RECOMMENDATIONS,architecture:ARCH};
+    const report = buildRepositoryReport();
     const url = URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:"application/json"}));
     const anchor=document.createElement("a");anchor.href=url;anchor.download=`${REPO.name}-analysis.json`;anchor.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);

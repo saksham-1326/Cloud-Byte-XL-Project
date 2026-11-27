@@ -16,9 +16,13 @@ DOCKER_ERROR = re.compile(r'Error response from daemon|No such container|failed 
 HTTP = re.compile(r'(?:HTTP(?:/\d(?:\.\d)?)?(?:\s+status(?:\s+code)?)?\s*[:=]?\s*|returned error:\s*)([45]\d\d)\b', re.I)
 EXIT_CODE = re.compile(r'Process completed with exit code (\d+)\b', re.I)
 SUMMARY = re.compile(r'\b(\d+)\s+(passed|failed|errors?|skipped|xfailed|xpassed)\b', re.I)
+LINT = re.compile(r'\b\d+:\d+\s+error\s+.+\s+[\w@/-]+\s*$|\bESLint(?:Error)?\s*:', re.I)
 
 
 def summary_counts(text):
+    # ESLint source coordinates and problem totals are not pytest counts.
+    if LINT.search(text) or re.search(r'\b\d+\s+problems?\s*\(', text, re.I):
+        return []
     # "HTTP 404 error" is a status code, never 404 pytest errors.
     http_numbers={match.start(1) for match in HTTP.finditer(text)}
     return [(match[1],match[2]) for match in SUMMARY.finditer(text) if match.start() not in http_numbers]
@@ -31,7 +35,7 @@ def body(text):
 
 def observations(items):
     facts={key:[] for key in ('commands','exit_codes','explicit_exit_commands','pytest_summaries',
-                              'compiler_errors','dependency_errors','test_errors','http_errors',
+                              'compiler_errors','dependency_errors','test_errors','lint_errors','http_errors',
                               'docker_errors','docker_build_errors','network_errors','shells','tolerated_failure_commands')}
     script=False
     conditional_depth=0
@@ -63,7 +67,7 @@ def observations(items):
             facts['pytest_summaries'].append({**ref,'counts':{name.lower():int(count) for count,name in counts}})
         # Command names (e.g. py_compile, pip install) are not error diagnostics.
         for key,pattern in [('compiler_errors',COMPILER),('dependency_errors',DEPENDENCY),
-                            ('test_errors',TEST_ERROR),('docker_errors',DOCKER_ERROR),
+                            ('test_errors',TEST_ERROR),('lint_errors',LINT),('docker_errors',DOCKER_ERROR),
                             ('docker_build_errors',DOCKER_BUILD),('network_errors',NETWORK)]:
             if pattern.search(text) and not command_echo:facts[key].append(ref)
         match=HTTP.search(text)
@@ -81,7 +85,7 @@ def passing_tests(facts):
 
 def intentional_exit(facts):
     return bool(any(item['unconditional_in_visible_script'] for item in facts['explicit_exit_commands'])
-                and not any(facts[key] for key in ('compiler_errors','dependency_errors','test_errors',
+                and not any(facts[key] for key in ('compiler_errors','dependency_errors','test_errors','lint_errors',
                                                   'http_errors','network_errors','docker_build_errors'))
                 and not any(item['counts'].get('failed',0) or item['counts'].get('errors',0)
                             for item in facts['pytest_summaries']))
@@ -94,6 +98,7 @@ def support(category,facts,text):
         'intentional_workflow_termination':lambda:intentional_exit(facts),
         'compilation_error':lambda:bool(facts['compiler_errors']),
         'dependency_error':lambda:bool(facts['dependency_errors']),
+        'lint_failure':lambda:bool(facts['lint_errors']),
         'unit_test_failure':lambda:bool(facts['test_errors'] or any(
             item['counts'].get('failed',0) or item['counts'].get('error',0) or item['counts'].get('errors',0)
             for item in facts['pytest_summaries'])),
@@ -137,8 +142,8 @@ def validate_claims(result,primary,cited,secondary):
         raise ValueError('RCA contains an unsupported compilation or syntax claim.')
     if positive_claim(text,dependency_claim) and not cited_facts['dependency_errors']:
         raise ValueError('RCA contains an unsupported dependency claim.')
-    if passing_tests(facts) and positive_claim(text,test_claim):
-        raise ValueError('RCA incorrectly claims that passing tests failed.')
+    if positive_claim(text,test_claim) and not support('unit_test_failure',cited_facts,'\n'.join(item['text'] for item in cited)):
+        raise ValueError('RCA contains an unsupported test failure claim.')
     if any(int(code) not in {item['code'] for item in cited_facts['http_errors']} for code in HTTP.findall(text)):
         raise ValueError('RCA contains an HTTP code unsupported by the cited content.')
     known_exit_codes={item['code'] for key in ('exit_codes','explicit_exit_commands') for item in cited_facts[key]}

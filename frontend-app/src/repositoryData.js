@@ -112,7 +112,8 @@ function applyRepositoryData(data) {
     commitHash: repository.analysisCommitSha?.slice(0,7) || data?.commits?.[0]?.hash || "",
     commitAuthor: data?.commits?.[0]?.author || repository.owner || "Unknown",
     lastAnalyzed: "just now",
-    analysisDuration: "—",
+    analysisDuration: Number.isFinite(data?.scanDurationMs) && data.scanDurationMs >= 0
+      ? `${(data.scanDurationMs / 1000).toFixed(2)}s` : "—",
   };
 
   LANGUAGES = Array.isArray(data?.languages) ? data.languages : [];
@@ -141,6 +142,12 @@ export function subscribeRepository(listener) {
   return () => subscribers.delete(listener);
 }
 export function getRepositoryRevision() { return revision; }
+export function buildRepositoryReport() {
+  return { repository: REPO, health: HEALTH, subscores: SUBSCORES, security: SECURITY,
+    issues: ISSUES, recommendations: RECOMMENDATIONS, architecture: ARCH,
+    files: REPOSITORY_FILES, fileCount: REPOSITORY_FILES.length, languages: LANGUAGES,
+    inspectionNote: "File inventory is separate from bounded source inspection; findings are static heuristics, not runtime telemetry." };
+}
 export function publishRepositoryData(data) {
   if(REPO.fullName!==data?.repository?.fullName){ANALYSIS_HISTORY=[];HISTORY_REPO=data?.repository?.fullName || "";}
   applyRepositoryData(data);

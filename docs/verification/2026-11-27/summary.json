@@ -1,0 +1,1604 @@
+{
+  "base_commit": "84999c4878be53df67c0023e61d9bacf52f3c81a",
+  "date": "2026-11-27",
+  "runtime": {
+    "python": "3.13.14",
+    "node": "22.20.0",
+    "npm": "10.9.3",
+    "local_postgres": "17.10",
+    "neon_postgres": 18
+  },
+  "tests": {
+    "backend_passed": 321,
+    "backend_skipped": 0,
+    "frontend_passed": 37,
+    "frontend_failed": 0,
+    "eslint": "passed",
+    "build": "passed",
+    "backend_seconds": 365.31
+  },
+  "browser": [
+    {
+      "env": "local",
+      "scanSuccess": true,
+      "scanSeconds": 7.086,
+      "responsive": [
+        {
+          "width": 1440,
+          "innerWidth": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435
+        },
+        {
+          "width": 1024,
+          "innerWidth": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020
+        },
+        {
+          "width": 768,
+          "innerWidth": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763
+        },
+        {
+          "width": 390,
+          "innerWidth": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385
+        }
+      ],
+      "console": [],
+      "pages": [
+        "Overview",
+        "Repository",
+        "Analysis",
+        "Issues",
+        "Security",
+        "Recommendations",
+        "Architecture",
+        "CI/CD",
+        "Docker",
+        "Kubernetes",
+        "AI Intelligence",
+        "Reports"
+      ],
+      "report_keys": [
+        "repository",
+        "health",
+        "subscores",
+        "security",
+        "issues",
+        "recommendations",
+        "architecture",
+        "files",
+        "fileCount",
+        "languages",
+        "inspectionNote"
+      ]
+    },
+    {
+      "env": "production",
+      "scanSuccess": true,
+      "scanSeconds": 6.38,
+      "responsive": [
+        {
+          "width": 1440,
+          "innerWidth": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435
+        },
+        {
+          "width": 1024,
+          "innerWidth": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020
+        },
+        {
+          "width": 768,
+          "innerWidth": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763
+        },
+        {
+          "width": 390,
+          "innerWidth": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385
+        }
+      ],
+      "console": [],
+      "pages": [
+        "Overview",
+        "Repository",
+        "Analysis",
+        "Issues",
+        "Security",
+        "Recommendations",
+        "Architecture",
+        "CI/CD",
+        "Docker",
+        "Kubernetes",
+        "AI Intelligence",
+        "Reports"
+      ],
+      "report_keys": [
+        "repository",
+        "health",
+        "subscores",
+        "security",
+        "issues",
+        "recommendations",
+        "architecture"
+      ]
+    }
+  ],
+  "interaction_checks": [
+    {
+      "env": "local",
+      "checks": {
+        "xray": true,
+        "landingNode": true,
+        "independentAI": true,
+        "disabledPrediction": true,
+        "storedRCAEvident": true,
+        "invalidURL": true,
+        "cancel": true,
+        "retry": true,
+        "source": true,
+        "fileSearchEmpty": true,
+        "issueEmpty": true,
+        "review": true,
+        "recommendationEmpty": true,
+        "printPDF": true
+      },
+      "error": null
+    },
+    {
+      "env": "production",
+      "checks": {
+        "xray": true,
+        "landingNode": true,
+        "independentAI": true,
+        "disabledPrediction": true,
+        "disabledSync": true,
+        "storedRCAEvident": true,
+        "invalidURL": true,
+        "cancel": true,
+        "retry": true,
+        "source": true,
+        "fileSearchEmpty": true,
+        "issueEmpty": true,
+        "review": true,
+        "recommendationEmpty": true,
+        "printPDF": true
+      },
+      "error": null
+    }
+  ],
+  "responsive_all_pages": [
+    {
+      "env": "local",
+      "checks": {
+        "failedRefreshPreserved": true,
+        "offlineError": true,
+        "escapeCancel": true,
+        "architectureNode": true,
+        "zoom": true,
+        "zoomReset": true
+      },
+      "pages": [
+        {
+          "name": "Overview",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 3306
+        },
+        {
+          "name": "Repository",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 3531
+        },
+        {
+          "name": "Analysis",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1451
+        },
+        {
+          "name": "Issues",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1051
+        },
+        {
+          "name": "Security",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1426
+        },
+        {
+          "name": "Recommendations",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1346
+        },
+        {
+          "name": "Architecture",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1202
+        },
+        {
+          "name": "CI/CD",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1756
+        },
+        {
+          "name": "Docker",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1156
+        },
+        {
+          "name": "Kubernetes",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1163
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 6418
+        },
+        {
+          "name": "Reports",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1669
+        },
+        {
+          "name": "Overview",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 3281
+        },
+        {
+          "name": "Repository",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 3531
+        },
+        {
+          "name": "Analysis",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1451
+        },
+        {
+          "name": "Issues",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1051
+        },
+        {
+          "name": "Security",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1426
+        },
+        {
+          "name": "Recommendations",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1346
+        },
+        {
+          "name": "Architecture",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1202
+        },
+        {
+          "name": "CI/CD",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1756
+        },
+        {
+          "name": "Docker",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1156
+        },
+        {
+          "name": "Kubernetes",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1163
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 6418
+        },
+        {
+          "name": "Reports",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1669
+        },
+        {
+          "name": "Overview",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 3207
+        },
+        {
+          "name": "Repository",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 3531
+        },
+        {
+          "name": "Analysis",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1451
+        },
+        {
+          "name": "Issues",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 996
+        },
+        {
+          "name": "Security",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1426
+        },
+        {
+          "name": "Recommendations",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1346
+        },
+        {
+          "name": "Architecture",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1202
+        },
+        {
+          "name": "CI/CD",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1756
+        },
+        {
+          "name": "Docker",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1156
+        },
+        {
+          "name": "Kubernetes",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1163
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 6418
+        },
+        {
+          "name": "Reports",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1669
+        },
+        {
+          "name": "Overview",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 3175
+        },
+        {
+          "name": "Repository",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 3531
+        },
+        {
+          "name": "Analysis",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1451
+        },
+        {
+          "name": "Issues",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 996
+        },
+        {
+          "name": "Security",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1426
+        },
+        {
+          "name": "Recommendations",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1346
+        },
+        {
+          "name": "Architecture",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1202
+        },
+        {
+          "name": "CI/CD",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1756
+        },
+        {
+          "name": "Docker",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1156
+        },
+        {
+          "name": "Kubernetes",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1163
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 6418
+        },
+        {
+          "name": "Reports",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1669
+        }
+      ],
+      "error": null
+    },
+    {
+      "env": "production",
+      "checks": {
+        "architectureNode": true,
+        "zoom": true,
+        "zoomReset": true
+      },
+      "pages": [
+        {
+          "name": "Overview",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 3377
+        },
+        {
+          "name": "Repository",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 3458
+        },
+        {
+          "name": "Analysis",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1368
+        },
+        {
+          "name": "Issues",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 978
+        },
+        {
+          "name": "Security",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1353
+        },
+        {
+          "name": "Recommendations",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1273
+        },
+        {
+          "name": "Architecture",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1129
+        },
+        {
+          "name": "CI/CD",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1683
+        },
+        {
+          "name": "Docker",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1083
+        },
+        {
+          "name": "Kubernetes",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1090
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 28704
+        },
+        {
+          "name": "Reports",
+          "width": 1440,
+          "scrollWidth": 1435,
+          "clientWidth": 1435,
+          "mainText": 1596
+        },
+        {
+          "name": "Overview",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 3352
+        },
+        {
+          "name": "Repository",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 3458
+        },
+        {
+          "name": "Analysis",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1368
+        },
+        {
+          "name": "Issues",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 978
+        },
+        {
+          "name": "Security",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1353
+        },
+        {
+          "name": "Recommendations",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1273
+        },
+        {
+          "name": "Architecture",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1129
+        },
+        {
+          "name": "CI/CD",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1683
+        },
+        {
+          "name": "Docker",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1083
+        },
+        {
+          "name": "Kubernetes",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1090
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 28704
+        },
+        {
+          "name": "Reports",
+          "width": 1024,
+          "scrollWidth": 1020,
+          "clientWidth": 1020,
+          "mainText": 1596
+        },
+        {
+          "name": "Overview",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 3278
+        },
+        {
+          "name": "Repository",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 3458
+        },
+        {
+          "name": "Analysis",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1368
+        },
+        {
+          "name": "Issues",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 923
+        },
+        {
+          "name": "Security",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1353
+        },
+        {
+          "name": "Recommendations",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1273
+        },
+        {
+          "name": "Architecture",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1129
+        },
+        {
+          "name": "CI/CD",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1683
+        },
+        {
+          "name": "Docker",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1083
+        },
+        {
+          "name": "Kubernetes",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1090
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 28704
+        },
+        {
+          "name": "Reports",
+          "width": 768,
+          "scrollWidth": 763,
+          "clientWidth": 763,
+          "mainText": 1596
+        },
+        {
+          "name": "Overview",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 3234
+        },
+        {
+          "name": "Repository",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 3458
+        },
+        {
+          "name": "Analysis",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1368
+        },
+        {
+          "name": "Issues",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 923
+        },
+        {
+          "name": "Security",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1353
+        },
+        {
+          "name": "Recommendations",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1273
+        },
+        {
+          "name": "Architecture",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1129
+        },
+        {
+          "name": "CI/CD",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1683
+        },
+        {
+          "name": "Docker",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1083
+        },
+        {
+          "name": "Kubernetes",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1090
+        },
+        {
+          "name": "AI Intelligence",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 28704
+        },
+        {
+          "name": "Reports",
+          "width": 390,
+          "scrollWidth": 385,
+          "clientWidth": 385,
+          "mainText": 1596
+        }
+      ],
+      "error": null
+    }
+  ],
+  "ai": {
+    "model_version": "70a321ae-a67a-4b99-a9c4-7965f24a061a",
+    "selected_model": "random_forest",
+    "threshold": 0.2,
+    "dataset_size": 77,
+    "class_distribution": {
+      "failure": 15,
+      "success": 62
+    },
+    "split_sizes": {
+      "test": 16,
+      "train": 46,
+      "validation": 15
+    },
+    "comparisons": {
+      "dummy": {
+        "test": {
+          "accuracy": 0.8125,
+          "brier_score": 0.15359168241965976,
+          "calibration_bins": [
+            {
+              "count": 16,
+              "mean_probability": 0.15217391304347827,
+              "observed_failure_rate": 0.1875
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              13,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "f1": 0.0,
+          "n": 16,
+          "pr_auc": 0.1875,
+          "precision": 0.0,
+          "recall": 0.0,
+          "roc_auc": 0.5
+        },
+        "threshold": 0.5,
+        "validation": {
+          "accuracy": 0.6666666666666666,
+          "brier_score": 0.2550409577819786,
+          "calibration_bins": [
+            {
+              "count": 15,
+              "mean_probability": 0.15217391304347824,
+              "observed_failure_rate": 0.3333333333333333
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              10,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          "f1": 0.0,
+          "n": 15,
+          "pr_auc": 0.3333333333333333,
+          "precision": 0.0,
+          "recall": 0.0,
+          "roc_auc": 0.5
+        }
+      },
+      "logistic": {
+        "test": {
+          "accuracy": 0.75,
+          "brier_score": 0.19663925650284428,
+          "calibration_bins": [
+            {
+              "count": 15,
+              "mean_probability": 0.03128814365475536,
+              "observed_failure_rate": 0.2
+            },
+            {
+              "count": 1,
+              "mean_probability": 0.5347788343248948,
+              "observed_failure_rate": 0.0
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              12,
+              1
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "f1": 0.0,
+          "n": 16,
+          "pr_auc": 0.2383838383838384,
+          "precision": 0.0,
+          "recall": 0.0,
+          "roc_auc": 0.41025641025641024
+        },
+        "threshold": 0.4,
+        "validation": {
+          "accuracy": 0.7333333333333333,
+          "brier_score": 0.26118517603711777,
+          "calibration_bins": [
+            {
+              "count": 14,
+              "mean_probability": 0.0925695444034422,
+              "observed_failure_rate": 0.2857142857142857
+            },
+            {
+              "count": 1,
+              "mean_probability": 0.48362727665077165,
+              "observed_failure_rate": 1.0
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              10,
+              0
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          "f1": 0.3333333333333333,
+          "n": 15,
+          "pr_auc": 0.5263003663003663,
+          "precision": 1.0,
+          "recall": 0.2,
+          "roc_auc": 0.48000000000000004
+        }
+      },
+      "random_forest": {
+        "test": {
+          "accuracy": 0.625,
+          "brier_score": 0.1558811862385908,
+          "calibration_bins": [
+            {
+              "count": 16,
+              "mean_probability": 0.17202954820690003,
+              "observed_failure_rate": 0.1875
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              10,
+              3
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "f1": 0.0,
+          "n": 16,
+          "pr_auc": 0.2409090909090909,
+          "precision": 0.0,
+          "recall": 0.0,
+          "roc_auc": 0.5128205128205128
+        },
+        "threshold": 0.2,
+        "validation": {
+          "accuracy": 0.7333333333333333,
+          "brier_score": 0.24555918896495532,
+          "calibration_bins": [
+            {
+              "count": 15,
+              "mean_probability": 0.13464309705625546,
+              "observed_failure_rate": 0.3333333333333333
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              10,
+              0
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          "f1": 0.3333333333333333,
+          "n": 15,
+          "pr_auc": 0.7633333333333332,
+          "precision": 1.0,
+          "recall": 0.2,
+          "roc_auc": 0.74
+        }
+      }
+    },
+    "test": {
+      "accuracy": 0.625,
+      "brier_score": 0.1558811862385908,
+      "calibration_bins": [
+        {
+          "count": 16,
+          "mean_probability": 0.17202954820690003,
+          "observed_failure_rate": 0.1875
+        }
+      ],
+      "calibration_status": "descriptive_only_insufficient_sample",
+      "confusion_matrix": [
+        [
+          10,
+          3
+        ],
+        [
+          3,
+          0
+        ]
+      ],
+      "f1": 0.0,
+      "n": 16,
+      "pr_auc": 0.2409090909090909,
+      "precision": 0.0,
+      "recall": 0.0,
+      "roc_auc": 0.5128205128205128
+    },
+    "release_gate": {
+      "limitation": "Passing permits no-impact shadow inference only. These historical criteria never prove prospective accuracy or model generalization.",
+      "policy_version": "shadow-release-v1",
+      "reasons": [
+        "Held-out failure recall or precision is below the shadow-release threshold.",
+        "No comparable walk-forward evaluation exists for the selected model family."
+      ],
+      "requirements": {
+        "holdout_min_failures": 3,
+        "holdout_min_successes": 10,
+        "min_failure_precision": 0.5,
+        "min_failure_recall": 0.7,
+        "replay_min_failures": 5,
+        "replay_min_successes": 20,
+        "rolling_brier_better_than_baseline": true
+      },
+      "status": "insufficient_evidence"
+    },
+    "walkforward": {
+      "comparisons": {
+        "historical_base_rate": {
+          "accuracy": 0.8059701492537313,
+          "brier_score": 0.16106899391299134,
+          "calibration_bins": [
+            {
+              "count": 67,
+              "mean_probability": 0.18188434903114803,
+              "observed_failure_rate": 0.19402985074626866
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              54,
+              0
+            ],
+            [
+              13,
+              0
+            ]
+          ],
+          "f1": 0.0,
+          "n": 67,
+          "pr_auc": 0.14750943804260885,
+          "precision": 0.0,
+          "recall": 0.0,
+          "roc_auc": 0.3212250712250712
+        },
+        "logistic": {
+          "accuracy": 0.6268656716417911,
+          "brier_score": 0.24360524085142976,
+          "calibration_bins": [
+            {
+              "count": 41,
+              "mean_probability": 0.1210308501243984,
+              "observed_failure_rate": 0.21951219512195122
+            },
+            {
+              "count": 18,
+              "mean_probability": 0.514978263875111,
+              "observed_failure_rate": 0.16666666666666666
+            },
+            {
+              "count": 8,
+              "mean_probability": 0.8068755162566499,
+              "observed_failure_rate": 0.125
+            }
+          ],
+          "calibration_status": "descriptive_only_insufficient_sample",
+          "confusion_matrix": [
+            [
+              38,
+              16
+            ],
+            [
+              9,
+              4
+            ]
+          ],
+          "f1": 0.24242424242424243,
+          "n": 67,
+          "pr_auc": 0.26104254551741884,
+          "precision": 0.2,
+          "recall": 0.3076923076923077,
+          "roc_auc": 0.4914529914529915
+        }
+      },
+      "coverage": 0.8701298701298701,
+      "eligible_evaluations": 67,
+      "eligible_failures": 13,
+      "eligible_successes": 54,
+      "excluded": {
+        "duplicate_commit": 0,
+        "insufficient_prior_data": 10
+      },
+      "limitation": "Historical walk-forward simulation only; no live prediction timing proof, no model-selection claims, and no independent prospective validation.",
+      "measurements_available": true,
+      "mode": "retrospective_preoutcome_replay",
+      "protocol": "Expanding historical first-attempt outcomes, completed strictly before each target creation, excluding same-commit observations, deterministic logistic baseline and fixed 0.5 threshold.",
+      "threshold": 0.5
+    },
+    "live_evaluated": 0,
+    "live_metrics": null,
+    "rca_reports": 15
+  },
+  "gemini": {
+    "run_id": 45972234793,
+    "attempt": 1,
+    "provider": "gemini",
+    "calls": 1,
+    "write_target": "isolated local verification database",
+    "status": "accepted",
+    "engine": "llm_grounded",
+    "model": "gemini-3.5-flash-lite",
+    "category": "insufficient_evidence",
+    "failed_step": "Run frontend contract tests",
+    "evidence_refs": [
+      "job:140415185118:line:2046",
+      "job:140415185118:line:210"
+    ],
+    "report_id": "6b429509-5eca-4c60-a744-d254fc636471",
+    "persisted": true
+  },
+  "rules": {
+    "repository": "saksham-1326/cloud-byte-xl-project",
+    "run_id": 45972234793,
+    "attempt": 1,
+    "write_target": "isolated local verification database",
+    "provider_calls": 0,
+    "jobs": 2,
+    "failed_logs": 1,
+    "rules": {
+      "report_id": "e65651d7-634d-4348-932c-b56636e77db2",
+      "engine": "evidence_rules",
+      "category": "insufficient_evidence",
+      "cause": "Truncated or potentially tolerated diagnostics do not establish a unique primary cause.",
+      "failed_step": "Run frontend contract tests",
+      "evidence_refs": [],
+      "persisted": true
+    },
+    "gemini": {
+      "status": "not_called_missing_key_or_logs"
+    }
+  },
+  "security_checks": [
+    {
+      "url": "https://cloud-bytexl-api.onrender.com/healthz",
+      "method": "GET",
+      "origin": "https://cloud-bytexl.vercel.app",
+      "http": 200,
+      "allow_origin": "https://cloud-bytexl.vercel.app",
+      "body": {
+        "mode": "public_read_only",
+        "status": "SUCCESS"
+      }
+    },
+    {
+      "url": "https://cloud-bytexl-api.onrender.com/healthz",
+      "method": "GET",
+      "origin": "https://unapproved.example",
+      "http": 200,
+      "allow_origin": null,
+      "body": {
+        "mode": "public_read_only",
+        "status": "SUCCESS"
+      }
+    },
+    {
+      "url": "https://cloud-bytexl-api.onrender.com/api/github/repository",
+      "method": "POST",
+      "origin": null,
+      "http": 403,
+      "allow_origin": "https://cloud-bytexl.vercel.app",
+      "body": {
+        "message": "Repository is not allowlisted.",
+        "status": "FAILED"
+      }
+    },
+    {
+      "url": "https://cloud-bytexl-api.onrender.com/api/github/repository",
+      "method": "POST",
+      "origin": null,
+      "http": 400,
+      "allow_origin": "https://cloud-bytexl.vercel.app",
+      "body": {
+        "message": "Approved HTTPS GitHub repository URL required.",
+        "status": "FAILED"
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/github/repository",
+      "method": "POST",
+      "origin": null,
+      "http": 400,
+      "allow_origin": "http://127.0.0.1:5173",
+      "body": {
+        "message": "GitHub repository or resource was not found. If this is a private repository, configure GITHUB_TOKEN.",
+        "status": "FAILED"
+      }
+    }
+  ],
+  "local_evidence_directory": "C:\\Project\\Cloud-ByteXL\\backend\\reports\\final_verification_20261127",
+  "screenshots": [
+    {
+      "name": "local-ai-1440.png",
+      "bytes": 2086631,
+      "sha256": "73b069aaebbcdb2a46e117cd0bb1f9b8ef020247c963a88d5ef06b3f5b635f3f"
+    },
+    {
+      "name": "local-ai-detail.png",
+      "bytes": 685664,
+      "sha256": "a3e2470f300ebba7aa2fd685d6c58a9bc3e4a79d3d3d7131eba07d27ac697786"
+    },
+    {
+      "name": "local-AI-Intelligence-1024.png",
+      "bytes": 557533,
+      "sha256": "d813ab64f97f918c3ade605c9bbda0f85c767f0bac7905cc9f18b74731d40a2c"
+    },
+    {
+      "name": "local-AI-Intelligence-1440.png",
+      "bytes": 710928,
+      "sha256": "5729fbdd7483a5d2b1573d8346814d6dd134c4f617a9711d9e8b7d5d07b80afd"
+    },
+    {
+      "name": "local-AI-Intelligence-390.png",
+      "bytes": 260663,
+      "sha256": "3ecf6f721b135afa4a0d2a958b3dffb572dcad4ea9e3268b54aa6f22a2012b47"
+    },
+    {
+      "name": "local-AI-Intelligence-768.png",
+      "bytes": 451048,
+      "sha256": "238312a016b567d5d60744f8ca2fe9059b7b7008e6a2b8112a70fd59084e683d"
+    },
+    {
+      "name": "local-corrected-lint-rca.png",
+      "bytes": 647440,
+      "sha256": "8b77eff85ca3f11b8ab4ceb99052923447036c85ac161968d2f2f46de2fa1476"
+    },
+    {
+      "name": "local-error.png",
+      "bytes": 130977,
+      "sha256": "25c0f7633a34e0a298e043d1f61f684d6f55ca3976e2a5c49bf83ae95ccacabf"
+    },
+    {
+      "name": "local-Issues-1024.png",
+      "bytes": 515888,
+      "sha256": "45a95d390caf64b069a030e0cde3d223cc4b5ae30d8ec0d4e28fcb9fc75b5450"
+    },
+    {
+      "name": "local-Issues-1440.png",
+      "bytes": 643146,
+      "sha256": "38d781a0ece7970a9164d763063f9359253e90c0e8244500c1660aa12895806e"
+    },
+    {
+      "name": "local-Issues-390.png",
+      "bytes": 252540,
+      "sha256": "b53fe5639b013996066d629b291b541ce8baf50a955641e105ad19d253a72ce2"
+    },
+    {
+      "name": "local-Issues-768.png",
+      "bytes": 407915,
+      "sha256": "79f00bede7284fde6d860a9792de6d47d37f14fa99d8ca789ce124330308fcc5"
+    },
+    {
+      "name": "local-overview-1024.png",
+      "bytes": 1333444,
+      "sha256": "6f71054ca14d01e1f6ee2f5e7130608c159036d424febd3590580c62a4e176e4"
+    },
+    {
+      "name": "local-overview-1440.png",
+      "bytes": 1677385,
+      "sha256": "d442809b18cebdadc4b438ff8c7e134ab5fa620d039d8dab76fd76db0ddf3fb5"
+    },
+    {
+      "name": "local-overview-390.png",
+      "bytes": 1004327,
+      "sha256": "08d193913710e98166df7d4f65c4b4a0cf9ed78178e736c83a6d40a5f17504a5"
+    },
+    {
+      "name": "local-overview-768.png",
+      "bytes": 1234739,
+      "sha256": "18d69bfbb58fa6ccd4223e62a31d43d164860dfc2522c8e5d069a95333184d90"
+    },
+    {
+      "name": "local-Reports-1024.png",
+      "bytes": 530274,
+      "sha256": "70a41da34655019b9e497b9a0306ff15f36232ed3a95dff149eb5cca606d41b9"
+    },
+    {
+      "name": "local-Reports-1440.png",
+      "bytes": 621851,
+      "sha256": "c98789d3332d9adcbe94dd75e014b29de5f16222fed1f8f32e5be074da365c51"
+    },
+    {
+      "name": "local-Reports-390.png",
+      "bytes": 256228,
+      "sha256": "0f2cf2989f2a51ce43cdfda65cf98907fc342987e1dbe3a1b087bf3425940ac3"
+    },
+    {
+      "name": "local-Reports-768.png",
+      "bytes": 439402,
+      "sha256": "d4baf4ccf23850b2851de3cbefbd6a4ed425ff67f15ec5c4152b04eccdffe04d"
+    },
+    {
+      "name": "local-viewport-1024.png",
+      "bytes": 600070,
+      "sha256": "5403448cecb4ed50b0d85c14103b0181d29583cea20c9db2680a08d6f41d6ed6"
+    },
+    {
+      "name": "local-viewport-1440.png",
+      "bytes": 773531,
+      "sha256": "68c232b219a68332adb9e630b4c725907fef4512c99edde5781fd4aecd20633f"
+    },
+    {
+      "name": "local-viewport-390.png",
+      "bytes": 276858,
+      "sha256": "2e5632c1857cb7643599c3eb092e080de4c24f4119c6aeb700c96af46d2018a7"
+    },
+    {
+      "name": "local-viewport-768.png",
+      "bytes": 480437,
+      "sha256": "476f0e76bf95b88b71aa6cf377659d4ee0086d5e9a7cd6f231adcebe69798d1f"
+    },
+    {
+      "name": "production-ai-1440.png",
+      "bytes": 2934025,
+      "sha256": "fd29c5584217bf61cfd3f30e779323e0bd282eadd70987b40be0b08affd35ed4"
+    },
+    {
+      "name": "production-ai-detail.png",
+      "bytes": 566322,
+      "sha256": "3c8dbe1996e70130843cc468d54b4b01607be8526ed77ed8a86a34ab0f447363"
+    },
+    {
+      "name": "production-AI-Intelligence-1024.png",
+      "bytes": 496133,
+      "sha256": "55b0645134fb66d20731dd5f1530bc4e0ca9199893dc837e0b24200dd9395f21"
+    },
+    {
+      "name": "production-AI-Intelligence-1440.png",
+      "bytes": 614302,
+      "sha256": "36ad9bad7b04170ca429e6c8d8796c913149cbe55e2cee4554200fa4790a8a10"
+    },
+    {
+      "name": "production-AI-Intelligence-390.png",
+      "bytes": 259368,
+      "sha256": "65df821c5e3b93dd2e82b8e7aa3da372bde14d86f3837a40b04e58073f6232c6"
+    },
+    {
+      "name": "production-AI-Intelligence-768.png",
+      "bytes": 437726,
+      "sha256": "e151893d5a0200bc93f16e428438dbfd74e34c5ce584a61f7ea9879382bf4c71"
+    },
+    {
+      "name": "production-error.png",
+      "bytes": 130714,
+      "sha256": "480f6057f6f201c038b0576766b96b75e93cbf4f40f39c33dc6005914da68335"
+    },
+    {
+      "name": "production-Issues-1024.png",
+      "bytes": 505995,
+      "sha256": "4030747becd25db0554d2e2cea30f8796fa810d87803410ed2ef7e1b3a0d430e"
+    },
+    {
+      "name": "production-Issues-1440.png",
+      "bytes": 610482,
+      "sha256": "ace3c1e600979d6e7e805dba63aa188357d5a93b4c28ef9206a73f3ce9de8bf2"
+    },
+    {
+      "name": "production-Issues-390.png",
+      "bytes": 249621,
+      "sha256": "fc9b9a902fc532495c9a60e58e218ec36b64af3797c11bcd3ba66c7f9b56679f"
+    },
+    {
+      "name": "production-Issues-768.png",
+      "bytes": 431546,
+      "sha256": "34c0444cd8dd871489e5853cada9bea83310f6e32d744b2050d4f04df83fbc52"
+    },
+    {
+      "name": "production-overview-1024.png",
+      "bytes": 1362433,
+      "sha256": "c3379d473b6c9c557775f85c44e69e2df54c5f0ccd0aabcc71aeaef46f49f8ae"
+    },
+    {
+      "name": "production-overview-1440.png",
+      "bytes": 1662731,
+      "sha256": "db4690e5720337a00a96d9610e29bca5f976473fe488d932c32aa67e77a1cf56"
+    },
+    {
+      "name": "production-overview-390.png",
+      "bytes": 1031346,
+      "sha256": "a20151648c2b5b610ed3097ce069b3bf0e3818edcfc4492326f65b67cea34d0c"
+    },
+    {
+      "name": "production-overview-768.png",
+      "bytes": 1228304,
+      "sha256": "dfda19365cce748b1812c83e71129b8b94a0b9c40c7ed842d63d90a9821e6c07"
+    },
+    {
+      "name": "production-Reports-1024.png",
+      "bytes": 519167,
+      "sha256": "f491e3f77f5fede582a65de0fe3e7537b50b4f7160043ca66381cd9cafca8e79"
+    },
+    {
+      "name": "production-Reports-1440.png",
+      "bytes": 660149,
+      "sha256": "b20e119c6866c52922b9746613f697da75f045a92c58ec41382046f7405241d9"
+    },
+    {
+      "name": "production-Reports-390.png",
+      "bytes": 259026,
+      "sha256": "41e58a5b6adecc1d8c2b2a4c7b14267cfd5a2ac8e155890a88f1dedfa0ea1097"
+    },
+    {
+      "name": "production-Reports-768.png",
+      "bytes": 432591,
+      "sha256": "44eee838c9de669885e9b4e13b9ef82f3531a3b5b26b773284637c7fefbdedd4"
+    },
+    {
+      "name": "production-viewport-1024.png",
+      "bytes": 602586,
+      "sha256": "0ac7dc7fbcbac20ff0797597bfc77dd8bfd03e0702e715b0617bfe4e6ff16559"
+    },
+    {
+      "name": "production-viewport-1440.png",
+      "bytes": 734032,
+      "sha256": "6d7736d9c3ff4197671d7f54defc8f3e6f12da21de880b34093f4d2516d5aa6b"
+    },
+    {
+      "name": "production-viewport-390.png",
+      "bytes": 281550,
+      "sha256": "6b94020af32ef902b781008654a486d069d6cca25002b8eb6922a14352c7ac09"
+    },
+    {
+      "name": "production-viewport-768.png",
+      "bytes": 487343,
+      "sha256": "a1be63c5f08661deb7e90df182e4b24a5990b1acd7121b9e9638b68c366b18ec"
+    },
+    {
+      "name": "tablet-before.png",
+      "bytes": 396264,
+      "sha256": "c600332c790041e742b53c58daceecf64e791cfad301956def6afb6efecc2401"
+    }
+  ],
+  "pdfs": [
+    {
+      "name": "local-report.pdf",
+      "bytes": 1634637,
+      "sha256": "108e8c80c375fd1c7dd3e8ef22d40adf6eb267d958b8eb95692101169a329546"
+    },
+    {
+      "name": "production-report.pdf",
+      "bytes": 1635225,
+      "sha256": "3f205bd4a06b8d6d15fd28b9936cd509ed930b0d934292d92943ba078bb77a0a"
+    }
+  ],
+  "rca_postfix": {
+    "providerCalls": 0,
+    "runId": 45795104375,
+    "beforeReports": 4,
+    "correctedCategory": true,
+    "citesLintRule": true,
+    "persistedCategories": [
+      "lint_failure",
+      "lint_failure",
+      "unit_test_failure"
+    ],
+    "oldReportPreserved": true,
+    "newRulesPersisted": true
+  },
+  "rules_reproduced_bug": {
+    "repository": "saksham-1326/cloud-byte-xl-project",
+    "run_id": 45795104375,
+    "attempt": 1,
+    "write_target": "isolated local verification database",
+    "provider_calls": 0,
+    "jobs": 2,
+    "failed_logs": 1,
+    "rules": {
+      "report_id": "43d0291d-40ae-43b2-89c3-89fb5e5cbb9d",
+      "engine": "evidence_rules",
+      "category": "unit_test_failure",
+      "cause": "The test output contains a failed test summary.",
+      "failed_step": "Lint frontend",
+      "evidence_refs": [
+        "job:139823627122:line:361",
+        "job:139823627122:line:363",
+        "job:139823627122:line:365"
+      ],
+      "persisted": true
+    },
+    "gemini": {
+      "status": "not_called_missing_key_or_logs"
+    }
+  }
+}

@@ -12,7 +12,7 @@ from .github import redact, scrub
 from .store import timestamp
 from .rca_facts import observations, passing_tests, intentional_exit, validate_claims, support, ambiguous_errors
 
-CATEGORIES=["intentional_workflow_termination","unit_test_failure","dependency_error","compilation_error","docker_build_failure","kubernetes_configuration_error","ci_workflow_misconfiguration","missing_environment_variable","authentication_permission_failure","network_service_failure","insufficient_evidence"]
+CATEGORIES=["intentional_workflow_termination","unit_test_failure","lint_failure","dependency_error","compilation_error","docker_build_failure","kubernetes_configuration_error","ci_workflow_misconfiguration","missing_environment_variable","authentication_permission_failure","network_service_failure","insufficient_evidence"]
 SCHEMA={"type":"object","additionalProperties":False,"properties":{
     "category":{"type":"string","enum":CATEGORIES},
     "primary_cause":{"type":"string","maxLength":2000},"explanation":{"type":"string","maxLength":3000},
@@ -35,6 +35,8 @@ Choose categories by these GENERAL definitions, not step names:
   earlier observed diagnostic explaining termination. Successful tests are not failed
   tests merely because their enclosing shell step fails.
 - unit_test_failure: actual failing assertions, failed test cases or failed summaries.
+- lint_failure: explicit linter diagnostics with source coordinates and lint rule IDs.
+  ESLint problem/error totals are not pytest failure or error counts.
 - compilation_error: explicit compiler/syntax diagnostics, not a compiler command name
   or an aggregate process exit. Do not infer syntax errors from a syntax-check step.
 - dependency_error: explicit import/install diagnostics identifying unavailable dependencies.
@@ -156,6 +158,7 @@ def grounded_diagnosis(evidence):
     text="\n".join(item["text"] for item in evidence["primary"])
     facts=observations(evidence['primary'])
     patterns=[
+        (r"\b\d+:\d+\s+error\b|\bESLint(?:Error)?\s*:", "lint_failure", "The linter reported a source diagnostic that failed the quality check.", "Correct the cited lint rule violation at its source location and rerun the configured linter."),
         (r"ModuleNotFoundError|No module named|Could not find a version that satisfies", "dependency_error", "A required dependency could not be imported or installed.", "Declare and install the missing dependency in the workflow's environment."),
         (r"AssertionError|={2,}\s*FAILURES|FAILED\s+.*test", "unit_test_failure", "A test assertion or test case failed.", "Inspect the cited failing assertion and correct the implementation or expected behavior."),
         (r"failed to solve|Dockerfile.*(?:parse|error)|docker build.*failed", "docker_build_failure", "The container build failed.", "Correct the Dockerfile instruction or missing build input shown in the evidence."),
