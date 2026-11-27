@@ -30,6 +30,6 @@ test('failed re-analysis preserves previously selected repository data', () => {
 
 test('AI historical evidence remains accessible without running a new source scan', () => {
   assert.match(app, /page === "intelligence" && \(!repoConnected \|\| !REPO\.url\)/);
-  assert.match(app, /AIIntelligence repository="saksham-1326\/Cloud-Byte-XL-Project"/);
+  assert.match(app, /AIIntelligence repository=\{DEMO_REPOSITORY\}/);
   assert.match(ai, /timeoutMs:60000/);
 });
