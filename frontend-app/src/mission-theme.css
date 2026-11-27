@@ -144,3 +144,32 @@ body { background:var(--mission-bg); color:var(--mission-ink); }
  .ai-metrics {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 @media(prefers-reduced-motion:reduce){.app-frame *, .app-frame *::before,.app-frame *::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* Read-only mode is an informational workspace state, never a failure alert. */
+.repository-storage-notice {
+ display:flex;align-items:center;gap:13px;padding:12px 15px;margin:0 0 20px;
+ border:1px solid rgba(68,195,225,.2);border-radius:12px;
+ background:linear-gradient(100deg,rgba(39,124,153,.09),rgba(12,27,47,.55));
+ color:#aebed4;font-size:12px;line-height:1.5;
+}
+.repository-storage-notice__icon {
+ display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;
+ color:#8eddeb;background:rgba(57,183,217,.10);border:1px solid rgba(70,188,219,.18);
+}
+.repository-storage-notice__copy {display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.repository-storage-notice__copy strong {font-size:12px;font-weight:650;color:#d3e8f5;}
+.repository-storage-notice__copy span {color:#90a8c2;}
+.repository-storage-notice__tag {
+ font:600 9px ui-monospace,SFMono-Regular,monospace;letter-spacing:.9px;white-space:nowrap;
+ color:#85c9da;border:1px solid rgba(74,193,218,.22);border-radius:6px;padding:5px 7px;
+}
+.repository-storage-notice__close {
+ display:grid;place-items:center;flex:0 0 28px;height:28px;border:0;border-radius:7px;
+ background:transparent;color:#87a0b9;cursor:pointer;
+}
+.repository-storage-notice__close:hover {background:rgba(140,181,210,.12);color:#e6f4ff;}
+.repository-storage-notice__close:focus-visible {outline:2px solid #51d8ea;outline-offset:2px;}
+@media(max-width:639px) {
+ .repository-storage-notice {align-items:flex-start;padding:12px;gap:10px;}
+ .repository-storage-notice__tag {display:none;}
+}

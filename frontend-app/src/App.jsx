@@ -1088,6 +1088,7 @@ export default function App() {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showResourcesModal, setShowResourcesModal] = useState(false);
   const [connectionError,setConnectionError] = useState("");
+  const [databaseNotice, setDatabaseNotice] = useState(false);
   const analysisRequest = useRef(null);
   const [analyzing, setAnalyzing]           = useState(false);
   const [analysisElapsed, setAnalysisElapsed] = useState(0);
@@ -1163,7 +1164,8 @@ export default function App() {
       }
       publishRepositoryData(data);
       setRepoConnected(true);
-      if(data.databaseWarning)setConnectionError(data.databaseWarning);
+      // An intentional public-demo write restriction is informational, not a scan error.
+      setDatabaseNotice(Boolean(data.databaseWarning));
       setPage("overview");
       pushToast(`Connected to ${data.repository?.fullName || data.repository?.name}`);
     } catch (error) {
@@ -1373,6 +1375,12 @@ export default function App() {
             <span className="workspace-identity__pill">EVIDENCE-FIRST · READ ONLY</span>
           </div>}
           {connectionError && <div className="ai-alert error" role="alert"><AlertTriangle size={18}/><p>{connectionError}</p></div>}
+          {repoConnected && databaseNotice && page === "overview" && <div className="repository-storage-notice" role="status" aria-label="Repository storage mode">
+            <span className="repository-storage-notice__icon"><Database size={15} aria-hidden="true"/></span>
+            <div className="repository-storage-notice__copy"><strong>Read-only analysis</strong><span>Results are available in this workspace. Saving this repository to the database is disabled for public visitors.</span></div>
+            <span className="repository-storage-notice__tag">PUBLIC DEMO</span>
+            <button type="button" className="repository-storage-notice__close" aria-label="Dismiss storage information" onClick={() => setDatabaseNotice(false)}><X size={15}/></button>
+          </div>}
           {content}
         </div>
       </main>

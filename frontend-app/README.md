@@ -41,3 +41,7 @@ The initial AI overview allows up to 60 seconds for Render Free startup.
 The hosted AI workspace remains read-only, historical predictions are
 experimental, and independently verified prospective performance is not yet
 established.
+
+### Public demo read-only storage notice
+
+After a successful repository assessment the frontend renders a small, dismissible **informational** banner explaining that results are available in the current workspace but public visitors cannot save the repository record into PostgreSQL. This expected security restriction is no longer treated as a red error. Genuine repository scan failures still appear separately as errors. The deployment remains read-only; no database, authorization or hosting policy changes were made.
