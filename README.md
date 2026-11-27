@@ -1157,3 +1157,23 @@ training/provider actions stay disabled. No paid resources are enabled.
 ### Public demo read-only storage notice
 
 After a successful repository assessment the frontend renders a small, dismissible **informational** banner explaining that results are available in the current workspace but public visitors cannot save the repository record into PostgreSQL. This expected security restriction is no longer treated as a red error. Genuine repository scan failures still appear separately as errors. The deployment remains read-only; no database, authorization or hosting policy changes were made.
+
+### Public website repository permission and functional mock audit
+
+The **public read-only** hosted demo intentionally authorizes only
+`saksham-1326/Cloud-Byte-XL-Project` in `AI_ALLOWED_REPOSITORIES`.
+The website now validates and normalizes the selected GitHub URL *before*
+making a request, pre-fills the approved repository, and explains when an
+unapproved repository is chosen. This avoids treating an intentional 403
+authorization decision as a general server outage. Additional repositories
+require a separately approved authenticated configuration, not an unrestricted
+public allowlist.
+
+Offline regression checks include mocked successful and forbidden repository
+requests, malformed URLs, network and invalid-response handling, all 12
+navigation route contracts, scan cancellation/retry, mocked historical AI
+metrics and RCA, and denial of public AI mutations. Flask route tests verify
+the allowlist, case-insensitive canonical identity, and read-only permission
+gate without touching live Neon or GitHub. These tests **do not** establish
+full real-browser functionality or AI model accuracy; interactive production
+acceptance and prospective model validation remain separate requirements.

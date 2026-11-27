@@ -45,3 +45,21 @@ established.
 ### Public demo read-only storage notice
 
 After a successful repository assessment the frontend renders a small, dismissible **informational** banner explaining that results are available in the current workspace but public visitors cannot save the repository record into PostgreSQL. This expected security restriction is no longer treated as a red error. Genuine repository scan failures still appear separately as errors. The deployment remains read-only; no database, authorization or hosting policy changes were made.
+
+### Repository access and mock functional checks
+
+The hosted demo permits one approved GitHub repository:
+`saksham-1326/Cloud-Byte-XL-Project`. The Connect modal pre-fills the
+approved URL, accepts harmless case and `.git` variations, and rejects
+other repositories before sending an HTTP request. The backend still applies
+its independent `AI_ALLOWED_REPOSITORIES` authorization gate.
+
+Run `npm test`, `npm run lint`, and `npm run build`. The offline test suite
+covers the 12 navigation destinations, scan recovery, selected UI actions,
+repository URL normalization and forbidden access, mocked repository-analysis
+responses, malformed/non-JSON/network failures, public AI write denial, and
+historical AI response handling. These are regression checks, **not** an
+end-to-end production-browser certification or evidence of accurate future
+failure predictions. The public site does not implement unrestricted remote
+Docker/Kubernetes actions, live Gemini inference, or a reliable prospective
+failure predictor.
