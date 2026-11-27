@@ -263,14 +263,9 @@ function Navbar({ collapsed, onAnalyze, analyzing, repoConnected, onConnectRepo,
               style={{ background: "#0e1525", border: "1px solid var(--border-default)" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {["Profile", "Team settings", "Sign out"].map((it) => (
-                <button
-                  key={it}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200"
-                >
-                  {it}
-                </button>
-              ))}
+              <p className="px-3 py-2 text-xs text-slate-400" role="status">Public read-only workspace. Account profiles, teams and sign-out are not available because this demo has no user login.</p>
+              <a href={DEMO_REPOSITORY_URL} target="_blank" rel="noreferrer" className="block rounded-lg px-3 py-2 text-sm text-cyan-300 hover:bg-white/[0.06]">View source on GitHub <ExternalLink className="inline h-3.5 w-3.5" /></a>
+              <button type="button" onClick={() => setProfileOpen(false)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/[0.06]">Close menu</button>
             </div>
           )}
         </div>
