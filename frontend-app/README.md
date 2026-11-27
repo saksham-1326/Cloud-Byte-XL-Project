@@ -1,5 +1,7 @@
 # Cloud-ByteXL Frontend — Mission Control UI
 
+Final verification records are in [`../docs/FINAL_PROJECT_VERIFICATION.md`](../docs/FINAL_PROJECT_VERIFICATION.md). Successful scans measure browser request duration with a monotonic clock. JSON reports include that duration, the exact analyzed revision, file inventory/count and detected languages alongside the dashboard assessment. Inventory does not mean every file was inspected; source analysis remains bounded. The landing page names pytest/CI without presenting a hardcoded historical test count as a current result.
+
 This is the user-provided **Cloud-ByteXL-Frontend-UI.zip** React 19 + Vite 8 frontend integrated into the existing Cloud-ByteXL repository. It replaces the previous frontend UI only, keeping Flask, Render, Neon PostgreSQL, the existing inference/quality guards and repository-analysis APIs unchanged. The interactive landing page and Mission Control workspace come from the uploaded design.
 
 ## Run locally

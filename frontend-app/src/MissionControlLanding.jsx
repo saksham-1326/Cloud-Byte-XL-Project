@@ -130,7 +130,7 @@ const DNA_ITEMS = [
     accent: "text-emerald-400",
     label: "pytest Verified",
     tag: "VERIFICATION",
-    title: "pytest (174 Passing Tests)",
+    title: "pytest regression suite",
     body: "Covers AI API storage, ML audit rules, RCA fact guards, PostgreSQL migrations, and durable callback persistence.",
   },
 ];
@@ -154,7 +154,7 @@ export default function MissionControlLanding({ onOpenWorkspace, xray, onToggleX
             </div>
             <span className="font-display text-base font-bold tracking-tight text-white">Cloud-ByteXL</span>
             <span className="hidden sm:inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
-              ● 174 TESTS PASS
+              ● PYTEST + CI
             </span>
           </div>
 
@@ -189,7 +189,7 @@ export default function MissionControlLanding({ onOpenWorkspace, xray, onToggleX
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3.5 py-1 font-mono text-[11px] font-semibold text-cyan-300">
             <span>AI-POWERED DEVOPS INTELLIGENCE</span>
             <span className="text-slate-500">|</span>
-            <span>POSTGRESQL 17 · GEMINI RCA · SCIKIT-LEARN</span>
+            <span>POSTGRESQL · GEMINI RCA · SCIKIT-LEARN</span>
           </div>
 
           <h1 className="font-display mx-auto mt-5 max-w-4xl text-4xl font-bold tracking-tight text-white sm:text-6xl lg:leading-[1.06]">

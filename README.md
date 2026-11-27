@@ -1,5 +1,7 @@
 # Cloud-ByteXL
 
+Final end-to-end verification, actual browser evidence, regression results and remaining demonstration limitations are recorded in [docs/FINAL_PROJECT_VERIFICATION.md](docs/FINAL_PROJECT_VERIFICATION.md). Report downloads now retain the analyzed file inventory and measured scan duration. New RCA distinguishes recognizable ESLint diagnostics from pytest failures and leaves tolerated or ambiguous failures uncertain; historical saved reports are preserved. See that dated report before claiming submission readiness or prospective AI accuracy.
+
 **AI-Powered DevOps Intelligence Platform**
 
 Understand what changed, why a pipeline failed, and what historical workflow data can tell you about the next run. Cloud-ByteXL brings repository analysis, evidence-grounded failure diagnosis, experimental failure prediction, and durable CI status persistence into a Flask/PostgreSQL backend with a React dashboard.
