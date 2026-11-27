@@ -1153,3 +1153,7 @@ history. Its historical overview tolerates Render Free cold startup for up
 to 60 seconds. Only past evidence, model evaluations, and grounded RCA are
 available; prospective prediction accuracy remains unverified, and hosted
 training/provider actions stay disabled. No paid resources are enabled.
+
+### Public demo read-only storage notice
+
+After a successful repository assessment the frontend renders a small, dismissible **informational** banner explaining that results are available in the current workspace but public visitors cannot save the repository record into PostgreSQL. This expected security restriction is no longer treated as a red error. Genuine repository scan failures still appear separately as errors. The deployment remains read-only; no database, authorization or hosting policy changes were made.
