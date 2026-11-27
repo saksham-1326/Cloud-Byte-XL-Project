@@ -74,6 +74,17 @@ test("all visible settings and report actions stay wired, with unavailable chat 
   assert.match(theme,/\.repository-storage-notice/);
 });
 
+test("profile dropdown contains no inert account-management buttons",()=>{
+  const start=app.indexOf("{profileOpen && (");
+  const end=app.indexOf("/* ============================== MOBILE NAV DRAWER",start);
+  const profile=app.slice(start,end);
+  assert.ok(start>0 && end>start);
+  assert.match(profile,/no user login/);
+  assert.match(profile,/View source on GitHub/);
+  assert.match(profile,/setProfileOpen\(false\)/);
+  assert.doesNotMatch(profile,/\["Profile", "Team settings", "Sign out"\]/);
+});
+
 test("mock backend success and read-only warning payload retain exact API contract",async t=>{
   const response={
     status:"SUCCESS",
