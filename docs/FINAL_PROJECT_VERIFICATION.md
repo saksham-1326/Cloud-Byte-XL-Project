@@ -8,6 +8,16 @@ This document distinguishes direct browser observations, live API/database reads
 
 ## Revision and preservation
 
+### Final release review before approval
+
+PR #17 originally contained head `1be9c22915fd4e0e9b04d3147a27ab28f291bf19`. Its [GitHub Actions run 46016084633](https://github.com/saksham-1326/Cloud-Byte-XL-Project/actions/runs/46016084633) completed successfully: frontend tests/lint/build, PostgreSQL-backed backend tests, Linux Gunicorn smoke and Docker build/run/health checks all passed. These hosted checks supplement the earlier Windows results; they are not a new local Docker claim. At review time there were no PR discussion comments, submitted reviews or inline review threads.
+
+The complete 12-file diff and structured evidence were inspected. No environment files, provider/hosting configuration, schema migrations, permissions, prediction-gate policy, production records or unrelated user changes are included. Configured credential-value comparison and token/private-key/credential-URL pattern checks found no matches in the proposed contents. The export adds inventory metadata and languages, not fetched source-code bodies. The evidence summary contains public repository/run metrics and sanitized local receipts; raw logs and credentials remain excluded.
+
+Final review reproduced and corrected two additional RCA edge cases: a tolerated `npm run lint || true` followed by an explicit exit must stay uncertain, and a generic line/column error with no recognizable lint rule must not become either a lint or pytest failure. Six lint regressions plus existing reliability checks passed: **73 tests**. Recognition remains conservative for unfamiliar rule formats. The revised PR head must have successful GitHub Actions before it is marked ready for review; exact-head check receipts are recorded in the release approval conversation. Earlier 321-test and browser receipts below retain their original scope.
+
+**Approval boundary:** no merge or deployment is authorized until the user explicitly approves the reviewed head. Existing Render `hosted_ai.py` can refit a model when ephemeral artifacts are absent after a restart, independently of public HTTP access; it appends model versions rather than overwriting historical evaluations. Deployment approval must explicitly cover preserving that configured background behavior, or this operational condition must be resolved before deployment. The smoke test will not call training, trigger a workflow, generate a prospective prediction, rewrite historical reports or enable a provider. Safe lint validation will use retained genuine evidence with the exact released code and read-only data; no public mutation endpoint will be opened for testing.
+
 | Check | Status | Evidence |
 | --- | --- | --- |
 | GitHub main | PASS | `git ls-remote` and fetch returned `84999c4878be53df67c0023e61d9bacf52f3c81a`. Genuine scans resolved the same SHA. |

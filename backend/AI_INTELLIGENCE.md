@@ -2,6 +2,8 @@
 
 ## Final live verification — 2026-11-27
 
+Final PR review additionally verified that a tolerated `npm run lint || true` followed by an explicit exit stays uncertain, and that generic source coordinates/error text cannot establish a lint failure without a recognizable lint rule identifier. The recognizer is deliberately bounded; unfamiliar or single-word rule identifiers without explicit ESLint error context can remain insufficient evidence. Existing stored reports remain unchanged.
+
 A genuine failed `Lint frontend` step exposed an evidence-rule defect: ESLint source coordinates and its `1 problem (1 error, 0 warnings)` summary were counted as pytest errors. New analyses classify explicit linter diagnostics as `lint_failure`, preserve the diagnostic citations, and recommend correcting the cited lint rule. Lint evidence cannot support a provider claim that unit tests failed. Regression tests use the redacted public diagnostic from Actions run `45795104375`, attempt 1. Existing database reports and historical evaluations are preserved; previously stored `unit_test_failure` reports for this lint pattern remain historical, incorrect diagnoses until separately reviewed. The exact provider call performed before this fix is not re-counted as a post-fix provider test. See [final verification](../docs/FINAL_PROJECT_VERIFICATION.md).
 
 ## RCA reliability improvements — 2026-11-15

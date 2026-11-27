@@ -33,3 +33,19 @@ def test_cited_lint_errors_cannot_support_a_provider_test_failure_claim():
 
 def test_genuine_pytest_error_summary_remains_a_test_failure():
     assert analyze(job_case('1 error in 0.20s\nProcess completed with exit code 1.'))['category'] == 'unit_test_failure'
+
+
+def test_tolerated_lint_before_explicit_exit_stays_uncertain():
+    log = ('##[group]Run npm run lint || true\nexit 1\nshell: /usr/bin/bash -e {0}\n'
+           '##[endgroup]\n1094:10  error  unused variable  no-unused-vars\n'
+           'Process completed with exit code 1.')
+    report = analyze(job_case(log))
+    assert report['facts']['tolerated_failure_commands']
+    assert report['category'] == 'insufficient_evidence'
+    assert report['uncertainty'] == 'high'
+
+
+def test_coordinates_and_generic_error_are_not_a_lint_rule():
+    report = analyze(job_case('10:2  error  use of undeclared identifier foo\nProcess completed with exit code 1.'))
+    assert not report['facts']['lint_errors']
+    assert report['category'] == 'insufficient_evidence'

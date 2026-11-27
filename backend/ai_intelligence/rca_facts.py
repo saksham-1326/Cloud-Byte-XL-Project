@@ -16,12 +16,12 @@ DOCKER_ERROR = re.compile(r'Error response from daemon|No such container|failed 
 HTTP = re.compile(r'(?:HTTP(?:/\d(?:\.\d)?)?(?:\s+status(?:\s+code)?)?\s*[:=]?\s*|returned error:\s*)([45]\d\d)\b', re.I)
 EXIT_CODE = re.compile(r'Process completed with exit code (\d+)\b', re.I)
 SUMMARY = re.compile(r'\b(\d+)\s+(passed|failed|errors?|skipped|xfailed|xpassed)\b', re.I)
-LINT = re.compile(r'\b\d+:\d+\s+error\s+.+\s+[\w@/-]+\s*$|\bESLint(?:Error)?\s*:', re.I)
+LINT = re.compile(r'\b\d+:\d+\s+error\s+.+\s+(?:@[\w-]+/)?[a-z][a-z0-9_-]*(?:[-/][a-z0-9_-]+)+\s*$|\bESLint(?:Error)?\s*:', re.I)
 
 
 def summary_counts(text):
-    # ESLint source coordinates and problem totals are not pytest counts.
-    if LINT.search(text) or re.search(r'\b\d+\s+problems?\s*\(', text, re.I):
+    # Source line/column diagnostics and linter totals are not pytest counts.
+    if re.search(r'\b\d+:\d+:?\s+(?:error|warning)\b|\b\d+\s+problems?\s*\(', text, re.I) or LINT.search(text):
         return []
     # "HTTP 404 error" is a status code, never 404 pytest errors.
     http_numbers={match.start(1) for match in HTTP.finditer(text)}
@@ -115,7 +115,7 @@ def support(category,facts,text):
 
 def ambiguous_errors(facts):
     return bool(facts['tolerated_failure_commands'] and facts['explicit_exit_commands']
-                and any(facts[key] for key in ('compiler_errors','dependency_errors','test_errors','http_errors')))
+                and any(facts[key] for key in ('compiler_errors','dependency_errors','test_errors','lint_errors','http_errors')))
 
 
 def positive_claim(text,pattern):

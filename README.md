@@ -1,6 +1,6 @@
 # Cloud-ByteXL
 
-Final end-to-end verification, actual browser evidence, regression results and remaining demonstration limitations are recorded in [docs/FINAL_PROJECT_VERIFICATION.md](docs/FINAL_PROJECT_VERIFICATION.md). Report downloads now retain the analyzed file inventory and measured scan duration. New RCA correctly distinguishes ESLint diagnostics from pytest failures; historical saved reports are preserved. See that dated report before claiming submission readiness or prospective AI accuracy.
+Final end-to-end verification, actual browser evidence, regression results and remaining demonstration limitations are recorded in [docs/FINAL_PROJECT_VERIFICATION.md](docs/FINAL_PROJECT_VERIFICATION.md). Report downloads now retain the analyzed file inventory and measured scan duration. New RCA distinguishes recognizable ESLint diagnostics from pytest failures and leaves tolerated or ambiguous failures uncertain; historical saved reports are preserved. See that dated report before claiming submission readiness or prospective AI accuracy.
 
 **AI-Powered DevOps Intelligence Platform**
 
