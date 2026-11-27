@@ -1,6 +1,7 @@
 import MissionControlLanding from "./MissionControlLanding.jsx";
 import AIIntelligence from "./AIIntelligence.jsx";
 import { API_BASE, requestJson } from "./api.js";
+import { DEMO_REPOSITORY, DEMO_REPOSITORY_URL, validateDemoRepository } from "./repoAccess.js";
 import { REPO, HEALTH, SUBSCORES, METRICS, SEVERITY_COUNTS, ISSUES, ARCH, SECURITY, RECOMMENDATIONS, ACTIVITY, CONTRIBUTORS, COMMITS, LANGUAGES, REPOSITORY_FILES, ANALYSIS_STEPS, ANALYSIS_HISTORY, subscribeRepository, getRepositoryRevision, publishRepositoryData } from "./repositoryData.js";
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import {
@@ -845,7 +846,7 @@ function IssueDetailModal({ issue, onClose, onMarkReviewed, reviewed }) {
 }
 
 function ConnectRepoModal({ open, onClose, onConnect }) {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(DEMO_REPOSITORY_URL);
   if (!open) return null;
   return (
     <div
@@ -863,7 +864,7 @@ function ConnectRepoModal({ open, onClose, onConnect }) {
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-100">Connect GitHub Repository</h3>
-            <p className="mt-0.5 text-sm text-muted">Enter any public repository URL to analyze</p>
+            <p className="mt-0.5 text-sm text-muted">This public read-only demo analyzes the approved Cloud-ByteXL repository.</p>
           </div>
           <button
             onClick={onClose}
@@ -886,7 +887,7 @@ function ConnectRepoModal({ open, onClose, onConnect }) {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onConnect(url)}
-            placeholder="github.com/your-org/your-repo"
+            placeholder="github.com/saksham-1326/Cloud-Byte-XL-Project"
             className="w-full bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
             autoFocus
           />
@@ -1135,9 +1136,14 @@ export default function App() {
   };
 
   const handleConnect = async (url) => {
-    const repoUrl = (url || "").trim();
-    if (!repoUrl) {
-      pushToast("Please enter a GitHub repository URL");
+    let repoUrl;
+    try {
+      // Validate before a network call so incorrect repository permissions
+      // result in a helpful inline message, never an unhandled backend 403.
+      repoUrl = validateDemoRepository(url || "");
+    } catch (error) {
+      setConnectionError(error.message || "Invalid GitHub repository URL.");
+      setShowConnectModal(false);
       return;
     }
 
@@ -1170,7 +1176,9 @@ export default function App() {
       pushToast(`Connected to ${data.repository?.fullName || data.repository?.name}`);
     } catch (error) {
       if(error.name==="AbortError" || analysisRequest.current!==controller)return;
-      setConnectionError(error.message || "Repository analysis unavailable.");
+      setConnectionError(error.message === "Repository is not allowlisted."
+        ? `This public demo permits only ${DEMO_REPOSITORY}. The Render repository allowlist may need synchronization; please retry the demo repository.`
+        : error.message || "Repository analysis unavailable.");
       // Preserve the last successfully analyzed repository when a refresh fails.
       pushToast(error.message || "Failed to connect GitHub repository");
     } finally {
@@ -1200,7 +1208,7 @@ export default function App() {
   // Historical AI evidence exists in Neon independently of a fresh, potentially
   // slow source scan. Do not gate the AI workspace behind repository analysis.
   if (page === "intelligence" && (!repoConnected || !REPO.url)) {
-    content = <AIIntelligence repository="saksham-1326/Cloud-Byte-XL-Project" apiBase={API_BASE} />;
+    content = <AIIntelligence repository={DEMO_REPOSITORY} apiBase={API_BASE} />;
   } else if (!repoConnected || !REPO.url) {
     content = <EmptyState onConnect={() => setShowConnectModal(true)} />;
   } else {
